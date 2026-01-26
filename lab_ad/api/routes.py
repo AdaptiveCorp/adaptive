@@ -4,9 +4,12 @@ from ..database.connection import get_db
 from ..database import orm_models
 #from ..services.vulnerability_service import VulnerabilityService
 from ..database.seed_vulnerabilities import seed_vulnerability_templates
-from ..integrations.proxmox import deploy_lab
+from ..integrations import dc_promote,deploy_lab,restart_vm
 #from ..integrations.ansible_generator import generate_playbook_content
 #from ..integrations.ansible_runner import run_playbook_from_memory
+from .utils import get_dcs_grouped_by_domain, get_domain
+import traceback
+import time
 
 router = APIRouter()
 
@@ -150,7 +153,6 @@ def list_domains(project_id: int, forest_id: int, db: Session = Depends(get_db))
 
 
 # ==================== SERVEURS ====================
-
 @router.post("/projects/{project_id}/forest/{forest_id}/domain/{domain_id}/server")
 def add_server(
     project_id: int,
@@ -240,7 +242,6 @@ def list_forest_servers(forest_id: int, project_id: int, db: Session = Depends(g
     } for s in servers]
 
 # ==================== UTILISATEURS ====================
-
 @router.post("/projects/{project_id}/forest/{forest_id}/domain/{domain_id}/user")
 def add_user(
     project_id: int,
@@ -253,7 +254,6 @@ def add_user(
     """
     Ajouter un utilisateur Active Directory
     """
-    # Vérifier que le domaine existe
     query = db.query(orm_models.DBServer)
     query = db.query(orm_models.DBDomain)
     query = query.filter(
@@ -316,7 +316,6 @@ def list_users(project_id: int, forest_id: int ,domain_id: int, db: Session = De
 
 
 # ==================== VULNÉRABILITÉS ====================
-
 @router.get("/vulnerabilities/")
 def list_available_vulnerabilities(db: Session = Depends(get_db)):
     """
@@ -378,7 +377,6 @@ def remove_applied_vulnerability(vuln_id: int, db: Session = Depends(get_db)):
     return {"message": "Vulnerability removed successfully"}
 
 
-# ==================== ADMIN ====================
 
 @router.post("/admin/reload_vulnerabilities")
 def reload_vulnerabilities():
@@ -393,7 +391,7 @@ def reload_vulnerabilities():
         raise HTTPException(status_code=500, detail=f"Error reloading vulnerabilities: {str(e)}")
 
 
-# ==================== DÉPLOIEMENT ====================
+
 @router.post("/projects/{project_id}/deploy")
 def deploy_project(project_id: int, db: Session = Depends(get_db)):
     """
@@ -404,28 +402,65 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Project not found")
     
     try:
-        # Générer le playbook
-        result = deploy_lab(project_id, db)
+
+        # ========================= DC PROMO ========================= #
         
-        # # Récupérer les hosts
-        # servers = db.query(orm_models.DBServer).filter(
-        #     orm_models.DBServer.project_id == project_id
-        # ).all()
-        # inventory_hosts = [server.ip for server in servers if server.ip]
-        
-        # if not inventory_hosts:
-        #     raise HTTPException(status_code=400, detail="No servers with IP addresses found")
-        
-        # # Exécuter le playbook
-        # result = run_playbook_from_memory(playbook_content, inventory_hosts)
-        
-        # # Mettre à jour le statut du projet
-        # if result.get("success"):
-        #     project.status = "deployed"
-        # else:
-        #     project.status = "error"
-        # db.commit()
-        
+        result = deploy_lab(project_id, db) # Cloner les VMs
+    
+        time.sleep(60)
+
+        all_dcs = get_dcs_grouped_by_domain(project_id, db) # list des DCs
+
+        for dcs in all_dcs :
+            is_primary = True
+           
+            domain = get_domain(dcs[0].domain_id,db)
+
+            for dc in dcs :
+                server_ip = dc.ip
+                dc_hostname = dc.fqdn
+                domain_fqdn = domain.fqdn
+                domain_netbios = domain_fqdn.split('.')[1]
+                dsrm_password = "Pat@te10000!"
+                is_first_dc = is_primary
+                domain_admin = 'Administrator'
+
+                result = dc_promote(server_ip, # Promotion du dc
+                                    dc_hostname,
+                                    domain_fqdn,
+                                    domain_netbios,
+                                    dsrm_password,
+                                    is_first_dc,
+                                    domain_admin)
+                
+                if result["success"]:
+                    result = restart_vm(dc.vm_id)  # Redémarre la VM
+
+                else :
+                    return {
+                        "project": project.name,
+                        "deployment_result": result
+                    }
+                
+            # ========================= Add Users ========================= #
+            # all_primary_dcs =
+            # pour chaque dc dans all_primary_dcs
+            # recupère les utilisateurs sous forme de liste, avec firstname, lastname
+            # apelle fonction dans ansible pour provider tout ça
+
+
+            # ========================= Ajouter les vulns sur les users Kerberoast-AsRepRoast ========================= #
+            # -------------------------------------------------
+            # -------------------------------------------------
+            # -------------------------------------------------
+            # -------------------------------------------------
+
+
+
+
+
+                
+
         return {
             "project": project.name,
             "deployment_result": result
@@ -433,11 +468,12 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         project.status = "error"
         db.commit()
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Deployment error: {str(e)}")
 
 
-# ==================== HEALTH CHECK ====================
 
+# ==================== HEALTH CHECK ====================
 @router.get("/health")
 def health_check():
     """

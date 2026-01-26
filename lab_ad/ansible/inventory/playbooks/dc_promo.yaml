@@ -1,0 +1,63 @@
+---
+- name: Promote Windows Server to Domain Controller
+  hosts: "{{ target_host }}"
+  gather_facts: no
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: ntlm
+    ansible_winrm_server_cert_validation: ignore
+    ansible_port: 5985
+    ansible_winrm_read_timeout_sec: 120
+    ansible_winrm_operation_timeout_sec: 110
+
+  tasks:
+    - name: Install AD-Domain-Services role
+      win_feature:
+        name: AD-Domain-Services
+        include_management_tools: yes
+        state: present
+      register: ad_install
+
+    - name: Create new forest (First DC)
+      win_shell: |
+        $Password = ConvertTo-SecureString "{{ dsrm_password }}" -AsPlainText -Force
+        Install-ADDSForest `
+          -DomainName "{{ domain_fqdn }}" `
+          -DomainNetbiosName "{{ domain_netbios }}" `
+          -ForestMode "{{ forest_mode }}" `
+          -DomainMode "{{ domain_mode }}" `
+          -InstallDns:${{ install_dns | string | lower }} `
+          -SafeModeAdministratorPassword $Password `
+          -Force `
+          -NoRebootOnCompletion
+      when: is_first_dc | bool
+      register: forest_creation
+      async: 600
+      poll: 10
+
+    - name: Join existing domain (Additional DC)
+      win_shell: |
+        $Password = ConvertTo-SecureString "{{ dsrm_password }}" -AsPlainText -Force
+        $DomainCred = New-Object System.Management.Automation.PSCredential("{{ domain_admin }}", $Password)
+        
+        Install-ADDSDomainController `
+          -DomainName "{{ domain_fqdn }}" `
+          -Credential $DomainCred `
+          -SafeModeAdministratorPassword $Password `
+          -InstallDns:${{ install_dns | string | lower }} `
+          -Force `
+          -NoRebootOnCompletion
+      when: not (is_first_dc | bool)
+      register: dc_join
+      async: 600
+      poll: 10
+
+    - name: Mark DC promotion complete
+      set_fact:
+        dc_promoted: true
+      when: forest_creation.changed or dc_join.changed
+
+    - name: Display pre-reboot message
+      debug:
+        msg: "DC promotion complete. Server will reboot. Credentials will change to {{ domain_fqdn }}\\Administrator"
+      when: dc_promoted is defined

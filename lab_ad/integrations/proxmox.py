@@ -17,6 +17,7 @@ def deploy_lab(project_id: int, db: Session):
     print(f"[++] Clonage des serveurs du projet : {project_id}")
     
     results = clone_all_servers_in_project(proxmox, project_id, db)
+    print(results)
     print(f"[++] Clonage terminé")
 
     return results
@@ -125,8 +126,8 @@ def clone_vm_for_server(proxmox, project_id: int, server_id: int, template_id: i
         print(f"[>] Clonage VM du serveur {server.fqdn}...")
         task = proxmox.nodes(PROXMOX_NODE).qemu(template_id).clone.post(
             newid=new_vm_id,
-            name=vm_name,
-            full=1
+            name=server.fqdn,
+            full=0
         )
         print(f"[>] Tâche de clonage lancée : {task}")
         
@@ -176,7 +177,7 @@ def clone_all_servers_in_project(proxmox, project_id: int, db: Session):
     # Pour le poc le VM ID est fixé au WINSERVER 2022
 
 
-    vm_id = 102
+    vm_id = 101
     for server in servers:
         try:
             result = clone_vm_for_server(proxmox, project_id, server.id, vm_id, db)
@@ -190,3 +191,43 @@ def clone_all_servers_in_project(proxmox, project_id: int, db: Session):
             })
     
     return results
+
+def restart_vm(vm_id: int, proxmox = get_proxmox_connection()):
+    """
+    Redémarre une VM Proxmox
+    """
+    try:
+        print(f"[>] Redémarrage de la VM {vm_id}...")
+        
+        proxmox.nodes(PROXMOX_NODE).qemu(vm_id).status.reboot.post()
+        
+        print(f"[+] Commande de redémarrage envoyée à la VM {vm_id}")
+        
+        
+        print(f"[>] Attente de l'arrêt...")
+        time.sleep(20)
+        
+        
+        print(f"[>] Attente du redémarrage...")
+        max_wait = 120 
+        elapsed = 0
+        
+        while elapsed < max_wait:
+            vm_status = proxmox.nodes(PROXMOX_NODE).qemu(vm_id).status.current.get()
+            
+            if vm_status.get('status') == 'running':
+                print(f"[+] VM {vm_id} redémarrée avec succès")
+                return True
+            
+            time.sleep(5)
+            elapsed += 5
+            
+            if elapsed % 20 == 0:
+                print(f"[>] Attente... {elapsed}s/{max_wait}s")
+        
+        print(f"[!] Timeout : VM {vm_id} n'a pas redémarré dans les temps")
+        return False
+    
+    except Exception as e:
+        print(f"[!] Erreur redémarrage VM : {e}")
+        return False
