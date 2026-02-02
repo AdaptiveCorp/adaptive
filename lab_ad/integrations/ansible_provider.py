@@ -1,7 +1,8 @@
 import ansible_runner # type: ignore
 import tempfile
 from pathlib import Path
-
+from ..database import orm_models
+from sqlalchemy.orm import Session
 
 def dc_promote(
     server_ip: str,
@@ -81,10 +82,48 @@ def dc_promote(
             }
 
 
-def add_users(host : int, userslist, ansible_user: str = "Administrator", ansible_password: str = "Azerty1234@"):
+def deploy_user(server_ip : str, fqdn : str, userslist, db: Session, ansible_user: str = "Administrator", ansible_password: str = "Azerty1234@"):
     
-    
+    # Pour les test l'ip du server est fixé 
 
+    users_list = []
+    for user in userslist :
+        user_data = {}
+        user_data["username"] = user.username
+        user_data["firstname"] = user.firstname
+        user_data["lastname"] = user.lastname
+        user_data["password"] = user.password + "Aaa"
+        users_list.append(user_data)
+    base_dn = "DC="+fqdn.split('.')[-2].lower()+","+"DC="+fqdn.split('.')[-1].lower()
+    extravars = {
+        "target_host": server_ip,
+        "users_list" : users_list,
+        "domain_fqdn" : fqdn,
+        "base_dn" : base_dn 
+    }
+
+    playbook_path = Path(__file__).parent.parent / "ansible" / "inventory" / "playbooks" / "add_users.yaml"
+    if not playbook_path.exists():
+        raise FileNotFoundError(f"Playbook not found: {playbook_path}")
     
-    
+    inventory = {
+        "all": {
+            "hosts": {
+                server_ip: {
+                    "ansible_user": ansible_user,
+                    "ansible_password": ansible_password,
+                }
+            }
+        }
+    }
+    with tempfile.TemporaryDirectory() as tmpdir:
+
+        result = ansible_runner.run(
+            private_data_dir=tmpdir,
+            playbook=str(playbook_path),
+            inventory=inventory,
+            extravars=extravars,
+            verbosity=6
+        )
+        
     return None

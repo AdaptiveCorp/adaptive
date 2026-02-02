@@ -4,6 +4,26 @@ from sqlalchemy.orm import Session
 
 
 
+
+
+def get_users_in_domain(project_id : int, forest_id : int, domain_id : int, db: Session) :
+    """
+    Récupère les utilisateurs d'un domain
+    
+    :param project_id: ID du projet
+    :param forest_id : ID de la forêt
+    :param domain_id : ID du domain
+    :param db: Session DB
+    :return: Les utilisateurs du domain
+    """    
+    users = db.query(orm_models.DBUser).filter(
+        orm_models.DBUser.project_id == project_id,
+        orm_models.DBUser.forest_id == forest_id,
+        orm_models.DBUser.domain_id == domain_id
+    ).all()
+    
+    return users
+
 def get_dcs_grouped_by_domain(project_id: int, db: Session):
     """
     Récupère les DCs groupés par domaine
@@ -25,6 +45,8 @@ def get_dcs_grouped_by_domain(project_id: int, db: Session):
     results = list(domains_dict.values())
     
     return results
+
+
 
 def get_domain(domain_id: int, db: Session):
     """

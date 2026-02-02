@@ -20,7 +20,7 @@
         enabled: yes
         password_never_expires: "{{ item.password_never_expires | default(false) }}"
         user_cannot_change_password: "{{ item.user_cannot_change_password | default(false) }}"
-        description: "{{ item.description | default('Created by Ansible') }}"
+        description: "{{ item.description | default('Adaptive User') }}"
         path: "{{ item.ou_path | default('CN=Users,' + base_dn) }}"
         upn: "{{ item.username }}@{{ domain_fqdn }}"
       loop: "{{ users_list }}"

@@ -45,6 +45,8 @@ class DBUser(Base):
     project_id = Column(Integer, ForeignKey("projects.id"))
     forest_id = Column(Integer, ForeignKey("forests.id"))
     domain_id = Column(Integer, ForeignKey("domains.id"))
+    firstname = Column(String(100), nullable=False)
+    lastname = Column(String(100), nullable=False)
     username = Column(String(100), nullable=False)
     password = Column(String(255), nullable=False)
 

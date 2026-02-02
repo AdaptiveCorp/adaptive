@@ -4,10 +4,10 @@ from ..database.connection import get_db
 from ..database import orm_models
 #from ..services.vulnerability_service import VulnerabilityService
 from ..database.seed_vulnerabilities import seed_vulnerability_templates
-from ..integrations import dc_promote,deploy_lab,restart_vm
+from ..integrations import dc_promote,deploy_lab,restart_vm,deploy_user
 #from ..integrations.ansible_generator import generate_playbook_content
 #from ..integrations.ansible_runner import run_playbook_from_memory
-from .utils import get_dcs_grouped_by_domain, get_domain
+from .utils import get_dcs_grouped_by_domain, get_domain, get_users_in_domain
 import traceback
 import time
 
@@ -247,7 +247,8 @@ def add_user(
     project_id: int,
     forest_id: int,
     domain_id: int,
-    username: str,
+    firstname: str,
+    lastname: str,
     password: str,
     db: Session = Depends(get_db)
 ):
@@ -266,16 +267,24 @@ def add_user(
     if not domain:
         raise HTTPException(status_code=404, detail="Domain not found")
     
+
+    username = firstname[0].lower() + "." + lastname.lower()
+ 
     user = orm_models.DBUser(
         project_id=project_id,
         forest_id=forest_id,
         domain_id=domain_id,
+        firstname = firstname.lower(),
+        lastname = lastname.lower(),
         username=username,
         password=password
     )
+
+
     db.add(user)
     db.commit()
     db.refresh(user)
+    
     return {
         "id": user.id,
         "username": user.username,
@@ -405,49 +414,50 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
 
         # ========================= DC PROMO ========================= #
         
-        result = deploy_lab(project_id, db) # Cloner les VMs
+        # result = deploy_lab(project_id, db) # Cloner les VMs
     
-        time.sleep(60)
+        # time.sleep(60)
 
-        all_dcs = get_dcs_grouped_by_domain(project_id, db) # list des DCs
+        # all_dcs = get_dcs_grouped_by_domain(project_id, db) # list des DCs
 
-        for dcs in all_dcs :
-            is_primary = True
+        # for dcs in all_dcs :
+        #     is_primary = True
            
-            domain = get_domain(dcs[0].domain_id,db)
+        #     domain = get_domain(dcs[0].domain_id,db)
 
-            for dc in dcs :
-                server_ip = dc.ip
-                dc_hostname = dc.fqdn
-                domain_fqdn = domain.fqdn
-                domain_netbios = domain_fqdn.split('.')[1]
-                dsrm_password = "Pat@te10000!"
-                is_first_dc = is_primary
-                domain_admin = 'Administrator'
+        #     for dc in dcs :
+        #         server_ip = dc.ip
+        #         dc_hostname = dc.fqdn
+        #         domain_fqdn = domain.fqdn
+        #         domain_netbios = domain_fqdn.split('.')[1]
+        #         dsrm_password = "Pat@te10000!"
+        #         is_first_dc = is_primary
+        #         domain_admin = 'Administrator'
 
-                result = dc_promote(server_ip, # Promotion du dc
-                                    dc_hostname,
-                                    domain_fqdn,
-                                    domain_netbios,
-                                    dsrm_password,
-                                    is_first_dc,
-                                    domain_admin)
+        #         result = dc_promote(server_ip, # Promotion du dc
+        #                             dc_hostname,
+        #                             domain_fqdn,
+        #                             domain_netbios,
+        #                             dsrm_password,
+        #                             is_first_dc,
+        #                             domain_admin)
                 
-                if result["success"]:
-                    result = restart_vm(dc.vm_id)  # Redémarre la VM
+        #         if result["success"]:
+        #             result = restart_vm(dc.vm_id)  # Redémarre la VM
 
-                else :
-                    return {
-                        "project": project.name,
-                        "deployment_result": result
-                    }
+        #         else :
+        #             return {
+        #                 "project": project.name,
+        #                 "deployment_result": result
+        #             }
                 
-            # ========================= Add Users ========================= #
-            # all_primary_dcs =
-            # pour chaque dc dans all_primary_dcs
-            # recupère les utilisateurs sous forme de liste, avec firstname, lastname
-            # apelle fonction dans ansible pour provider tout ça
-
+            
+        # # ========================= Add Users ========================= #
+        # time.sleep(60)
+        all_primary_dcs = [dc[0] for dc in get_dcs_grouped_by_domain(project_id, db)]
+        for dc in all_primary_dcs : 
+            users = get_users_in_domain(project_id, dc.forest_id, dc.domain_id, db)
+            result = deploy_user(dc.ip, dc.fqdn, users, db)
 
             # ========================= Ajouter les vulns sur les users Kerberoast-AsRepRoast ========================= #
             # -------------------------------------------------
@@ -455,16 +465,11 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
             # -------------------------------------------------
             # -------------------------------------------------
 
-
-
-
-
-                
-
         return {
             "project": project.name,
             "deployment_result": result
         }
+    
     except Exception as e:
         project.status = "error"
         db.commit()
