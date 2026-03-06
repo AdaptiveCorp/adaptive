@@ -1,6 +1,7 @@
-import ansible_runner # type: ignore
 import tempfile
 from pathlib import Path
+
+import ansible_runner  # type: ignore
 
 
 def dc_promote(
@@ -20,13 +21,18 @@ def dc_promote(
     print(f"[>] Promotion du DC {dc_hostname} ({server_ip})...")
     print(f"    Domaine: {domain_fqdn}")
     print(f"    Premier DC: {is_first_dc}")
-    
-    
-    playbook_path = Path(__file__).parent.parent / "ansible" / "inventory" / "playbooks" / "dc_promo.yaml"
+
+    playbook_path = (
+        Path(__file__).parent.parent
+        / "ansible"
+        / "inventory"
+        / "playbooks"
+        / "dc_promo.yaml"
+    )
     print(playbook_path)
     if not playbook_path.exists():
         raise FileNotFoundError(f"Playbook not found: {playbook_path}")
-    
+
     inventory = {
         "all": {
             "hosts": {
@@ -37,8 +43,7 @@ def dc_promote(
             }
         }
     }
-    
-    
+
     extravars = {
         "target_host": server_ip,
         "dc_hostname": dc_hostname,
@@ -49,19 +54,18 @@ def dc_promote(
         "forest_mode": forest_mode,
         "domain_mode": domain_mode,
         "install_dns": install_dns,
-        "domain_admin": domain_admin or f"Administrator@{domain_fqdn}"
+        "domain_admin": domain_admin or f"Administrator@{domain_fqdn}",
     }
-    
-    with tempfile.TemporaryDirectory() as tmpdir:
 
+    with tempfile.TemporaryDirectory() as tmpdir:
         result = ansible_runner.run(
             private_data_dir=tmpdir,
             playbook=str(playbook_path),
             inventory=inventory,
             extravars=extravars,
-            verbosity=2
+            verbosity=2,
         )
-        
+
         if result.status == "successful":
             print(f"[+] DC {dc_hostname} promu avec succès")
             return {
@@ -69,22 +73,19 @@ def dc_promote(
                 "dc_hostname": dc_hostname,
                 "domain_fqdn": domain_fqdn,
                 "server_ip": server_ip,
-                "output": result.stdout.read() if result.stdout else ""
+                "output": result.stdout.read() if result.stdout else "",
             }
         else:
             error_msg = result.stdout.read() if result.stdout else "Unknown error"
             print(f"[!] Erreur lors de la promotion : {error_msg}")
-            return {
-                "success": False,
-                "error": error_msg,
-                "return_code": result.rc
-            }
+            return {"success": False, "error": error_msg, "return_code": result.rc}
 
 
-def add_users(host : int, userslist, ansible_user: str = "Administrator", ansible_password: str = "Azerty1234@"):
-    
-    
+def add_users(
+    host: int,
+    userslist,
+    ansible_user: str = "Administrator",
+    ansible_password: str = "Azerty1234@",
+):
 
-    
-    
     return None
