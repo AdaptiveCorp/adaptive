@@ -1,39 +1,37 @@
+from __future__ import annotations
 
-"""
-Module contenant la classe principale LabProject.
-"""
+from datetime import datetime
 
-from .models import Forest, Domain, User
+from sqlalchemy import DateTime, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-class LabProject:
-    """Point d'entrée principal du lab."""
-    
-    def __init__(self, id, name, created_at):
-        self.id = id
-        self.name = name
-        self.created_at = created_at
-        
-        # Lien avec d'autres classe
-        self._forests = {}
-        self._domains = {}
-    
-    def create_forest(self, forest_id, fqdn):
-        forest = Forest(forest_id, self.id, fqdn)
-        self._forests[forest_id] = forest
-        return forest
+from adaptive.environment.database import Base
+from adaptive.models.domain import Domain
+from adaptive.models.forest import Forest
 
-    def compute(self):
-        """
-        Méthode qui appelle le moteur de déploiement pour déployer le projet sur l'hyperviseur
-        
-        :param self: Description
-        """
-        return None
 
-    def validate(self):
-        """
-        Fonction qui permet de vérifier la cohérence du projet
-        
-        :param self: Description
-        """
-        return None
+class Project(Base):
+    __tablename__ = "projects"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )
+
+    # ── _forests : One-to-many ─────────────────────────────────────────────
+    forests: Mapped[list[Forest]] = relationship(
+        "Forest",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
+
+    # ── _domains : One-to-many ─────────────────────────────────────────────
+    domains: Mapped[list[Domain]] = relationship(
+        "Domain",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self) -> str:
+        return f"<LabProject id={self.id} name={self.name!r}>"
