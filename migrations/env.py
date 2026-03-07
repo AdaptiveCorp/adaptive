@@ -3,6 +3,13 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+# Importer tous les modèles pour qu'ils soient enregistrés sur Base.metadata
+import adaptive.models.domain  # noqa: F401
+import adaptive.models.forest  # noqa: F401
+import adaptive.models.project  # noqa: F401
+import adaptive.models.server  # noqa: F401
+import adaptive.models.user  # noqa: F401
+import adaptive.models.vulnerability  # noqa: F401
 from adaptive.environment.database import Base
 
 # this is the Alembic Config object, which provides

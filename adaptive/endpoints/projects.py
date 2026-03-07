@@ -4,79 +4,57 @@ import traceback
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..database import orm_models
-from ..database.connection import get_db
+from adaptive.models.applied_vulnerability import AppliedVulnerability
+from adaptive.models.project import Project
+from adaptive.models.server import Server
 
-# from ..services.vulnerability_service import VulnerabilityService
-from ..integrations import dc_promote, deploy_lab, restart_vm
-
-# from ..integrations.ansible_generator import generate_playbook_content
-# from ..integrations.ansible_runner import run_playbook_from_memory
+from ..environment.database import get_db
+from ..infrastructure.ansible.ansible_provider import dc_promote
+from ..infrastructure.proxmox.proxmox import ServerInfo, deploy_lab, restart_vm
 from .utils import get_dcs_grouped_by_domain, get_domain
 
-router = APIRouter()
+router = APIRouter(prefix="/projects")
 
 
-@router.post("/project")
+@router.post("/")
 def create_project(name: str, db: Session = Depends(get_db)):
     """
     Créer un nouveau projet AD.
     --> Première validation
     """
-    project = orm_models.DBProject(name=name)
+    project = Project(name=name)
     db.add(project)
     db.commit()
     db.refresh(project)
     return {"id": project.id, "name": project.name, "created_at": project.created_at}
 
 
-@router.get("/projects")
+@router.get("/")
 def list_projects(db: Session = Depends(get_db)):
     """
     Lister tous les projets
     --> Première validation
     """
-    projects = db.query(orm_models.DBProject).all()
+    projects = db.query(Project).all()
     return [{"id": p.id, "name": p.name, "created_at": p.created_at} for p in projects]
 
 
-@router.get("/projects/{project_id}")
+@router.get("/{project_id}")
 def get_project(project_id: int, db: Session = Depends(get_db)):
     """
-    Récupérer les détails d'un projet avec tous ses objets
-    --> Première validation
+    Récupérer les détails d'un projet avec tous ses objets.
     """
-    project = (
-        db.query(orm_models.DBProject)
-        .filter(orm_models.DBProject.id == project_id)
-        .first()
-    )
+    project = db.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    forests = (
-        db.query(orm_models.DBForest)
-        .filter(orm_models.DBForest.project_id == project_id)
-        .all()
-    )
-    domains = (
-        db.query(orm_models.DBDomain)
-        .filter(orm_models.DBDomain.project_id == project_id)
-        .all()
-    )
-    servers = (
-        db.query(orm_models.DBServer)
-        .filter(orm_models.DBServer.project_id == project_id)
-        .all()
-    )
-    users = (
-        db.query(orm_models.DBUser)
-        .filter(orm_models.DBUser.project_id == project_id)
-        .all()
-    )
-    vulnerabilities = (
-        db.query(orm_models.DBAppliedVulnerability)
-        .filter(orm_models.DBAppliedVulnerability.project_id == project_id)
+    forests = project.forests
+    domains = [d for f in forests for d in f.domains]
+    servers = [s for d in domains for s in d.servers]
+    users = [u for d in domains for u in d.users]
+    applied_vulns = (
+        db.query(AppliedVulnerability)
+        .filter(AppliedVulnerability.project_id == project_id)
         .all()
     )
 
@@ -94,20 +72,16 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
             {"id": s.id, "fqdn": s.fqdn, "is_dc": s.is_dc, "ip": s.ip} for s in servers
         ],
         "users": [{"id": u.id, "username": u.username} for u in users],
-        "vulnerabilities_count": len(vulnerabilities),
+        "vulnerabilities_count": len(applied_vulns),
     }
 
 
-@router.delete("/projects/{project_id}")
+@router.delete("/{project_id}")
 def delete_project(project_id: int, db: Session = Depends(get_db)):
     """
     Supprimer un projet et tous ses objets associés
     """
-    project = (
-        db.query(orm_models.DBProject)
-        .filter(orm_models.DBProject.id == project_id)
-        .first()
-    )
+    project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -116,27 +90,47 @@ def delete_project(project_id: int, db: Session = Depends(get_db)):
     return {"message": "Project deleted successfully"}
 
 
-@router.post("/projects/{project_id}/deploy")
+@router.post("/{project_id}/deploy")
 def deploy_project(project_id: int, db: Session = Depends(get_db)):
     """
     Déployer un projet complet (génère et exécute le playbook Ansible)
     """
-    project = (
-        db.query(orm_models.DBProject)
-        .filter(orm_models.DBProject.id == project_id)
-        .first()
-    )
+    project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
     try:
-        # ========================= DC PROMO ========================= #
+        # ========================= CLONE VMs ========================= #
 
-        result = deploy_lab(project_id, db)  # Cloner les VMs
+        # Récupérer tous les serveurs du projet
+        forests = project.forests
+        domains = [d for f in forests for d in f.domains]
+        all_servers = [s for d in domains for s in d.servers]
+
+        if not all_servers:
+            raise HTTPException(status_code=400, detail="No servers in project")
+
+        # Préparer les données sans dépendance DB
+        server_infos = [
+            ServerInfo(id=s.id, fqdn=s.fqdn, ip=s.ip, vm_id=s.vm_id)
+            for s in all_servers
+        ]
+
+        clone_results = deploy_lab(server_infos)
+
+        # Sauvegarder les vm_id en DB
+        for res in clone_results:
+            if res.get("success") and res.get("vm_id"):
+                server = db.get(Server, res["server_id"])
+                if server:
+                    server.vm_id = res["vm_id"]
+        db.commit()
 
         time.sleep(60)
 
-        all_dcs = get_dcs_grouped_by_domain(project_id, db)  # list des DCs
+        # ========================= DC PROMO ========================= #
+
+        all_dcs = get_dcs_grouped_by_domain(db)
 
         for dcs in all_dcs:
             is_primary = True
@@ -144,29 +138,22 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
             domain = get_domain(dcs[0].domain_id, db)
 
             for dc in dcs:
-                server_ip = dc.ip
-                dc_hostname = dc.fqdn
-                domain_fqdn = domain.fqdn
-                domain_netbios = domain_fqdn.split(".")[1]
-                dsrm_password = "Pat@te10000!"
-                is_first_dc = is_primary
-                domain_admin = "Administrator"
-
                 result = dc_promote(
-                    server_ip,  # Promotion du dc
-                    dc_hostname,
-                    domain_fqdn,
-                    domain_netbios,
-                    dsrm_password,
-                    is_first_dc,
-                    domain_admin,
+                    server_ip=dc.ip,
+                    dc_hostname=dc.fqdn,
+                    domain_fqdn=domain.fqdn,
+                    domain_netbios=domain.fqdn.split(".")[0],
+                    dsrm_password="Pat@te10000!",
+                    is_first_dc=is_primary,
+                    domain_admin="Administrator",
                 )
 
                 if result["success"]:
-                    result = restart_vm(dc.vm_id)  # Redémarre la VM
-
+                    restart_vm(dc.vm_id)
                 else:
                     return {"project": project.name, "deployment_result": result}
+
+                is_primary = False
 
             # ========================= Add Users ========================= #
             # all_primary_dcs =
@@ -182,7 +169,6 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
 
         return {"project": project.name, "deployment_result": result}
     except Exception as e:
-        project.status = "error"
-        db.commit()
+        db.rollback()
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Deployment error: {str(e)}")

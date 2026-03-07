@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from adaptive.environment.database import Base
-from adaptive.models.domain import Domain
-from adaptive.models.forest import Forest
+
+if TYPE_CHECKING:
+    from adaptive.models.forest import Forest
 
 
 class Project(Base):
@@ -19,16 +21,8 @@ class Project(Base):
         DateTime, server_default=func.now(), nullable=False
     )
 
-    # ── _forests : One-to-many ─────────────────────────────────────────────
     forests: Mapped[list[Forest]] = relationship(
         "Forest",
-        back_populates="project",
-        cascade="all, delete-orphan",
-    )
-
-    # ── _domains : One-to-many ─────────────────────────────────────────────
-    domains: Mapped[list[Domain]] = relationship(
-        "Domain",
         back_populates="project",
         cascade="all, delete-orphan",
     )

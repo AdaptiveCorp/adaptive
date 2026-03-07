@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from adaptive.environment.database import Base
-from adaptive.models.domain import Domain
-from adaptive.models.project import Project
-from adaptive.models.user import User
+
+if TYPE_CHECKING:
+    from adaptive.models.domain import Domain
+    from adaptive.models.project import Project
 
 
 class Forest(Base):
@@ -17,22 +20,11 @@ class Forest(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     fqdn: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
 
-    # ── FK vers Project ─────────────────────────────────────────────────
-    lab_project_id: Mapped[int] = mapped_column(
-        ForeignKey("lab_projects.id"), nullable=False
-    )
-    lab_project: Mapped[Project] = relationship("Project", back_populates="forests")
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
+    project: Mapped[Project] = relationship("Project", back_populates="forests")
 
-    # ── Domaines de cette forêt ────────────────────────────────────────────
     domains: Mapped[list[Domain]] = relationship(
         "Domain",
-        back_populates="forest",
-        cascade="all, delete-orphan",
-    )
-
-    # ── Utilisateurs de cette forêt ────────────────────────────────────────
-    users: Mapped[list[User]] = relationship(
-        "User",
         back_populates="forest",
         cascade="all, delete-orphan",
     )

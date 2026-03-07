@@ -1,9 +1,7 @@
 import time
+from dataclasses import dataclass
 
 from proxmoxer import ProxmoxAPI  # type: ignore
-from sqlalchemy.orm import Session  # type: ignore
-
-from ..database import orm_models
 
 # Configuration Proxmox (à mettre dans config.py)
 PROXMOX_HOST = "10.0.0.10"
@@ -12,22 +10,81 @@ PROXMOX_PASSWORD = "adaptive"
 PROXMOX_NODE = "pve-01"
 
 
-def deploy_lab(project_id: int, db: Session):
+@dataclass
+class ServerInfo:
+    """Données nécessaires pour cloner/déployer un serveur, sans dépendance DB."""
+
+    id: int
+    fqdn: str
+    ip: str | None
+    vm_id: int | None
+
+
+def deploy_lab(servers: list[ServerInfo], template_id: int = 101) -> list[dict]:
+    """
+    Clone des VMs pour une liste de serveurs.
+
+    :param servers: Liste de ServerInfo à déployer
+    :param template_id: ID du template Proxmox source
+    :return: Liste de résultats avec vm_id attribués
+    """
     proxmox = get_proxmox_connection()
-    # Commence par cloner toutes les VMs à partir du template_id qui est fixé (poc)
 
-    print(f"[++] Clonage des serveurs du projet : {project_id}")
+    print(f"[++] Clonage de {len(servers)} serveurs")
 
-    results = clone_all_servers_in_project(proxmox, project_id, db)
-    print(results)
+    results = []
+    for server in servers:
+        try:
+            result = clone_vm(proxmox, server, template_id)
+            results.append(result)
+        except Exception as e:
+            results.append({"success": False, "server_id": server.id, "error": str(e)})
+
     print("[++] Clonage terminé")
-
     return results
 
 
-def start_vm(proxmox, vm_id: int, db: Session, server_id: int):
+def clone_vm(proxmox, server: ServerInfo, template_id: int) -> dict:
     """
-    Démarre une VM Proxmox
+    Clone une VM pour un serveur.
+
+    :param server: ServerInfo avec les données du serveur
+    :param template_id: ID du template Proxmox source
+    :return: Dict avec les infos de clonage, incluant le vm_id attribué
+    """
+    new_vm_id = 1000 + server.id
+    vm_name = server.fqdn.split(".")[0]
+
+    try:
+        print(f"[>] Clonage VM du serveur {server.fqdn}...")
+        task = (
+            proxmox.nodes(PROXMOX_NODE)
+            .qemu(template_id)
+            .clone.post(newid=new_vm_id, name=server.fqdn, full=0)
+        )
+        print(f"[>] Tâche de clonage lancée : {task}")
+
+        print("[>] Attente de la fin du clonage...")
+        wait_for_task_completion(proxmox, task)
+
+        start_vm(proxmox, new_vm_id)
+        print(f"[+] VM {server.fqdn} clonée, ID --> {new_vm_id}")
+
+        return {
+            "success": True,
+            "vm_id": new_vm_id,
+            "vm_name": vm_name,
+            "server_id": server.id,
+            "task": task,
+        }
+
+    except Exception as e:
+        raise Exception(f"[!] Erreur clonage VM : {e}")
+
+
+def start_vm(proxmox, vm_id: int):
+    """
+    Démarre une VM Proxmox.
     """
     try:
         print(f"[>] Démarrage de la VM {vm_id}...")
@@ -40,7 +97,6 @@ def start_vm(proxmox, vm_id: int, db: Session, server_id: int):
         if vm_status.get("status") == "running":
             print(f"[+] VM {vm_id} démarrée")
             return True
-
         else:
             print(f"[!] VM {vm_id} status: {vm_status.get('status')}")
             return False
@@ -105,106 +161,11 @@ def wait_for_task_completion(
             time.sleep(check_interval)
 
 
-def clone_vm_for_server(
-    proxmox, project_id: int, server_id: int, template_id: int, db: Session
-):
+def restart_vm(vm_id: int):
     """
-    Clone une VM pour un serveur d'un projet
-
-    :param project_id: ID du projet
-    :param server_id: ID du serveur dans la base
-    :param template_id: ID du template Proxmox source
-    :param db: Session de base de données
-    :return: Dict avec les infos de clonage
+    Redémarre une VM Proxmox.
     """
-
-    server = (
-        db.query(orm_models.DBServer)
-        .filter(
-            orm_models.DBServer.id == server_id,
-            orm_models.DBServer.project_id == project_id,
-        )
-        .first()
-    )
-
-    if not server:
-        raise ValueError(f"[!] Serveur {server_id} non trouvé dans projet {project_id}")
-
-    new_vm_id = 1000 + server.id
-    vm_name = f"{server.fqdn.split('.')[0]}-{project_id}"
-
-    try:
-        print(f"[>] Clonage VM du serveur {server.fqdn}...")
-        task = (
-            proxmox.nodes(PROXMOX_NODE)
-            .qemu(template_id)
-            .clone.post(newid=new_vm_id, name=server.fqdn, full=0)
-        )
-        print(f"[>] Tâche de clonage lancée : {task}")
-
-        print("[>] Attente de la fin du clonage...")
-        wait_for_task_completion(proxmox, task)
-
-        start_vm(proxmox, new_vm_id, db, server_id)
-        print(f"[+] VM {server.fqdn} clonée, ID --> {new_vm_id}")
-
-        server.vm_id = new_vm_id
-        db.commit()
-
-        return {
-            "success": True,
-            "vm_id": new_vm_id,
-            "vm_name": vm_name,
-            "server_id": server_id,
-            "task": task,
-        }
-
-    except Exception as e:
-        server.status = "error"
-        db.commit()
-        raise Exception(f"[!] Erreur clonage VM : {e}")
-
-
-def clone_all_servers_in_project(proxmox, project_id: int, db: Session):
-    """
-    Clone des VMs pour tous les serveurs d'un projet
-
-    :param project_id: ID du projet
-    :param db: Session DB
-    :return: Liste des résultats
-    """
-
-    servers = (
-        db.query(orm_models.DBServer)
-        .filter(orm_models.DBServer.project_id == project_id)
-        .all()
-    )
-
-    if not servers:
-        raise ValueError(f"[!] Aucun serveur trouvé dans projet {project_id}")
-
-    results = []
-
-    # TODO
-    # Rajouter une logique de récupération de VM id de base par rapport à la version de l'os CHOISIT
-    # Pour le poc le VM ID est fixé au WINSERVER 2022
-
-    vm_id = 101
-    for server in servers:
-        try:
-            result = clone_vm_for_server(proxmox, project_id, server.id, vm_id, db)
-
-            results.append(result)
-        except Exception as e:
-            results.append({"success": False, "server_id": server.id, "error": str(e)})
-
-    return results
-
-
-def restart_vm(vm_id: int, proxmox=get_proxmox_connection()):
-    """
-    Redémarre une VM Proxmox
-    """
+    proxmox = get_proxmox_connection()
     try:
         print(f"[>] Redémarrage de la VM {vm_id}...")
 
@@ -220,9 +181,9 @@ def restart_vm(vm_id: int, proxmox=get_proxmox_connection()):
         elapsed = 0
 
         while elapsed < max_wait:
-            vm_status = proxmox.nodes(PROXMOX_NODE).qemu(vm_id).status.current.get()
+            vm_status = proxmox.nodes(PROXMOX_NODE).qemu(vm_id).status.current.get()  # type: ignore[union-attr]
 
-            if vm_status.get("status") == "running":
+            if vm_status.get("status") == "running":  # type: ignore[union-attr]
                 print(f"[+] VM {vm_id} redémarrée avec succès")
                 return True
 
