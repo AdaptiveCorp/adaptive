@@ -1,40 +1,36 @@
-from collections import defaultdict
-
+from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from adaptive.environment.database import get_db
 from adaptive.models.domain import Domain
+from adaptive.models.forest import Forest
+from adaptive.models.project import Project
 from adaptive.models.server import Server
 
 
-def get_dcs_grouped_by_domain(db: Session):
-    """
-    Récupère les DCs groupés par domaine
-
-    :param db: Session DB
-    :return: Liste de listes [[DC1_DOM1, DC2_DOM1], [DC1_DOM2, DC2_DOM2]]
-    """
-
-    dc_servers = (
-        db.query(Server)
-        .filter(Server.is_dc)
-        .order_by(Server.domain_id, Server.id)
-        .all()
-    )
-
-    domains_dict = defaultdict(list)
-    for dc in dc_servers:
-        domains_dict[dc.domain_id].append(dc)
-
-    return list(domains_dict.values())
+def get_project_or_404(project_id: int, db: Session = Depends(get_db)) -> Project:
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
 
 
-def get_domain(domain_id: int, db: Session):
-    """
-    Récupère le Domain par rapport à son ID
+def get_forest_or_404(forest_id: int, db: Session = Depends(get_db)) -> Forest:
+    forest = db.get(Forest, forest_id)
+    if not forest:
+        raise HTTPException(status_code=404, detail="Forest not found")
+    return forest
 
-    :param domain_id: ID du domain
-    :param db: Session DB
-    :return: Domain
-    """
 
-    return db.get(Domain, domain_id)
+def get_domain_or_404(domain_id: int, db: Session = Depends(get_db)) -> Domain:
+    domain = db.get(Domain, domain_id)
+    if not domain:
+        raise HTTPException(status_code=404, detail="Domain not found")
+    return domain
+
+
+def get_server_or_404(server_id: int, db: Session = Depends(get_db)) -> Server:
+    server = db.get(Server, server_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    return server

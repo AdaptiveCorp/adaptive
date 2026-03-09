@@ -7,6 +7,12 @@ You need those tools to start the project localy :
 Then to set up the project, run :
 uv sync
 
+To start the application, run :
+
+```
+uv run uvicorn adaptive.main:app --reload
+```
+
 ## Migrations
 
 Use the alembic command to create and run the migrations.
@@ -22,3 +28,5 @@ Then, write some sqlalchemy code to update or populate the database and run :
 ```
 uv run alembic upgrade head
 ```
+
+If you want to reset the db, just delete the app.db file and run the previous command.

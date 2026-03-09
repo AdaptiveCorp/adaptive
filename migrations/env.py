@@ -10,6 +10,8 @@ import adaptive.models.project  # noqa: F401
 import adaptive.models.server  # noqa: F401
 import adaptive.models.user  # noqa: F401
 import adaptive.models.vulnerability  # noqa: F401
+import adaptive.models.applied_vulnerability  # noqa: F401
+from adaptive.environment.config import settings
 from adaptive.environment.database import Base
 
 # this is the Alembic Config object, which provides
@@ -26,6 +28,9 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
+
+# Synchroniser l'URL alembic avec le settings (écrase alembic.ini si .env est présent)
+config.set_main_option("sqlalchemy.url", f"sqlite:///./{settings.db_file}")
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
