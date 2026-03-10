@@ -3,3 +3,6 @@ app.db
 .venv
 __pycache__/
 *.pyc
+adaptive/adaptive_web/dist/
+adaptive/adaptive_web/node_modules/
+adaptive/adaptive_web/.env
