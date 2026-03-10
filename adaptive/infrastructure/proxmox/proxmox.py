@@ -8,6 +8,8 @@ from adaptive.infrastructure.base import CloneResult, HypervisorProvider, Server
 
 logger = logging.getLogger(__name__)
 
+PREFIX = "[PROXMOX]"
+
 
 class ProxmoxProvider(HypervisorProvider):
     def __init__(
@@ -24,77 +26,103 @@ class ProxmoxProvider(HypervisorProvider):
         self._node = node or settings.proxmox_node
         self._verify_ssl = verify_ssl
         self._api: ProxmoxAPI | None = None
+        logger.info("%s Provider initialized (host=%s, node=%s)", PREFIX, self._host, self._node)
 
     @property
     def api(self) -> ProxmoxAPI:
         if self._api is None:
+            logger.info("%s Connecting to Proxmox at %s...", PREFIX, self._host)
             self._api = ProxmoxAPI(
                 self._host,
                 user=self._user,
                 password=self._password,
                 verify_ssl=self._verify_ssl,
             )
-            logger.info("Connected to Proxmox at %s", self._host)
+            logger.info("%s Connected successfully", PREFIX)
         return self._api
 
     def deploy_lab(
         self, servers: list[ServerInfo], template_id: int = 101
     ) -> list[CloneResult]:
-        logger.info("Cloning %d servers from template %d", len(servers), template_id)
-        results = []
+        logger.info("%s Starting lab deployment: %d servers from template %d", PREFIX, len(servers), template_id)
+        results: list[CloneResult] = []
         for server in servers:
             try:
                 result = self.clone_vm(server, template_id)
                 results.append(result)
             except Exception as e:
-                logger.error("Failed to clone server %s: %s", server.fqdn, e)
+                logger.error("%s Failed to clone server %s: %s", PREFIX, server.fqdn, e)
                 results.append(
                     CloneResult(success=False, server_id=server.id, error=str(e))
                 )
+
+        succeeded = sum(1 for r in results if r.success)
+        logger.info("%s Lab deployment finished: %d/%d VMs cloned successfully", PREFIX, succeeded, len(servers))
         return results
 
-    def clone_vm(self, server: ServerInfo, template_id: int) -> CloneResult:
-        new_vm_id = 1000 + server.id
-        logger.info("Cloning VM for %s (vm_id=%d)...", server.fqdn, new_vm_id)
+    def _next_vm_id(self) -> int:
+        """Demande à Proxmox le prochain VMID disponible."""
+        vmid = int(self.api.cluster.nextid.get())
+        logger.debug("%s Next available VMID: %d", PREFIX, vmid)
+        return vmid
 
-        task_upid = (
+    def clone_vm(self, server: ServerInfo, template_id: int) -> CloneResult:
+        logger.info("%s Cloning template %d -> '%s'...", PREFIX, template_id, server.fqdn)
+
+        new_vm_id = self._next_vm_id()
+
+        task_upid: str = (
             self.api.nodes(self._node)
             .qemu(template_id)
             .clone.post(newid=new_vm_id, name=server.fqdn, full=0)
         )
+        logger.debug("%s Clone task started: %s", PREFIX, task_upid)
 
         self._wait_for_task(task_upid)
+        logger.info("%s Clone completed for '%s' (vm_id=%d)", PREFIX, server.fqdn, new_vm_id)
+
         self.start_vm(new_vm_id)
 
-        logger.info("VM %s cloned successfully (vm_id=%d)", server.fqdn, new_vm_id)
         return CloneResult(success=True, server_id=server.id, vm_id=new_vm_id)
 
     def start_vm(self, vm_id: int) -> bool:
-        logger.info("Starting VM %d...", vm_id)
+        logger.info("%s Starting VM %d...", PREFIX, vm_id)
         self.api.nodes(self._node).qemu(vm_id).status.start.post()
         time.sleep(3)
-        return self._check_vm_status(vm_id, "running")
+        ok = self._check_vm_status(vm_id, "running")
+        if ok:
+            logger.info("%s VM %d started successfully", PREFIX, vm_id)
+        else:
+            logger.warning("%s VM %d failed to start", PREFIX, vm_id)
+        return ok
 
     def stop_vm(self, vm_id: int) -> bool:
-        logger.info("Stopping VM %d...", vm_id)
+        logger.info("%s Stopping VM %d...", PREFIX, vm_id)
         self.api.nodes(self._node).qemu(vm_id).status.stop.post()
         time.sleep(3)
-        return self._check_vm_status(vm_id, "stopped")
+        ok = self._check_vm_status(vm_id, "stopped")
+        if ok:
+            logger.info("%s VM %d stopped successfully", PREFIX, vm_id)
+        else:
+            logger.warning("%s VM %d failed to stop", PREFIX, vm_id)
+        return ok
 
     def restart_vm(self, vm_id: int) -> bool:
-        logger.info("Restarting VM %d...", vm_id)
+        logger.info("%s Restarting VM %d...", PREFIX, vm_id)
         self.api.nodes(self._node).qemu(vm_id).status.reboot.post()
-        return self._wait_for_status(vm_id, "running", timeout=120, initial_wait=20)
+        ok = self._wait_for_status(vm_id, "running", timeout=120, initial_wait=20)
+        if ok:
+            logger.info("%s VM %d restarted successfully", PREFIX, vm_id)
+        else:
+            logger.warning("%s VM %d failed to restart within timeout", PREFIX, vm_id)
+        return ok
 
     def _check_vm_status(self, vm_id: int, expected: str) -> bool:
         status = (
             self.api.nodes(self._node).qemu(vm_id).status.current.get().get("status")
         )
-        if status == expected:
-            logger.info("VM %d is %s", vm_id, expected)
-            return True
-        logger.warning("VM %d status is '%s', expected '%s'", vm_id, status, expected)
-        return False
+        logger.debug("%s VM %d status: '%s' (expected: '%s')", PREFIX, vm_id, status, expected)
+        return status == expected
 
     def _wait_for_status(
         self,
@@ -105,6 +133,7 @@ class ProxmoxProvider(HypervisorProvider):
         poll_interval: int = 5,
     ) -> bool:
         if initial_wait:
+            logger.debug("%s Waiting %ds before polling VM %d...", PREFIX, initial_wait, vm_id)
             time.sleep(initial_wait)
 
         elapsed = 0
@@ -114,14 +143,13 @@ class ProxmoxProvider(HypervisorProvider):
             time.sleep(poll_interval)
             elapsed += poll_interval
 
-        logger.error(
-            "Timeout waiting for VM %d to reach status '%s'", vm_id, expected
-        )
+        logger.error("%s Timeout (%ds) waiting for VM %d to reach '%s'", PREFIX, timeout, vm_id, expected)
         return False
 
     def _wait_for_task(
         self, task_upid: str, timeout: int = 300, poll_interval: int = 5
     ) -> None:
+        logger.debug("%s Waiting for task %s (timeout=%ds)...", PREFIX, task_upid, timeout)
         start_time = time.time()
 
         while True:
@@ -138,10 +166,10 @@ class ProxmoxProvider(HypervisorProvider):
             exitstatus = task_status.get("exitstatus")
 
             if status == "stopped" and exitstatus == "OK":
-                logger.info("Task %s completed successfully", task_upid)
+                logger.debug("%s Task %s completed successfully (%.1fs)", PREFIX, task_upid, elapsed)
                 return
             if status == "stopped":
                 raise RuntimeError(f"Task {task_upid} failed: {exitstatus}")
 
-            logger.debug("Task in progress... (%ds elapsed)", int(elapsed))
+            logger.debug("%s Task %s in progress... (%.0fs elapsed)", PREFIX, task_upid, elapsed)
             time.sleep(poll_interval)

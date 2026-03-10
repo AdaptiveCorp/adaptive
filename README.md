@@ -5,7 +5,12 @@ You need those tools to start the project localy :
 - uv
 
 Then to set up the project, run :
+
+```
 uv sync
+```
+
+Before starting the application, you need to set up the configuration file. To do that, copy paste `.env.example` in file named `.env` and fill in the configuration.
 
 To start the application, run :
 

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from adaptive.models.applied_vulnerability import AppliedVulnerability
-from adaptive.models.vulnerability import Vulnerability
+from adaptive.models.applied_template import AppliedTemplate
+from adaptive.models.template import Template, TemplateType
 
 from ..environment.database import get_db
 
@@ -17,7 +17,7 @@ def list_vulnerabilities(db: Session = Depends(get_db)):
     """
     Lister le catalogue de vulnérabilités disponibles.
     """
-    vulns = db.query(Vulnerability).all()
+    vulns = db.query(Template).filter(Template.type == TemplateType.VULNERABILITY).all()
     return [
         {
             "id": v.id,
@@ -35,28 +35,31 @@ def list_applied_vulnerabilities(project_id: int, db: Session = Depends(get_db))
     """
     Lister toutes les vulnérabilités appliquées à un projet.
     """
-    applied_vulns = (
-        db.query(AppliedVulnerability)
-        .filter(AppliedVulnerability.project_id == project_id)
+    applied = (
+        db.query(AppliedTemplate)
+        .join(Template)
+        .filter(
+            AppliedTemplate.project_id == project_id,
+            Template.type == TemplateType.VULNERABILITY,
+        )
         .all()
     )
 
     return [
         {
-            "id": av.id,
-            "vulnerability": {
-                "code": av.vulnerability.code,
-                "name": av.vulnerability.name,
+            "id": at.id,
+            "template": {
+                "code": at.template.code,
+                "name": at.template.name,
             },
-            "source_user_id": av.source_user_id,
-            "user_id": av.user_id,
-            "domain_id": av.domain_id,
-            "server_id": av.server_id,
-            "forest_id": av.forest_id,
-            "params": av.params,
-            "created_at": av.created_at,
+            "user_id": at.user_id,
+            "domain_id": at.domain_id,
+            "server_id": at.server_id,
+            "forest_id": at.forest_id,
+            "params": at.params,
+            "created_at": at.created_at,
         }
-        for av in applied_vulns
+        for at in applied
     ]
 
 
@@ -65,10 +68,10 @@ def remove_applied_vulnerability(vuln_id: int, db: Session = Depends(get_db)):
     """
     Supprimer une vulnérabilité appliquée.
     """
-    vuln = db.get(AppliedVulnerability, vuln_id)
-    if not vuln:
-        raise HTTPException(status_code=404, detail="Vulnerability not found")
+    applied = db.get(AppliedTemplate, vuln_id)
+    if not applied:
+        raise HTTPException(status_code=404, detail="Applied vulnerability not found")
 
-    db.delete(vuln)
+    db.delete(applied)
     db.commit()
     return {"message": "Vulnerability removed successfully"}

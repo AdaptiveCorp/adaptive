@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class ServerInfo:
     id: int
     fqdn: str
-    ip: str | None
-    vm_id: int | None
+    ip: str | None = None
 
 
 @dataclass
@@ -16,6 +15,15 @@ class CloneResult:
     server_id: int
     vm_id: int | None = None
     error: str | None = None
+
+
+@dataclass
+class DeploymentResult:
+    project_name: str
+    success: bool
+    message: str | None = None
+    error: str | None = None
+    clone_results: list[CloneResult] = field(default_factory=list)
 
 
 class HypervisorProvider(ABC):

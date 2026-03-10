@@ -13,25 +13,25 @@ if TYPE_CHECKING:
     from adaptive.models.forest import Forest
     from adaptive.models.project import Project
     from adaptive.models.server import Server
+    from adaptive.models.template import Template
     from adaptive.models.user import User
-    from adaptive.models.vulnerability import Vulnerability
 
 
-class AppliedVulnerability(Base):
-    """Instances de vulnérabilités appliquées à un des objets du lab (User, Server, Domain, Forest)."""
+class AppliedTemplate(Base):
+    """Instances de templates appliqués à un objet du lab (User, Server, Domain, Forest)."""
 
-    __tablename__ = "applied_vulnerabilities"
+    __tablename__ = "applied_templates"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
     project: Mapped[Project] = relationship("Project")
 
-    vulnerability_id: Mapped[int] = mapped_column(
-        ForeignKey("vulnerabilities.id"), nullable=False
+    template_id: Mapped[int] = mapped_column(
+        ForeignKey("templates.id"), nullable=False
     )
-    vulnerability: Mapped[Vulnerability] = relationship(
-        "Vulnerability", back_populates="applied"
+    template: Mapped[Template] = relationship(
+        "Template", back_populates="applied"
     )
 
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
@@ -59,4 +59,4 @@ class AppliedVulnerability(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<AppliedVulnerability id={self.id} vulnerability_id={self.vulnerability_id}>"
+        return f"<AppliedTemplate id={self.id} template_id={self.template_id}>"

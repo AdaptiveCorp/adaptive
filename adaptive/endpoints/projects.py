@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from adaptive.environment.database import get_db
-from adaptive.models.applied_vulnerability import AppliedVulnerability
+from adaptive.models.applied_template import AppliedTemplate
 from adaptive.models.project import Project
 from adaptive.services.deployment_service import deploy_project as run_deployment
 
@@ -39,8 +39,8 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
     servers = [s for d in domains for s in d.servers]
     users = [u for d in domains for u in d.users]
     applied_vulns = (
-        db.query(AppliedVulnerability)
-        .filter(AppliedVulnerability.project_id == project_id)
+        db.query(AppliedTemplate)
+        .filter(AppliedTemplate.project_id == project_id)
         .all()
     )
 

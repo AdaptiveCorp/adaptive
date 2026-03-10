@@ -4,83 +4,143 @@ import time
 from sqlalchemy.orm import Session
 
 from adaptive.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
+from adaptive.infrastructure.base import DeploymentResult, HypervisorProvider
 from adaptive.models.domain import Domain
+from adaptive.models.project import Project
 from adaptive.models.server import Server
+from adaptive.models.user import User
 
 logger = logging.getLogger(__name__)
 
 
-def get_dcs_grouped_by_domain(db: Session) -> dict[int, list[Server]]:
-    dcs = (
-        db.query(Server)
-        .filter(Server.is_dc)
-        .order_by(Server.domain_id, Server.id)
-        .all()
-    )
-    grouped: dict[int, list[Server]] = {}
-    for dc in dcs:
-        grouped.setdefault(dc.domain_id, []).append(dc)
+def get_dcs_grouped_by_domain(project: Project) -> dict[Domain, list[Server]]:
+    grouped: dict[Domain, list[Server]] = {}
+    for forest in project.forests:
+        for domain in forest.domains:
+            dcs = [s for s in domain.servers if s.is_dc]
+            if dcs:
+                grouped[domain] = dcs
+    return grouped
+
+
+def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:
+    grouped: dict[Domain, list[User]] = {}
+    for forest in project.forests:
+        for domain in forest.domains:
+            if domain.users:
+                grouped[domain] = list(domain.users)
     return grouped
 
 
 def deploy_project(
-    project,
+    project: Project,
     db: Session,
-    hypervisor: ProxmoxProvider | None = None,
+    hypervisor: HypervisorProvider | None = None,
     ansible: AnsibleService | None = None,
-) -> dict:
+) -> DeploymentResult:
+    logger.info("Starting deployment for project '%s'", project.name)
+
     hypervisor = hypervisor or ProxmoxProvider()
-    ansible = ansible or AnsibleService()
+    ansible = ansible or AnsibleService(db=db)
 
     forests = project.forests
-    domains = [d for f in forests for d in f.domains]
-    all_servers = [s for d in domains for s in d.servers]
+    domains: list[Domain] = [d for f in forests for d in f.domains]
+    all_servers: list[Server] = [s for d in domains for s in d.servers]
 
     if not all_servers:
         raise ValueError("No servers in project")
 
-    # --- Clone VMs ---
-    server_infos = [
-        ServerInfo(id=s.id, fqdn=s.fqdn, ip=s.ip, vm_id=s.vm_id)
-        for s in all_servers
+    logger.info(
+        "Project '%s': %d forests, %d domains, %d servers",
+        project.name, len(forests), len(domains), len(all_servers),
+    )
+
+    # --- 1. Clone VMs ---
+    server_infos: list[ServerInfo] = [
+        ServerInfo(id=s.id, fqdn=s.fqdn, ip=s.ip) for s in all_servers
     ]
     clone_results = hypervisor.deploy_lab(server_infos)
-
     for res in clone_results:
         if res.success and res.vm_id:
-            server = db.get(Server, res.server_id)
-            if server:
-                server.vm_id = res.vm_id
+            srv: Server | None = db.get(Server, res.server_id)
+            if srv:
+                srv.vm_id = res.vm_id
+                logger.info("Saved vm_id=%d for server '%s'", res.vm_id, srv.fqdn)
     db.commit()
 
     logger.info("Waiting 60s for VMs to boot...")
     time.sleep(60)
 
-    # --- DC Promotion ---
-    dcs_by_domain = get_dcs_grouped_by_domain(db)
-    last_result: dict = {"success": True, "message": "No DCs to promote"}
+    deployment_result = DeploymentResult(
+        project_name=project.name,
+        success=True,
+        message="Deployment completed",
+        clone_results=clone_results,
+    )
 
-    for domain_id, dcs in dcs_by_domain.items():
-        domain = db.get(Domain, domain_id)
-        if not domain:
-            continue
+    # --- 2. DC Promotion ---
+    dcs_by_domain = get_dcs_grouped_by_domain(project)
+
+    if dcs_by_domain:
+        logger.info("Starting DC promotions across %d domains", len(dcs_by_domain))
+
+    for domain, dcs in dcs_by_domain.items():
+        logger.info("Processing domain '%s' (%d DCs)", domain.fqdn, len(dcs))
 
         for i, dc in enumerate(dcs):
-            is_first = i == 0
+            if not dc.ip:
+                logger.error("DC '%s' has no IP, skipping", dc.fqdn)
+                continue
+
             result = ansible.dc_promote(
                 server_ip=dc.ip,
                 dc_hostname=dc.fqdn,
                 domain_fqdn=domain.fqdn,
                 domain_netbios=domain.fqdn.split(".")[0],
-                is_first_dc=is_first,
+                is_first_dc=(i == 0),
             )
 
-            last_result = {"success": result.success, "error": result.error}
+            if not result.success:
+                logger.error("Deployment aborted: DC promotion failed for '%s'", dc.fqdn)
+                deployment_result.success = False
+                deployment_result.error = result.error
+                return deployment_result
 
-            if result.success:
+            if dc.vm_id:
                 hypervisor.restart_vm(dc.vm_id)
-            else:
-                logger.error("DC promotion failed for %s: %s", dc.fqdn, result.error)
-                return {"project": project.name, "deployment_result": last_result}
 
-    return {"project": project.name, "deployment_result": last_result}
+    # --- 3. Wait for DCs to reboot after promotion ---
+    if dcs_by_domain:
+        logger.info("Waiting 60s for DCs to reboot after promotion...")
+        time.sleep(60)
+
+    # --- 4. Add Users ---
+    users_by_domain = get_users_grouped_by_domain(project)
+
+    if users_by_domain:
+        logger.info("Starting user creation across %d domains", len(users_by_domain))
+
+    for domain, users in users_by_domain.items():
+        # Find a DC for this domain to run the playbook against
+        dc = next((s for s in domain.servers if s.is_dc and s.ip), None)
+        if not dc or not dc.ip:
+            logger.error("No reachable DC found for domain '%s', skipping user creation", domain.fqdn)
+            continue
+
+        logger.info("Adding %d users to domain '%s' via DC '%s'", len(users), domain.fqdn, dc.fqdn)
+
+        user_dicts: list[dict[str, str]] = [
+            {"username": u.username, "password": u.password}
+            for u in users
+        ]
+
+        result = ansible.add_users(server_ip=dc.ip, users=user_dicts)
+
+        if not result.success:
+            logger.error("User creation failed on domain '%s': %s", domain.fqdn, result.error)
+            deployment_result.success = False
+            deployment_result.error = result.error
+            return deployment_result
+
+    logger.info("Deployment completed for project '%s' (success=%s)", project.name, deployment_result.success)
+    return deployment_result

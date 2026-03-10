@@ -9,8 +9,8 @@ import adaptive.models.forest  # noqa: F401
 import adaptive.models.project  # noqa: F401
 import adaptive.models.server  # noqa: F401
 import adaptive.models.user  # noqa: F401
-import adaptive.models.vulnerability  # noqa: F401
-import adaptive.models.applied_vulnerability  # noqa: F401
+import adaptive.models.template  # noqa: F401
+import adaptive.models.applied_template  # noqa: F401
 from adaptive.environment.config import settings
 from adaptive.environment.database import Base
 
