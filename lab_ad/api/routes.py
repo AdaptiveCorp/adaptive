@@ -1,17 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from ..database.connection import get_db
 from ..database import orm_models
 #from ..services.vulnerability_service import VulnerabilityService
 from ..database.seed_vulnerabilities import seed_vulnerability_templates
-from ..integrations import dc_promote,deploy_lab,restart_vm,deploy_user
+from ..integrations import dc_promote,deploy_lab,restart_vm,deploy_user, execute_powershell_winrm
 #from ..integrations.ansible_generator import generate_playbook_content
 #from ..integrations.ansible_runner import run_playbook_from_memory
-from .utils import get_dcs_grouped_by_domain, get_domain, get_users_in_domain
+from .utils import get_dcs_grouped_by_domain, get_domain, get_users_in_domain, get_primary_domain
+from pydantic import BaseModel
+from typing import Dict, Any
 import traceback
 import time
+import ast
 
 router = APIRouter()
+
+class VulnerabilityRequest(BaseModel):
+    params: Dict[str, Any] = {}
 
 @router.post("/project")
 def create_project(name: str, db: Session = Depends(get_db)):
@@ -149,7 +155,6 @@ def list_domains(project_id: int, forest_id: int, db: Session = Depends(get_db))
     domains = query.all()
 
     return [{"id": d.id, "fqdn": d.fqdn, "forest_id": d.forest_id} for d in domains]
-
 
 
 # ==================== SERVEURS ====================
@@ -341,6 +346,7 @@ def list_available_vulnerabilities(db: Session = Depends(get_db)):
     } for t in templates]
 
 
+
 @router.get("/projects/{project_id}/vulnerabilities/")
 def list_applied_vulnerabilities(project_id: int, db: Session = Depends(get_db)):
     """
@@ -367,7 +373,42 @@ def list_applied_vulnerabilities(project_id: int, db: Session = Depends(get_db))
         })
     
     return result
+    
 
+@router.post("/projects/{project_id}/forest/{forest_id}/domain/{domain_id}/vulnerability")
+def post_vulnerability(project_id: int, forest_id: int, domain_id: int, vuln_id : int, request : VulnerabilityRequest,  db: Session = Depends(get_db)):
+    """
+    Ajoute une vulnerabilité
+    """
+    # Récupère les paramètres
+    # Vérifie qu'ils sont correcte par rapport à request.params
+    # Deploie la vulnerabilité
+    # Si c'est bon ajoute dans la base de donnée AppliedVulnerability
+
+    vuln_template = db.query(orm_models.DBVulnerabilityTemplate).filter(
+        orm_models.DBVulnerabilityTemplate.id == vuln_id
+    ).first()
+
+    primary_dc = get_primary_domain(project_id, forest_id, domain_id, db)
+
+    param_vuln = ast.literal_eval(vuln_template.required_params)
+    param_req = request.params
+
+    if len(param_req) <= 0 :
+        raise HTTPException(status_code=400, detail="Invalid parameters, required params are : "+ vuln_template.required_params)
+
+    for keys in param_req.keys() :
+        if keys not in param_vuln :
+            raise HTTPException(status_code=400, detail="Invalid parameters, required params are : "+ vuln_template.required_params)
+
+    powershell_script = vuln_template.powershell_template
+
+    for keys in param_req.keys() :
+        powershell_script = powershell_script.replace(keys, param_req[keys])
+
+    result = execute_powershell_winrm(primary_dc.ip, powershell_script)
+
+    return result
 
 @router.delete("/projects/{project_id}/vulnerabilities/{vuln_id}")
 def remove_applied_vulnerability(vuln_id: int, db: Session = Depends(get_db)):
@@ -454,7 +495,9 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
             
         # # ========================= Add Users ========================= #
         # time.sleep(60)
+        # Mettre l'ip dans le projet d'un vrai 
         all_primary_dcs = [dc[0] for dc in get_dcs_grouped_by_domain(project_id, db)]
+
         for dc in all_primary_dcs : 
             users = get_users_in_domain(project_id, dc.forest_id, dc.domain_id, db)
             result = deploy_user(dc.ip, dc.fqdn, users, db)
@@ -464,6 +507,10 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
             # -------------------------------------------------
             # -------------------------------------------------
             # -------------------------------------------------
+
+
+        # # ========================= Add User Vulnerabilities ========================= #
+        
 
         return {
             "project": project.name,
@@ -475,8 +522,6 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
         db.commit()
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Deployment error: {str(e)}")
-
-
 
 # ==================== HEALTH CHECK ====================
 @router.get("/health")

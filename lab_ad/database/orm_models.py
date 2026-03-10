@@ -69,7 +69,7 @@ class DBVulnerabilityTemplate(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
-class DBAppliedVulnerability(Base):
+class DBAppliedUserVulnerability(Base):
     """
     Instances de vulnérabilités appliquées à des users
     """

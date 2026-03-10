@@ -3,8 +3,19 @@ from ..database import orm_models
 from sqlalchemy.orm import Session
 
 
+def get_primary_domain(project_id : int, forest_id : int, domain_id : int, db : Session) :
+    """
+    Récupère le serveur du domain
+    """
+    servers = db.query(orm_models.DBServer).filter(
+        orm_models.DBServer.project_id == project_id,
+        orm_models.DBServer.forest_id == forest_id,
+        orm_models.DBServer.domain_id == domain_id,
+        orm_models.DBServer.is_dc == True
+    ).all()
 
 
+    return servers[0]
 
 def get_users_in_domain(project_id : int, forest_id : int, domain_id : int, db: Session) :
     """
@@ -45,8 +56,6 @@ def get_dcs_grouped_by_domain(project_id: int, db: Session):
     results = list(domains_dict.values())
     
     return results
-
-
 
 def get_domain(domain_id: int, db: Session):
     """

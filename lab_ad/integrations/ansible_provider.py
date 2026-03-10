@@ -83,9 +83,7 @@ def dc_promote(
 
 
 def deploy_user(server_ip : str, fqdn : str, userslist, db: Session, ansible_user: str = "Administrator", ansible_password: str = "Azerty1234@"):
-    
-    # Pour les test l'ip du server est fixé 
-
+    # Pour les test l'ip du server est fixé
     users_list = []
     for user in userslist :
         user_data = {}
@@ -127,3 +125,62 @@ def deploy_user(server_ip : str, fqdn : str, userslist, db: Session, ansible_use
         )
         
     return None
+
+def execute_powershell_winrm(
+    server_ip: str, 
+    powershell_script: str,
+    ansible_user: str = "Administrator",
+    ansible_password: str = "Azerty1234@"
+):
+    print(f"[>] Exécution PowerShell sur {server_ip}")
+    
+    # Playbook minimal INLINE
+    playbook_content = f"""---
+- name: Exécuter PowerShell
+  hosts: {server_ip}
+  gather_facts: false
+  tasks:
+    - name: Run PowerShell script
+      win_shell: |
+        {powershell_script}
+      register: result
+      ignore_errors: true
+      
+    - name: Debug output
+      debug:
+        var: result
+"""
+    
+    inventory = {
+        "all": {
+            "hosts": {
+                server_ip: {
+                    "ansible_user": ansible_user,
+                    "ansible_password": ansible_password,
+                    "ansible_connection": "winrm",
+                    "ansible_winrm_transport": "ntlm", 
+                    "ansible_winrm_server_cert_validation": "ignore"
+                }
+            }
+        }
+    }
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Écriture du playbook temporaire
+        playbook_path = Path(tmpdir) / "powershell.yaml"
+        playbook_path.write_text(playbook_content)
+        
+        r = ansible_runner.run(
+            private_data_dir=tmpdir,
+            playbook=str(playbook_path),
+            inventory=inventory,
+            verbosity=2
+        )
+    
+    return {
+        "success": r.status == "successful",
+        "output": r.stdout.read() if r.stdout else "",
+        "stderr": r.stderr.read() if r.stderr else "",
+        "return_code": r.rc
+    }
+
