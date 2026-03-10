@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from api.environment.database import get_db
-from api.models.domain import Domain
-from api.models.forest import Forest
+from adaptive.api.environment.database import get_db
+from adaptive.api.models.domain import Domain
+from adaptive.api.models.forest import Forest
 
 router = APIRouter(prefix="/forests/{forest_id}/domains", tags=["domains"])
 

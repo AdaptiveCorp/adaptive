@@ -1,15 +1,19 @@
 import logging
 import time
 
-from api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
-from api.infrastructure.base import DeploymentResult, HypervisorProvider
-from api.models.domain import Domain
-from api.models.project import Project
-from api.models.server import Server
-from api.models.user import User
+from adaptive.api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
+from adaptive.api.infrastructure.base import DeploymentResult, HypervisorProvider
+from adaptive.api.models.domain import Domain
+from adaptive.api.models.project import Project
+from adaptive.api.models.server import Server
+from adaptive.api.models.user import User
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
+
+
+def _bare_ip(ip: str) -> str:
+    return ip.split("/")[0]
 
 
 def get_dcs_grouped_by_domain(project: Project) -> dict[Domain, list[Server]]:
@@ -59,7 +63,8 @@ def deploy_project(
 
     # --- 1. Clone VMs ---
     server_infos: list[ServerInfo] = [
-        ServerInfo(id=s.id, fqdn=s.fqdn, ip=s.ip) for s in all_servers
+        ServerInfo(id=s.id, fqdn=s.fqdn, ip=s.ip, gtw=s.gtw, dns=s.dns)
+        for s in all_servers
     ]
     clone_results = hypervisor.deploy_lab(server_infos)
     for res in clone_results:
@@ -95,7 +100,7 @@ def deploy_project(
                 continue
 
             result = ansible.dc_promote(
-                server_ip=dc.ip,
+                server_ip=_bare_ip(dc.ip),
                 dc_hostname=dc.fqdn,
                 domain_fqdn=domain.fqdn,
                 domain_netbios=domain.fqdn.split(".")[0],
@@ -127,7 +132,7 @@ def deploy_project(
     for domain, users in users_by_domain.items():
         # Find a DC for this domain to run the playbook against
         dc = next((s for s in domain.servers if s.is_dc and s.ip), None)
-        if not dc or not dc.ip:
+        if not dc:
             logger.error(
                 "No reachable DC found for domain '%s', skipping user creation",
                 domain.fqdn,
@@ -145,7 +150,7 @@ def deploy_project(
             {"username": u.username, "password": u.password} for u in users
         ]
 
-        result = ansible.add_users(server_ip=dc.ip, users=user_dicts)
+        result = ansible.add_users(server_ip=_bare_ip(dc.ip), users=user_dicts)
 
         if not result.success:
             logger.error(

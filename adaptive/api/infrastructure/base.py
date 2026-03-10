@@ -7,6 +7,8 @@ class ServerInfo:
     id: int
     fqdn: str
     ip: str | None = None
+    gtw: str | None = None
+    dns: str | None = None
 
 
 @dataclass
@@ -29,22 +31,17 @@ class DeploymentResult:
 class HypervisorProvider(ABC):
     @abstractmethod
     def deploy_lab(
-        self, servers: list[ServerInfo], template_id: int = 101
-    ) -> list[CloneResult]:
-        ...
+        self, servers: list[ServerInfo], template_id: int = 109
+    ) -> list[CloneResult]: ...
 
     @abstractmethod
-    def clone_vm(self, server: ServerInfo, template_id: int) -> CloneResult:
-        ...
+    def clone_vm(self, server: ServerInfo, template_id: int) -> CloneResult: ...
 
     @abstractmethod
-    def start_vm(self, vm_id: int) -> bool:
-        ...
+    def start_vm(self, vm_id: int) -> bool: ...
 
     @abstractmethod
-    def restart_vm(self, vm_id: int) -> bool:
-        ...
+    def restart_vm(self, vm_id: int) -> bool: ...
 
     @abstractmethod
-    def stop_vm(self, vm_id: int) -> bool:
-        ...
+    def stop_vm(self, vm_id: int) -> bool: ...

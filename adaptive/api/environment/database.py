@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from api.environment.config import settings
+from adaptive.api.environment.config import settings
 
 DATABASE_URL = f"sqlite:///./{settings.db_file}"
 

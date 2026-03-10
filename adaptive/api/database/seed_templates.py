@@ -4,16 +4,16 @@ from pathlib import Path
 
 import yaml
 
-from api.environment.database import SessionLocal, engine, Base
-from api.models.template import Template
+from adaptive.api.environment.database import SessionLocal, engine, Base
+from adaptive.api.models.template import Template
 
 # Importer tous les modèles pour résoudre les relationships SQLAlchemy
-import api.models.applied_template  # noqa: F401
-import api.models.project  # noqa: F401
-import api.models.forest  # noqa: F401
-import api.models.domain  # noqa: F401
-import api.models.server  # noqa: F401
-import api.models.user  # noqa: F401
+import adaptive.api.models.applied_template  # noqa: F401
+import adaptive.api.models.project  # noqa: F401
+import adaptive.api.models.forest  # noqa: F401
+import adaptive.api.models.domain  # noqa: F401
+import adaptive.api.models.server  # noqa: F401
+import adaptive.api.models.user  # noqa: F401
 
 logger = logging.getLogger(__name__)
 

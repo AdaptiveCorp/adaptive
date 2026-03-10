@@ -3,8 +3,8 @@ import time
 
 from proxmoxer import ProxmoxAPI  # type: ignore
 
-from api.environment.config import settings
-from api.infrastructure.base import CloneResult, HypervisorProvider, ServerInfo
+from adaptive.api.environment.config import settings
+from adaptive.api.infrastructure.base import CloneResult, HypervisorProvider, ServerInfo
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +81,22 @@ class ProxmoxProvider(HypervisorProvider):
         self._wait_for_task(task_upid)
         logger.info("%s Clone completed for '%s' (vm_id=%d)", PREFIX, server.fqdn, new_vm_id)
 
+        self._configure_cloudinit(new_vm_id, server)
         self.start_vm(new_vm_id)
 
         return CloneResult(success=True, server_id=server.id, vm_id=new_vm_id)
+
+    def _configure_cloudinit(self, vm_id: int, server: ServerInfo) -> None:
+        if not server.ip:
+            logger.warning("%s No IP for VM %d, skipping cloud-init config", PREFIX, vm_id)
+            return
+
+        config: dict[str, str] = {"ipconfig0": f"ip={server.ip},gw={server.gtw}"}
+        if server.dns:
+            config["nameserver"] = server.dns
+
+        logger.info("%s Configuring cloud-init for VM %d: %s", PREFIX, vm_id, config)
+        self.api.nodes(self._node).qemu(vm_id).config.put(**config)
 
     def start_vm(self, vm_id: int) -> bool:
         logger.info("%s Starting VM %d...", PREFIX, vm_id)

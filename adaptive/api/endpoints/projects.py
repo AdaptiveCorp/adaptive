@@ -3,10 +3,10 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from api.environment.database import get_db
-from api.models.applied_template import AppliedTemplate
-from api.models.project import Project
-from api.services.deployment_service import deploy_project as run_deployment
+from adaptive.api.environment.database import get_db
+from adaptive.api.models.applied_template import AppliedTemplate
+from adaptive.api.models.project import Project
+from adaptive.api.services.deployment_service import deploy_project as run_deployment
 
 logger = logging.getLogger(__name__)
 

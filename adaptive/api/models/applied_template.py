@@ -6,15 +6,15 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from api.environment.database import Base
+from adaptive.api.environment.database import Base
 
 if TYPE_CHECKING:
-    from api.models.domain import Domain
-    from api.models.forest import Forest
-    from api.models.project import Project
-    from api.models.server import Server
-    from api.models.template import Template
-    from api.models.user import User
+    from adaptive.api.models.domain import Domain
+    from adaptive.api.models.forest import Forest
+    from adaptive.api.models.project import Project
+    from adaptive.api.models.server import Server
+    from adaptive.api.models.template import Template
+    from adaptive.api.models.user import User
 
 
 class AppliedTemplate(Base):
