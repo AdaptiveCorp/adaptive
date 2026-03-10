@@ -1,12 +1,12 @@
 import logging
 import time
 
-from adaptive.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
-from adaptive.infrastructure.base import DeploymentResult, HypervisorProvider
-from adaptive.models.domain import Domain
-from adaptive.models.project import Project
-from adaptive.models.server import Server
-from adaptive.models.user import User
+from api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
+from api.infrastructure.base import DeploymentResult, HypervisorProvider
+from api.models.domain import Domain
+from api.models.project import Project
+from api.models.server import Server
+from api.models.user import User
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)

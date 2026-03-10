@@ -3,8 +3,8 @@ import time
 
 from proxmoxer import ProxmoxAPI  # type: ignore
 
-from adaptive.environment.config import settings
-from adaptive.infrastructure.base import CloneResult, HypervisorProvider, ServerInfo
+from api.environment.config import settings
+from api.infrastructure.base import CloneResult, HypervisorProvider, ServerInfo
 
 logger = logging.getLogger(__name__)
 

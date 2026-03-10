@@ -1,6 +1,6 @@
-from adaptive.infrastructure.base import CloneResult, DeploymentResult, HypervisorProvider, ServerInfo
-from adaptive.infrastructure.proxmox.proxmox import ProxmoxProvider
-from adaptive.infrastructure.ansible.ansible_provider import AnsibleService, PlaybookResult
+from api.infrastructure.base import CloneResult, DeploymentResult, HypervisorProvider, ServerInfo
+from api.infrastructure.proxmox.proxmox import ProxmoxProvider
+from api.infrastructure.ansible.ansible_provider import AnsibleService, PlaybookResult
 
 __all__ = [
     "CloneResult",

@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from adaptive.environment.database import Base
+from api.environment.database import Base
 
 if TYPE_CHECKING:
-    from adaptive.models.applied_template import AppliedTemplate
+    from api.models.applied_template import AppliedTemplate
 
 
 class TemplateType(str, enum.Enum):

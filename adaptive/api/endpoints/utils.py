@@ -1,11 +1,11 @@
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from adaptive.environment.database import get_db
-from adaptive.models.domain import Domain
-from adaptive.models.forest import Forest
-from adaptive.models.project import Project
-from adaptive.models.server import Server
+from api.environment.database import get_db
+from api.models.domain import Domain
+from api.models.forest import Forest
+from api.models.project import Project
+from api.models.server import Server
 
 
 def get_project_or_404(project_id: int, db: Session = Depends(get_db)) -> Project:

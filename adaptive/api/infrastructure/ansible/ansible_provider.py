@@ -7,8 +7,8 @@ from typing import Any
 import ansible_runner  # type: ignore
 from sqlalchemy.orm import Session
 
-from adaptive.environment.config import settings
-from adaptive.models.template import Template
+from api.environment.config import settings
+from api.models.template import Template
 
 logger = logging.getLogger(__name__)
 

@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from adaptive.environment.database import Base
+from api.environment.database import Base
 
 if TYPE_CHECKING:
-    from adaptive.models.domain import Domain
-    from adaptive.models.project import Project
+    from api.models.domain import Domain
+    from api.models.project import Project
 
 
 class Forest(Base):

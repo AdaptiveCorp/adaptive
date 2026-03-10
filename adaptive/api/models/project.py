@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from adaptive.environment.database import Base
+from api.environment.database import Base
 
 if TYPE_CHECKING:
-    from adaptive.models.forest import Forest
+    from api.models.forest import Forest
 
 
 class Project(Base):

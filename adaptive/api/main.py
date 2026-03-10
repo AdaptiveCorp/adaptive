@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from adaptive.database.seed_templates import seed_templates
-from adaptive.endpoints import (
+from api.database.seed_templates import seed_templates
+from api.endpoints import (
     domains,
     forests,
     internals,

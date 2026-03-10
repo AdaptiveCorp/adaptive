@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from adaptive.models.applied_template import AppliedTemplate
-from adaptive.models.template import Template, TemplateType
+from api.models.applied_template import AppliedTemplate
+from api.models.template import Template, TemplateType
 
 from ..environment.database import get_db
 

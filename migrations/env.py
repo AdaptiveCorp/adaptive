@@ -4,15 +4,15 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 # Importer tous les modèles pour qu'ils soient enregistrés sur Base.metadata
-import adaptive.models.domain  # noqa: F401
-import adaptive.models.forest  # noqa: F401
-import adaptive.models.project  # noqa: F401
-import adaptive.models.server  # noqa: F401
-import adaptive.models.user  # noqa: F401
-import adaptive.models.template  # noqa: F401
-import adaptive.models.applied_template  # noqa: F401
-from adaptive.environment.config import settings
-from adaptive.environment.database import Base
+import api.models.domain  # noqa: F401
+import api.models.forest  # noqa: F401
+import api.models.project  # noqa: F401
+import api.models.server  # noqa: F401
+import api.models.user  # noqa: F401
+import api.models.template  # noqa: F401
+import api.models.applied_template  # noqa: F401
+from api.environment.config import settings
+from api.environment.database import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

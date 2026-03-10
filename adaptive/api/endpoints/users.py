@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from adaptive.models.domain import Domain
-from adaptive.models.server import Server
-from adaptive.models.user import User
+from api.models.domain import Domain
+from api.models.server import Server
+from api.models.user import User
 
 from ..environment.database import get_db
 
