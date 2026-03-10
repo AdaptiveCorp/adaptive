@@ -1,7 +1,24 @@
-// ── VM Settings ──────────────────────────────────────────────
+variable "proxmox_api_url" {
+  type = string
+}
+
+variable "proxmox_username" {
+  type = string
+}
+
+variable "proxmox_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "admin_password" {
+  type      = string
+  sensitive = true
+}
+
 variable "vm_name" {
   type    = string
-  default = "windows-server-2022-template"
+  default = "WIN-SRV-2022"
 }
 
 variable "disk_size" {
@@ -19,7 +36,6 @@ variable "cpus" {
   default = 4
 }
 
-// ── Proxmox ─────────────────────────────────────────────────
 variable "proxmox_node" {
   type    = string
   default = "pve-01"
@@ -28,6 +44,11 @@ variable "proxmox_node" {
 variable "storage_pool" {
   type    = string
   default = "local-lvm"
+}
+
+variable "iso_storage_pool" {
+  type    = string
+  default = "local"
 }
 
 variable "iso_file" {
@@ -45,7 +66,6 @@ variable "network_bridge" {
   default = "vmbr0"
 }
 
-// ── Network (static IP during Packer build) ─────────────────
 variable "vm_ip" {
   type    = string
   default = "10.0.0.50"

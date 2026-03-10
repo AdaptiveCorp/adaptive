@@ -1,14 +1,13 @@
 import logging
 import time
 
-from sqlalchemy.orm import Session
-
 from adaptive.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
 from adaptive.infrastructure.base import DeploymentResult, HypervisorProvider
 from adaptive.models.domain import Domain
 from adaptive.models.project import Project
 from adaptive.models.server import Server
 from adaptive.models.user import User
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,10 @@ def deploy_project(
 
     logger.info(
         "Project '%s': %d forests, %d domains, %d servers",
-        project.name, len(forests), len(domains), len(all_servers),
+        project.name,
+        len(forests),
+        len(domains),
+        len(all_servers),
     )
 
     # --- 1. Clone VMs ---
@@ -101,7 +103,9 @@ def deploy_project(
             )
 
             if not result.success:
-                logger.error("Deployment aborted: DC promotion failed for '%s'", dc.fqdn)
+                logger.error(
+                    "Deployment aborted: DC promotion failed for '%s'", dc.fqdn
+                )
                 deployment_result.success = False
                 deployment_result.error = result.error
                 return deployment_result
@@ -124,23 +128,36 @@ def deploy_project(
         # Find a DC for this domain to run the playbook against
         dc = next((s for s in domain.servers if s.is_dc and s.ip), None)
         if not dc or not dc.ip:
-            logger.error("No reachable DC found for domain '%s', skipping user creation", domain.fqdn)
+            logger.error(
+                "No reachable DC found for domain '%s', skipping user creation",
+                domain.fqdn,
+            )
             continue
 
-        logger.info("Adding %d users to domain '%s' via DC '%s'", len(users), domain.fqdn, dc.fqdn)
+        logger.info(
+            "Adding %d users to domain '%s' via DC '%s'",
+            len(users),
+            domain.fqdn,
+            dc.fqdn,
+        )
 
         user_dicts: list[dict[str, str]] = [
-            {"username": u.username, "password": u.password}
-            for u in users
+            {"username": u.username, "password": u.password} for u in users
         ]
 
         result = ansible.add_users(server_ip=dc.ip, users=user_dicts)
 
         if not result.success:
-            logger.error("User creation failed on domain '%s': %s", domain.fqdn, result.error)
+            logger.error(
+                "User creation failed on domain '%s': %s", domain.fqdn, result.error
+            )
             deployment_result.success = False
             deployment_result.error = result.error
             return deployment_result
 
-    logger.info("Deployment completed for project '%s' (success=%s)", project.name, deployment_result.success)
+    logger.info(
+        "Deployment completed for project '%s' (success=%s)",
+        project.name,
+        deployment_result.success,
+    )
     return deployment_result
