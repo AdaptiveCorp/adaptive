@@ -1,54 +1,39 @@
 packer {
   required_plugins {
     proxmox = {
-      version = "v1.2.3"
+      version = "~> 1.2"
       source  = "github.com/hashicorp/proxmox"
     }
   }
 }
 
 source "proxmox-iso" "windows-server" {
-  # Connexion Proxmox
+  # ── Proxmox connection ───────────────────────────────────────
   proxmox_url              = var.proxmox_api_url
   username                 = var.proxmox_username
   password                 = var.proxmox_password
   insecure_skip_tls_verify = true
   node                     = var.proxmox_node
 
-  # Configuration VM
+  # ── VM config ────────────────────────────────────────────────
   vm_name              = var.vm_name
-  template_description = "Windows Server 2022 - WinRM + Cloudbase-Init"
+  template_description = "Windows Server 2022 — WinRM + Cloudbase-Init (ADaptive)"
   memory               = var.memory
   cores                = var.cpus
   cpu_type             = "host"
   os                   = "win11"
   bios                 = "ovmf"
   machine              = "q35"
-  
-  # EFI Configuration
+  qemu_agent           = true
+
+  # ── EFI ──────────────────────────────────────────────────────
   efi_config {
     efi_storage_pool  = var.storage_pool
     pre_enrolled_keys = true
     efi_type          = "4m"
   }
 
-  # ISO Configuration Windows
-  boot_iso {
-    iso_file    = var.iso_file
-    unmount     = true
-    type        = "sata"
-  }
-  
-  # ISO VirtIO drivers
-  additional_iso_files {
-    device   = "ide3"
-    iso_file = var.virtio_iso
-    unmount  = true
-    type     = "ide"
-  }
-
-
-  # Disque
+  # ── Disk ─────────────────────────────────────────────────────
   disks {
     storage_pool = var.storage_pool
     type         = "scsi"
@@ -56,68 +41,87 @@ source "proxmox-iso" "windows-server" {
     format       = "raw"
     cache_mode   = "writeback"
   }
-  
+
   scsi_controller = "virtio-scsi-pci"
-  
-  http_directory = "http"
-  http_port_min  = 8802
-  http_port_max  = 8802
- 
-  # Réseau
+
+  # ── Network ──────────────────────────────────────────────────
   network_adapters {
     model  = "virtio"
-    bridge = "vmbr0"
+    bridge = var.network_bridge
   }
 
-  # Agent QEMU
-  qemu_agent = true
+  # ── Windows ISO (boot) ──────────────────────────────────────
+  boot_iso {
+    iso_file = var.iso_file
+    unmount  = true
+    type     = "sata"
+  }
 
-  # Communication WinRM
+  # ── VirtIO drivers ISO ──────────────────────────────────────
+  additional_iso_files {
+    type     = "sata"
+    index    = 1
+    iso_file = var.virtio_iso
+    unmount  = true
+  }
+
+  # ── Autounattend (templated with variables) ─────────────────
+  additional_iso_files {
+    type         = "sata"
+    index        = 2
+    unmount      = true
+    cd_label     = "OEMDRV"
+    iso_storage_pool = var.storage_pool
+    cd_content = {
+      "autounattend.xml" = templatefile("${path.root}/autounattend.xml.pkrtpl.hcl", {
+        admin_password = var.admin_password
+        vm_ip          = var.vm_ip
+        vm_gateway     = var.vm_gateway
+        vm_netmask     = var.vm_netmask
+        vm_dns         = var.vm_dns
+      })
+    }
+  }
+
+  # ── WinRM communicator ──────────────────────────────────────
   communicator   = "winrm"
   winrm_username = "Administrator"
   winrm_password = var.admin_password
-  winrm_timeout  = "12h"
+  winrm_timeout  = "1h"
   winrm_use_ssl  = false
   winrm_insecure = true
 
-  # Boot
-  boot_wait = "3s"
+  # ── Boot ─────────────────────────────────────────────────────
+  boot_wait    = "3s"
   boot_command = ["<spacebar>"]
+
+  # ── Cloud-Init drive (Proxmox will use this slot on clones) ─
+  cloud_init              = true
+  cloud_init_storage_pool = var.storage_pool
 }
 
 
 build {
-  name    = "windows-server-2022-build"
+  name    = "windows-server-2022"
   sources = ["source.proxmox-iso.windows-server"]
 
-  # 1. Installation VirtIO drivers
+  # 1. VirtIO drivers (balloon, serial, QEMU guest agent)
   provisioner "powershell" {
-    scripts = ["./scripts/install-virtio.ps1"]
+    script = "${path.root}/scripts/install-virtio.ps1"
   }
 
-  # 2. Configuration WinRM pour Ansible
+  # 2. WinRM hardening for Ansible (HTTPS + CredSSP)
   provisioner "powershell" {
-    scripts = ["./scripts/setup-winrm.ps1"]
+    script = "${path.root}/scripts/setup-winrm.ps1"
   }
 
-  # 3. Installation Cloudbase-Init
+  # 3. Cloudbase-Init (handles IP/hostname on clone via Proxmox cloud-init)
   provisioner "powershell" {
-    scripts = ["./scripts/install-cloudbase.ps1"]
+    script = "${path.root}/scripts/install-cloudbase.ps1"
   }
 
-  # 4. Windows Updates (optionnel mais recommandé)
-  # provisioner "windows-update" {
-  #    search_criteria = "IsInstalled=0"
-  #    filters = [
-  #      "exclude:$_.Title -like '*Preview*'",
-  #      "include:$true"
-  #    ]
-  #    update_limit = 50
-  #   }
-
-  # 5. Nettoyage final
+  # 4. Cleanup temp files and logs
   provisioner "powershell" {
-    scripts = ["./scripts/cleanup.ps1"]
+    script = "${path.root}/scripts/cleanup.ps1"
   }
 }
-

@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<unattend xmlns="urn:schemas-microsoft-com:unattend">
+<unattend xmlns="urn:schemas-microsoft-com:unattend"
+          xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Pass 1 — windowsPE: language, disk, drivers
+         ═══════════════════════════════════════════════════════════ -->
     <settings pass="windowsPE">
-        <!-- Configuration régionale - Anglais avec clavier AZERTY -->
-        <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+        <component name="Microsoft-Windows-International-Core-WinPE"
+                   processorArchitecture="amd64"
+                   publicKeyToken="31bf3856ad364e35"
+                   language="neutral" versionScope="nonSxS">
             <SetupUILanguage>
                 <UILanguage>en-US</UILanguage>
             </SetupUILanguage>
@@ -11,11 +18,17 @@
             <UILanguage>en-US</UILanguage>
             <UserLocale>en-US</UserLocale>
         </component>
-        
-        <!-- Configuration du partitionnement -->
-        <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+
+        <component name="Microsoft-Windows-Setup"
+                   processorArchitecture="amd64"
+                   publicKeyToken="31bf3856ad364e35"
+                   language="neutral" versionScope="nonSxS">
+
+            <!-- GPT partitioning for UEFI -->
             <DiskConfiguration>
                 <Disk wcm:action="add">
+                    <DiskID>0</DiskID>
+                    <WillWipeDisk>true</WillWipeDisk>
                     <CreatePartitions>
                         <CreatePartition wcm:action="add">
                             <Order>1</Order>
@@ -52,11 +65,10 @@
                             <Letter>C</Letter>
                         </ModifyPartition>
                     </ModifyPartitions>
-                    <DiskID>0</DiskID>
-                    <WillWipeDisk>true</WillWipeDisk>
                 </Disk>
             </DiskConfiguration>
-            
+
+            <!-- Windows Server 2022 Standard (Desktop Experience) = index 2 -->
             <ImageInstall>
                 <OSImage>
                     <InstallFrom>
@@ -71,53 +83,84 @@
                     </InstallTo>
                 </OSImage>
             </ImageInstall>
-            
+
             <UserData>
                 <AcceptEula>true</AcceptEula>
                 <FullName>Administrator</FullName>
                 <Organization>Lab</Organization>
             </UserData>
-            
-            <!-- Installation des drivers VirtIO pendant l'installation -->
+
+            <!-- VirtIO drivers — try D: E: F: (drive letter varies by CD slot) -->
             <DriverPaths>
                 <PathAndCredentials wcm:action="add" wcm:keyValue="1">
-                    <Path>E:\vioscsi\2k22\amd64</Path>
+                    <Path>D:\vioscsi\2k22\amd64</Path>
                 </PathAndCredentials>
                 <PathAndCredentials wcm:action="add" wcm:keyValue="2">
-                    <Path>E:\viostor\2k22\amd64</Path>
+                    <Path>D:\viostor\2k22\amd64</Path>
                 </PathAndCredentials>
                 <PathAndCredentials wcm:action="add" wcm:keyValue="3">
+                    <Path>D:\NetKVM\2k22\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="4">
+                    <Path>E:\vioscsi\2k22\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="5">
+                    <Path>E:\viostor\2k22\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="6">
                     <Path>E:\NetKVM\2k22\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="7">
+                    <Path>F:\vioscsi\2k22\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="8">
+                    <Path>F:\viostor\2k22\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="9">
+                    <Path>F:\NetKVM\2k22\amd64</Path>
                 </PathAndCredentials>
             </DriverPaths>
         </component>
     </settings>
-    
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Pass 2 — specialize: hostname, timezone
+         ═══════════════════════════════════════════════════════════ -->
     <settings pass="specialize">
-        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
-            <ComputerName>WIN-TEMP</ComputerName>
+        <component name="Microsoft-Windows-Shell-Setup"
+                   processorArchitecture="amd64"
+                   publicKeyToken="31bf3856ad364e35"
+                   language="neutral" versionScope="nonSxS">
+            <ComputerName>WIN-TEMPLATE</ComputerName>
             <TimeZone>Romance Standard Time</TimeZone>
         </component>
     </settings>
-    
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Pass 3 — oobeSystem: admin account, auto-logon, WinRM bootstrap
+         ═══════════════════════════════════════════════════════════ -->
     <settings pass="oobeSystem">
-        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+        <component name="Microsoft-Windows-Shell-Setup"
+                   processorArchitecture="amd64"
+                   publicKeyToken="31bf3856ad364e35"
+                   language="neutral" versionScope="nonSxS">
+
             <AutoLogon>
                 <Password>
-                    <Value>VotreMotDePasseAdmin123!</Value>
+                    <Value>${admin_password}</Value>
                     <PlainText>true</PlainText>
                 </Password>
                 <Enabled>true</Enabled>
                 <Username>Administrator</Username>
             </AutoLogon>
-            
+
             <UserAccounts>
                 <AdministratorPassword>
-                    <Value>VotreMotDePasseAdmin123!</Value>
+                    <Value>${admin_password}</Value>
                     <PlainText>true</PlainText>
                 </AdministratorPassword>
             </UserAccounts>
-            
+
             <OOBE>
                 <HideEULAPage>true</HideEULAPage>
                 <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
@@ -125,33 +168,51 @@
                 <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
                 <ProtectYourPC>3</ProtectYourPC>
             </OOBE>
-            
-            <!-- Configuration WinRM uniquement - Le reste est géré par Packer -->
+
             <FirstLogonCommands>
+                <!-- 1. Set static IP so Packer can reach the VM -->
                 <SynchronousCommand wcm:action="add">
                     <Order>1</Order>
-                    <Description>Set Execution Policy</Description>
-                    <CommandLine>powershell -Command "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force"</CommandLine>
+                    <Description>Set static IP</Description>
+                    <CommandLine>cmd /c netsh interface ip set address "Ethernet" static ${vm_ip} ${vm_netmask} ${vm_gateway}</CommandLine>
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
                     <Order>2</Order>
+                    <Description>Set DNS</Description>
+                    <CommandLine>cmd /c netsh interface ip set dns "Ethernet" static ${vm_dns}</CommandLine>
+                </SynchronousCommand>
+
+                <!-- 2. Set execution policy -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>3</Order>
+                    <Description>Set Execution Policy</Description>
+                    <CommandLine>powershell -Command "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force"</CommandLine>
+                </SynchronousCommand>
+
+                <!-- 3. Bootstrap WinRM so Packer can connect -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>4</Order>
                     <Description>Enable WinRM</Description>
                     <CommandLine>cmd /c winrm quickconfig -quiet</CommandLine>
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
-                    <Order>3</Order>
+                    <Order>5</Order>
                     <Description>Configure WinRM for Packer</Description>
-                    <CommandLine>powershell -Command "Enable-PSRemoting -Force; Set-Item WSMan:\localhost\Service\Auth\Basic -Value $true; Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value $true; Set-Service -Name WinRM -StartupType Automatic; Restart-Service WinRM"</CommandLine>
+                    <CommandLine>powershell -Command "Set-Item WSMan:\localhost\Service\Auth\Basic -Value $true; Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value $true; Set-Item WSMan:\localhost\MaxTimeoutms -Value 1800000; Restart-Service WinRM"</CommandLine>
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
-                    <Order>4</Order>
+                    <Order>6</Order>
                     <Description>Open Firewall for WinRM</Description>
-                    <CommandLine>powershell -Command "New-NetFirewallRule -DisplayName 'WinRM HTTP' -Direction Inbound -LocalPort 5985 -Protocol TCP -Action Allow"</CommandLine>
+                    <CommandLine>powershell -Command "New-NetFirewallRule -DisplayName 'WinRM HTTP' -Direction Inbound -LocalPort 5985 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue"</CommandLine>
                 </SynchronousCommand>
             </FirstLogonCommands>
         </component>
-        
-        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+
+        <!-- Keep AZERTY keyboard in OOBE -->
+        <component name="Microsoft-Windows-International-Core"
+                   processorArchitecture="amd64"
+                   publicKeyToken="31bf3856ad364e35"
+                   language="neutral" versionScope="nonSxS">
             <InputLocale>fr-FR</InputLocale>
             <SystemLocale>en-US</SystemLocale>
             <UILanguage>en-US</UILanguage>
@@ -159,4 +220,3 @@
         </component>
     </settings>
 </unattend>
-

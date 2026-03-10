@@ -1,4 +1,4 @@
-# Proxmox API Credentials
+// ── Proxmox API Credentials ─────────────────────────────────
 variable "proxmox_api_url" {
   type    = string
   default = "https://10.0.0.10:8006/api2/json"
@@ -6,7 +6,7 @@ variable "proxmox_api_url" {
 
 variable "proxmox_username" {
   type    = string
-  default = "root@pam"  # Format: utilisateur@realm!nom_token
+  default = "root@pam"
 }
 
 variable "proxmox_password" {
@@ -15,9 +15,10 @@ variable "proxmox_password" {
   sensitive = true
 }
 
+// ── Windows Admin Password ──────────────────────────────────
+// Must match in: autounattend.xml, Packer WinRM communicator
 variable "admin_password" {
   type      = string
-  default   = "adaptive"
+  default   = "Adaptive123!"
   sensitive = true
 }
-

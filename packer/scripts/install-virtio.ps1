@@ -1,47 +1,58 @@
-Write-Host "Installation des drivers VirtIO..."
+# ── VirtIO drivers installation ──────────────────────────────
+# Installs remaining VirtIO drivers + QEMU Guest Agent.
+# The core drivers (vioscsi, viostor, NetKVM) are loaded during
+# Windows Setup via autounattend.xml DriverPaths.
 
-# Trouver la lettre du lecteur VirtIO
-$virtioCD = Get-WmiObject -Class Win32_CDROMDrive | Where-Object { $_.VolumeName -like "*virtio*" } | Select-Object -ExpandProperty Drive
+Write-Host "=== Installing VirtIO drivers ==="
+
+# Find the VirtIO ISO drive
+$virtioCD = Get-WmiObject -Class Win32_CDROMDrive |
+    Where-Object { $_.VolumeName -like "*virtio*" } |
+    Select-Object -First 1 -ExpandProperty Drive
+
+if (-not $virtioCD) {
+    # Fallback: try all CD drives
+    $virtioCD = Get-WmiObject -Class Win32_CDROMDrive | ForEach-Object {
+        if (Test-Path "$($_.Drive)\guest-agent") { $_.Drive }
+    } | Select-Object -First 1
+}
 
 if ($virtioCD) {
-    Write-Host "ISO VirtIO trouvé sur $virtioCD"
-    
-    # Installer les drivers principaux
+    Write-Host "VirtIO ISO found on $virtioCD"
+
+    # Additional drivers (core ones already loaded by autounattend)
     $drivers = @(
         "Balloon\2k22\amd64",
-        "NetKVM\2k22\amd64",
         "vioserial\2k22\amd64",
-        "viostor\2k22\amd64",
-        "vioscsi\2k22\amd64"
+        "viorng\2k22\amd64",
+        "pvpanic\2k22\amd64"
     )
-    
+
     foreach ($driver in $drivers) {
         $driverPath = "$virtioCD\$driver"
         if (Test-Path $driverPath) {
-            Write-Host "Installation de $driver..."
-            pnputil.exe /add-driver "$driverPath\*.inf" /install /subdirs
+            Write-Host "Installing $driver..."
+            pnputil.exe /add-driver "$driverPath\*.inf" /install /subdirs 2>&1 | Out-Null
         }
     }
-    
-    # Installer l'agent QEMU Guest Agent
+
+    # QEMU Guest Agent
     $qemuAgent = "$virtioCD\guest-agent\qemu-ga-x86_64.msi"
     if (Test-Path $qemuAgent) {
-        Write-Host "Installation de QEMU Guest Agent..."
-        Start-Process msiexec.exe -ArgumentList "/i `"$qemuAgent`" /qn /norestart" -Wait
+        Write-Host "Installing QEMU Guest Agent..."
+        Start-Process msiexec.exe -ArgumentList "/i `"$qemuAgent`" /qn /norestart" -Wait -NoNewWindow
     }
-    
-    Write-Host "Drivers VirtIO installés avec succès"
+
+    Write-Host "VirtIO drivers installed"
 } else {
-    Write-Host "ERREUR: ISO VirtIO non trouvé" -ForegroundColor Red
-    # Chercher manuellement
+    Write-Host "WARNING: VirtIO ISO not found" -ForegroundColor Yellow
     Get-WmiObject -Class Win32_CDROMDrive | ForEach-Object {
-        Write-Host "CD trouvé: $($_.Drive) - $($_.VolumeName)"
+        Write-Host "  CD: $($_.Drive) — $($_.VolumeName)"
     }
 }
 
-# Activer le service QEMU Guest Agent
+# Enable QEMU Guest Agent service
 Set-Service -Name "QEMU-GA" -StartupType Automatic -ErrorAction SilentlyContinue
 Start-Service -Name "QEMU-GA" -ErrorAction SilentlyContinue
 
-Write-Host "Installation VirtIO terminée"
-
+Write-Host "=== VirtIO installation complete ==="
