@@ -129,27 +129,35 @@ def deploy_user(server_ip : str, fqdn : str, userslist, db: Session, ansible_use
 def execute_powershell_winrm(
     server_ip: str, 
     powershell_script: str,
+    params: dict,
     ansible_user: str = "Administrator",
-    ansible_password: str = "Azerty1234@"
+    ansible_password: str = "Azerty1234@",
 ):
     print(f"[>] Exécution PowerShell sur {server_ip}")
+
+    vars_block = "\n    ".join([f'{k}: "{v}"' for k, v in params.items()])
     
-    # Playbook minimal INLINE
+    indented_script = "\n        ".join(
+        line for line in powershell_script.strip().splitlines()
+    )
     playbook_content = f"""---
 - name: Exécuter PowerShell
   hosts: {server_ip}
   gather_facts: false
+  vars:
+    {vars_block}
   tasks:
     - name: Run PowerShell script
       win_shell: |
-        {powershell_script}
+        {indented_script}
       register: result
       ignore_errors: true
-      
+
     - name: Debug output
       debug:
         var: result
 """
+
     
     inventory = {
         "all": {
@@ -158,29 +166,37 @@ def execute_powershell_winrm(
                     "ansible_user": ansible_user,
                     "ansible_password": ansible_password,
                     "ansible_connection": "winrm",
-                    "ansible_winrm_transport": "ntlm", 
-                    "ansible_winrm_server_cert_validation": "ignore"
+                    "ansible_winrm_transport": "ntlm",
+                    "ansible_winrm_server_cert_validation": "ignore",
+                    "ansible_winrm_scheme": "http",
+                    "ansible_port": 5985,
                 }
             }
         }
     }
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Écriture du playbook temporaire
         playbook_path = Path(tmpdir) / "powershell.yaml"
         playbook_path.write_text(playbook_content)
-        
+
         r = ansible_runner.run(
             private_data_dir=tmpdir,
             playbook=str(playbook_path),
             inventory=inventory,
             verbosity=2
         )
+
+        
+        output = r.stdout.read() if r.stdout else ""
+        stderr = r.stderr.read() if r.stderr else ""
+        status = r.status
+        rc = r.rc
+
     
     return {
-        "success": r.status == "successful",
-        "output": r.stdout.read() if r.stdout else "",
-        "stderr": r.stderr.read() if r.stderr else "",
-        "return_code": r.rc
+        "success": status == "successful",
+        "output": output,
+        "stderr": stderr,
+        "return_code": rc
     }
 

@@ -338,6 +338,7 @@ def list_available_vulnerabilities(db: Session = Depends(get_db)):
     templates = db.query(orm_models.DBVulnerabilityTemplate).all()
     
     return [{
+        "id" : t.id,
         "code": t.code,
         "name": t.name,
         "description": t.description,
@@ -403,10 +404,11 @@ def post_vulnerability(project_id: int, forest_id: int, domain_id: int, vuln_id 
 
     powershell_script = vuln_template.powershell_template
 
-    for keys in param_req.keys() :
-        powershell_script = powershell_script.replace(keys, param_req[keys])
-
-    result = execute_powershell_winrm(primary_dc.ip, powershell_script)
+    # for keys in param_req.keys() :
+    #     powershell_script = powershell_script.replace(keys, param_req[keys])
+    
+    print("Paramètres :", param_req)
+    result = execute_powershell_winrm(primary_dc.ip, powershell_script, param_req)
 
     return result
 
@@ -507,6 +509,7 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
             # -------------------------------------------------
             # -------------------------------------------------
             # -------------------------------------------------
+
 
 
         # # ========================= Add User Vulnerabilities ========================= #
