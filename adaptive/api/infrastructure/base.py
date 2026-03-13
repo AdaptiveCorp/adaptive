@@ -31,7 +31,7 @@ class DeploymentResult:
 class HypervisorProvider(ABC):
     @abstractmethod
     def deploy_lab(
-        self, servers: list[ServerInfo], template_id: int = 109
+        self, servers: list[ServerInfo], template_id: int = 102
     ) -> list[CloneResult]: ...
 
     @abstractmethod

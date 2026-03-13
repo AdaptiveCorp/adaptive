@@ -101,7 +101,7 @@ def deploy_project(
 
             result = ansible.dc_promote(
                 server_ip=_bare_ip(dc.ip),
-                dc_hostname=dc.fqdn,
+                dc_hostname=dc.fqdn.split(".")[0],
                 domain_fqdn=domain.fqdn,
                 domain_netbios=domain.fqdn.split(".")[0],
                 is_first_dc=(i == 0),

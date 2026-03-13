@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(./adaptive/**)",
+      "Read(./migrations/**)",
+      "Read(./packer/**)",
+      "Read(./agent_docs/**)",
+      "Read(./cli/**)",
+      "Read(./alembic.ini)",
+      "Read(./pyproject.toml)",
+      "Read(./templates.yaml)",
+      "Bash(uv run *)",
+      "Bash(uv sync)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(ansible-galaxy collection install *)",
+      "Bash(packer validate *)",
+      "Bash(packer fmt *)",
+      "WebFetch"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./packer/creds.pkr.hcl)",
+      "Bash(packer build *)",
+      "Bash(rm -rf *)",
+      "Bash(alembic downgrade *)"
+    ]
+  }
+}
