@@ -129,7 +129,7 @@ templates:
     required_params:
       - username
     content: |
-      Set-ADUser -Identity {{username}} -DoesNotRequirePreAuth $true
+      Set-ADAccountControl -Identity "{{username}}" -DoesNotRequirePreAuth $true
 
   - code: kerberoasting
     name: Kerberoasting
@@ -140,7 +140,7 @@ templates:
       - username
       - spn_name
     content: |
-      Set-ADUser -Identity {{username}} -ServicePrincipalNames @{Add='{{spn_name}}'}
+      Set-ADUser -Identity "{{username}}" -ServicePrincipalNames @{Add='{{spn_name}}/{{username}}'}
 
   - code: genericall_dacl
     name: GenericAll DACL
@@ -151,8 +151,9 @@ templates:
       - source_username
       - target_username
     content: |
-      $SourceUser = Get-ADUser -Identity {{source_username}}
-      $TargetUser = Get-ADUser -Identity {{target_username}}
+    powershell_template: |
+      $SourceUser = Get-ADUser -Identity "{{source_username}}"
+      $TargetUser = Get-ADUser -Identity "{{target_username}}"
       $ACL = Get-ACL "AD:$($TargetUser.DistinguishedName)"
       $Identity = [System.Security.Principal.SecurityIdentifier]$SourceUser.SID
       $Rights = [System.DirectoryServices.ActiveDirectoryRights]::GenericAll
@@ -170,8 +171,8 @@ templates:
       - source_username
       - target_username
     content: |
-      $SourceUser = Get-ADUser -Identity {{source_username}}
-      $TargetUser = Get-ADUser -Identity {{target_username}}
+      $SourceUser = Get-ADUser -Identity "{{source_username}}"
+      $TargetUser = Get-ADUser -Identity "{{target_username}}"
       $ACL = Get-ACL "AD:$($TargetUser.DistinguishedName)"
       $Identity = [System.Security.Principal.SecurityIdentifier]$SourceUser.SID
       $Rights = [System.DirectoryServices.ActiveDirectoryRights]::WriteDacl
@@ -209,20 +210,20 @@ templates:
       - username
       - domain_dn
     content: |
-      $User = Get-ADUser -Identity {{username}}
+      $User = Get-ADUser -Identity "{{username}}"
       $Domain = "{{domain_dn}}"
       $ACL = Get-ACL "AD:$Domain"
       $Identity = [System.Security.Principal.SecurityIdentifier]$User.SID
-
+      
       # DS-Replication-Get-Changes
       $GUID1 = [System.Guid]"1131f6aa-9c07-11d1-f79f-00c04fc2dcd2"
       $Rights = [System.DirectoryServices.ActiveDirectoryRights]::ExtendedRight
       $ACE1 = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, "Allow", $GUID1)
-
+      
       # DS-Replication-Get-Changes-All
       $GUID2 = [System.Guid]"1131f6ad-9c07-11d1-f79f-00c04fc2dcd2"
       $ACE2 = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, "Allow", $GUID2)
-
+      
       $ACL.AddAccessRule($ACE1)
       $ACL.AddAccessRule($ACE2)
       Set-ACL -Path "AD:$Domain" -AclObject $ACL

@@ -81,6 +81,7 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
 
     try:
         return run_deployment(project, db)
+    
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

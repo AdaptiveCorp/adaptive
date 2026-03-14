@@ -20,7 +20,8 @@ router = APIRouter(
 
 @router.post("/")
 def add_user(
-    username: str,
+    firstname: str,
+    lastname: str,
     password: str,
     domain_id: int | None = None,
     server_id: int | None = None,
@@ -40,12 +41,13 @@ def add_user(
         domain = db.get(Domain, domain_id)
         if not domain:
             raise HTTPException(status_code=404, detail="Domain not found")
-        user = User(domain_id=domain_id, username=username, password=password)
+        username = firstname[0].lower() + "." + lastname.lower()
+        user = User(domain_id=domain_id, firstname=firstname, lastname=lastname, username=username, password=password)
     else:
         server = db.get(Server, server_id)
         if not server:
             raise HTTPException(status_code=404, detail="Server not found")
-        user = User(server_id=server_id, username=username, password=password)
+        #user = User(server_id=server_id, username=username, password=password)
 
     db.add(user)
     db.commit()

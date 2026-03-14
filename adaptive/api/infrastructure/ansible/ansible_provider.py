@@ -92,19 +92,24 @@ class AnsibleService:
         self,
         server_ip: str,
         users: list[dict[str, str]],
+        base_dn: str,
+        domain_fqdn: str
     ) -> PlaybookResult:
-        logger.info("%s Adding %d users on %s", PREFIX, len(users), server_ip)
+        logger.info("%s Adding %d user on %s", PREFIX, users, server_ip)
+
 
         extravars: dict[str, Any] = {
             "target_host": server_ip,
-            "users": users,
+            "users_list": users,
+            "base_dn": base_dn,
+            "domain_fqdn": domain_fqdn
         }
 
         content = self._get_template_content("add_users")
         result = self._run_playbook(content, server_ip, extravars)
 
         if result.success:
-            logger.info("%s Successfully added %d users on %s", PREFIX, len(users), server_ip)
+            logger.info("%s Successfully added %d users on %s", PREFIX, server_ip)
         else:
             logger.error("%s Failed to add users on %s: %s", PREFIX, server_ip, result.error)
 

@@ -85,6 +85,8 @@ def deploy_project(
         clone_results=clone_results,
     )
 
+
+
     # --- 2. DC Promotion ---
     dcs_by_domain = get_dcs_grouped_by_domain(project)
 
@@ -125,7 +127,7 @@ def deploy_project(
 
     # --- 4. Add Users ---
     users_by_domain = get_users_grouped_by_domain(project)
-
+   
     if users_by_domain:
         logger.info("Starting user creation across %d domains", len(users_by_domain))
 
@@ -138,6 +140,7 @@ def deploy_project(
                 domain.fqdn,
             )
             continue
+        fqdn = dc.fqdn
 
         logger.info(
             "Adding %d users to domain '%s' via DC '%s'",
@@ -147,10 +150,14 @@ def deploy_project(
         )
 
         user_dicts: list[dict[str, str]] = [
-            {"username": u.username, "password": u.password} for u in users
+            {"username": u.username,
+             "firstname": u.firstname,
+             "lastname": u.lastname,
+             "password": u.password} for u in users
         ]
-
-        result = ansible.add_users(server_ip=_bare_ip(dc.ip), users=user_dicts)
+        print("FQDN : ", fqdn)
+        base_dn = "DC="+fqdn.split('.')[-2].lower()+","+"DC="+fqdn.split('.')[-1].lower()
+        result = ansible.add_users(server_ip=_bare_ip(dc.ip), users=user_dicts, base_dn=base_dn, domain_fqdn=domain.fqdn)
 
         if not result.success:
             logger.error(
