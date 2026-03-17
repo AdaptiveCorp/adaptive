@@ -1,20 +1,34 @@
 import logging
 import time
-
+from sqlalchemy.orm import Session
+from sqlalchemy import select
 from adaptive.api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
 from adaptive.api.infrastructure.base import DeploymentResult, HypervisorProvider
+from adaptive.api.models.applied_template import AppliedTemplate
 from adaptive.api.models.domain import Domain
 from adaptive.api.models.project import Project
 from adaptive.api.models.server import Server
 from adaptive.api.models.user import User
+from adaptive.api.models.forest import Forest
+from adaptive.api.endpoints.utils import get_root_dc
 from sqlalchemy.orm import Session
+from textwrap import dedent
+import ast
 
 logger = logging.getLogger(__name__)
-
 
 def _bare_ip(ip: str) -> str:
     return ip.split("/")[0]
 
+
+def get_template_for_project(project: Project,db: Session) -> list[AppliedTemplate] :
+    
+    stmt = select(AppliedTemplate).where(
+        AppliedTemplate.project_id == project.id
+    )
+    list_stmt = db.scalars(stmt).all()
+
+    return list_stmt
 
 def get_dcs_grouped_by_domain(project: Project) -> dict[Domain, list[Server]]:
     grouped: dict[Domain, list[Server]] = {}
@@ -26,6 +40,24 @@ def get_dcs_grouped_by_domain(project: Project) -> dict[Domain, list[Server]]:
     return grouped
 
 
+
+def get_all_domain_in_project(project: Project, db: Session) -> list[Domain] :
+    
+    stmt = select(Forest).where(
+        Forest.project_id == project.id
+    )
+    list_foret = db.scalars(stmt).all()
+    
+    liste_domain = []
+
+    for foret in list_foret :
+        stmt = select(Domain).where(
+            Domain.forest_id == foret.id
+        )
+        liste_domain.extend(db.scalars(stmt).all())
+
+    return liste_domain
+
 def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:
     grouped: dict[Domain, list[User]] = {}
     for forest in project.forests:
@@ -34,6 +66,47 @@ def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:
                 grouped[domain] = list(domain.users)
     return grouped
 
+def execute_powershell_winrm(server_ip: int, powershell_script, params, db: Session):
+    ansible = AnsibleService(db=db)
+    
+    vars_block = "\n      ".join([f'{k}: "{v}"' for k, v in params.items()])
+    
+    indented_script = "\n            ".join(
+        line for line in powershell_script.strip().splitlines()
+    )
+
+    playbook_content = dedent(f"""
+        - name: Exécuter PowerShell
+          hosts: {server_ip}
+          gather_facts: false
+          vars:
+            {vars_block}
+            ansible_connection: winrm
+            ansible_winrm_transport: ntlm
+            ansible_winrm_server_cert_validation: ignore
+            ansible_port: 5985
+            ansible_winrm_read_timeout_sec: 120
+
+          tasks:
+            - name: Run PowerShell script
+              win_shell: |
+                {indented_script}
+              register: result
+              ignore_errors: true
+
+            - name: Debug output
+              debug:
+                var: result
+    """).lstrip("\n")
+    
+    print("server_ip", server_ip)
+    print("Content", playbook_content)
+    print("params", params)
+    ansible._run_playbook(
+        playbook_content, server_ip, params
+    )
+    
+    return None
 
 def deploy_project(
     project: Project,
@@ -41,6 +114,7 @@ def deploy_project(
     hypervisor: HypervisorProvider | None = None,
     ansible: AnsibleService | None = None,
 ) -> DeploymentResult:
+    
     logger.info("Starting deployment for project '%s'", project.name)
 
     hypervisor = hypervisor or ProxmoxProvider()
@@ -61,7 +135,7 @@ def deploy_project(
         len(all_servers),
     )
 
-    # --- 1. Clone VMs ---
+    # # --- 1. Clone VMs --- #
     server_infos: list[ServerInfo] = [
         ServerInfo(id=s.id, fqdn=s.fqdn, ip=s.ip, gtw=s.gtw, dns=s.dns)
         for s in all_servers
@@ -85,12 +159,10 @@ def deploy_project(
         clone_results=clone_results,
     )
 
-
-
-    # --- 2. DC Promotion ---
+    # # --- 2. DC Promotion ---
     dcs_by_domain = get_dcs_grouped_by_domain(project)
 
-    if dcs_by_domain:
+    if dcs_by_domain :
         logger.info("Starting DC promotions across %d domains", len(dcs_by_domain))
 
     for domain, dcs in dcs_by_domain.items():
@@ -120,12 +192,12 @@ def deploy_project(
             if dc.vm_id:
                 hypervisor.restart_vm(dc.vm_id)
 
-    # --- 3. Wait for DCs to reboot after promotion ---
+    # # --- 3. Wait for DCs to reboot after promotion --- #
     if dcs_by_domain:
         logger.info("Waiting 60s for DCs to reboot after promotion...")
         time.sleep(60)
 
-    # --- 4. Add Users ---
+    # --- 4. Add Users --- #
     users_by_domain = get_users_grouped_by_domain(project)
    
     if users_by_domain:
@@ -155,10 +227,9 @@ def deploy_project(
              "lastname": u.lastname,
              "password": u.password} for u in users
         ]
-        print("FQDN : ", fqdn)
         base_dn = "DC="+fqdn.split('.')[-2].lower()+","+"DC="+fqdn.split('.')[-1].lower()
         result = ansible.add_users(server_ip=_bare_ip(dc.ip), users=user_dicts, base_dn=base_dn, domain_fqdn=domain.fqdn)
-
+        
         if not result.success:
             logger.error(
                 "User creation failed on domain '%s': %s", domain.fqdn, result.error
@@ -166,6 +237,28 @@ def deploy_project(
             deployment_result.success = False
             deployment_result.error = result.error
             return deployment_result
+        None
+
+    # --- 5. Push vulnerability --- #
+    
+    project_id = project.id
+    dcs_by_domain = get_dcs_grouped_by_domain(project)
+    
+    
+    liste_templates = get_template_for_project(project, db)
+    liste_domain = get_all_domain_in_project(project, db)
+    print(liste_domain)
+    
+    for domain in liste_domain :
+        #Récupère les template associé à un template
+        #Récupère le dc : 
+        dc = get_root_dc(domain, db)
+        for template in liste_templates :
+            
+            if template.template.category != "infrastrucutre" :
+                param_vuln = ast.literal_eval(template.params)
+                powershell_script = template.template.content
+                result = execute_powershell_winrm(dc.ip, powershell_script, param_vuln, db)
 
     logger.info(
         "Deployment completed for project '%s' (success=%s)",

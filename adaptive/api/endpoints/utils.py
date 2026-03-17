@@ -1,11 +1,22 @@
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from sqlalchemy import select
 from adaptive.api.environment.database import get_db
 from adaptive.api.models.domain import Domain
 from adaptive.api.models.forest import Forest
 from adaptive.api.models.project import Project
 from adaptive.api.models.server import Server
+
+
+def get_root_dc(domain: Domain, db: Session = Depends(get_db)) -> Server:
+    stmt = select(Server).where(
+        Server.domain_id == domain.id,
+        Server.is_dc == True
+    )
+    server = db.scalars(stmt).first()
+    if not server:
+        raise HTTPException(status_code=404, detail="Root DC not found")
+    return server
 
 
 def get_project_or_404(project_id: int, db: Session = Depends(get_db)) -> Project:

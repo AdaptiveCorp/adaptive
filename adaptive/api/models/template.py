@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from adaptive.api.environment.database import Base
 
 if TYPE_CHECKING:

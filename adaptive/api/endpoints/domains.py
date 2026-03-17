@@ -7,7 +7,6 @@ from adaptive.api.models.forest import Forest
 
 router = APIRouter(prefix="/forests/{forest_id}/domains", tags=["domains"])
 
-
 @router.post("/")
 def create_domain(forest_id: int, fqdn: str, db: Session = Depends(get_db)):
     forest = db.get(Forest, forest_id)

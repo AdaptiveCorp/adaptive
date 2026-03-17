@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import ansible_runner  # type: ignore
+import ansible_runner
 from sqlalchemy.orm import Session
 
 from adaptive.api.environment.config import settings
@@ -13,7 +13,6 @@ from adaptive.api.models.template import Template
 logger = logging.getLogger(__name__)
 
 PREFIX = "[ANSIBLE]"
-
 
 @dataclass
 class PlaybookResult:
@@ -104,7 +103,7 @@ class AnsibleService:
             "base_dn": base_dn,
             "domain_fqdn": domain_fqdn
         }
-
+        
         content = self._get_template_content("add_users")
         result = self._run_playbook(content, server_ip, extravars)
 
@@ -122,13 +121,14 @@ class AnsibleService:
         extravars: dict[str, Any],
     ) -> PlaybookResult:
         logger.info("%s Running playbook on %s", PREFIX, target_host)
-
+       
         inventory = {
             "all": {
                 "hosts": {
                     target_host: {
                         "ansible_user": self._user,
                         "ansible_password": self._password,
+                        
                     }
                 }
             }
