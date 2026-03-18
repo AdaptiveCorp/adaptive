@@ -240,11 +240,9 @@ def deploy_project(
             deployment_result.success = False
             deployment_result.error = result.error
             return deployment_result
-        None
 
     # --- 5. Push vulnerability --- #
 
-    project_id = project.id
     dcs_by_domain = get_dcs_grouped_by_domain(project)
 
     liste_templates = get_template_for_project(project, db)

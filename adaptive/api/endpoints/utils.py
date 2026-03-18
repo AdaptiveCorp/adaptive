@@ -10,7 +10,7 @@ from adaptive.api.models.server import Server
 
 
 def get_root_dc(domain: Domain, db: Session = Depends(get_db)) -> Server:
-    stmt = select(Server).where(Server.domain_id == domain.id, Server.is_dc == True)
+    stmt = select(Server).where(Server.domain_id == domain.id, Server.is_dc.is_(True))
     server = db.scalars(stmt).first()
     if not server:
         raise HTTPException(status_code=404, detail="Root DC not found")

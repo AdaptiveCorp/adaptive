@@ -75,8 +75,8 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
         return run_deployment(project, db)
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         db.rollback()
         logger.exception("Deployment failed for project %d", project_id)
-        raise HTTPException(status_code=500, detail=f"Deployment error: {e}")
+        raise HTTPException(status_code=500, detail=f"Deployment error: {e}") from e

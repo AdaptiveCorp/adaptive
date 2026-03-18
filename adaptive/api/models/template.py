@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from adaptive.api.models.applied_template import AppliedTemplate
 
 
-class TemplateType(str, enum.Enum):
+class TemplateType(enum.StrEnum):
     CONFIG = "config"
     VULNERABILITY = "vulnerability"
 

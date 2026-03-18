@@ -99,3 +99,43 @@ rm app.db && uv run alembic upgrade head
 ```
 
 > **Note :** Les templates de vulnérabilités sont automatiquement injectés au démarrage de l'application depuis `templates.yaml`.
+
+## Linting
+
+Le projet utilise deux linters, installés automatiquement avec `uv sync` (groupe `dev`) :
+
+### Ruff (Python)
+
+uv run yamllint adaptive/api/database/
+
+[Ruff](https://docs.astral.sh/ruff/) s'occupe du lint et du formatage du code Python. La configuration se trouve dans `pyproject.toml` sous `[tool.ruff]`.
+
+```bash
+# Vérifier les erreurs de lint
+uv run ruff check .
+
+# Corriger automatiquement les erreurs
+uv run ruff check . --fix
+
+# Vérifier le formatage
+uv run ruff format --check .
+
+# Formater automatiquement
+uv run ruff format .
+```
+
+Règles activées : pycodestyle, pyflakes, isort, pyupgrade, bugbear, simplify.
+
+### yamllint (YAML)
+
+[yamllint](https://yamllint.readthedocs.io/) valide les fichiers YAML du dossier `adaptive/api/database/` (templates de vulnérabilités). La configuration se trouve dans `.yamllint.yml`.
+
+```bash
+uv run yamllint adaptive/api/database/
+```
+
+### Avant de commit
+
+```bash
+uv run ruff check . --fix && uv run ruff format . && uv run yamllint adaptive/api/database/
+```
