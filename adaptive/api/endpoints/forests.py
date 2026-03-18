@@ -28,7 +28,4 @@ def list_forests(project_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Project not found")
 
     forests = db.query(Forest).filter(Forest.project_id == project_id).all()
-    return [
-        {"id": f.id, "fqdn": f.fqdn, "project_id": f.project_id}
-        for f in forests
-    ]
+    return [{"id": f.id, "fqdn": f.fqdn, "project_id": f.project_id} for f in forests]

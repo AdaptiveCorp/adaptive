@@ -27,29 +27,19 @@ class AppliedTemplate(Base):
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
     project: Mapped[Project] = relationship("Project")
 
-    template_id: Mapped[int] = mapped_column(
-        ForeignKey("templates.id"), nullable=False
-    )
-    template: Mapped[Template] = relationship(
-        "Template", back_populates="applied"
-    )
+    template_id: Mapped[int] = mapped_column(ForeignKey("templates.id"), nullable=False)
+    template: Mapped[Template] = relationship("Template", back_populates="applied")
 
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     user: Mapped[User | None] = relationship("User", foreign_keys=[user_id])
 
-    domain_id: Mapped[int | None] = mapped_column(
-        ForeignKey("domains.id"), nullable=True
-    )
+    domain_id: Mapped[int | None] = mapped_column(ForeignKey("domains.id"), nullable=True)
     domain: Mapped[Domain | None] = relationship("Domain")
 
-    server_id: Mapped[int | None] = mapped_column(
-        ForeignKey("servers.id"), nullable=True
-    )
+    server_id: Mapped[int | None] = mapped_column(ForeignKey("servers.id"), nullable=True)
     server: Mapped[Server | None] = relationship("Server")
 
-    forest_id: Mapped[int | None] = mapped_column(
-        ForeignKey("forests.id"), nullable=True
-    )
+    forest_id: Mapped[int | None] = mapped_column(ForeignKey("forests.id"), nullable=True)
     forest: Mapped[Forest | None] = relationship("Forest")
 
     params: Mapped[str | None] = mapped_column(Text)

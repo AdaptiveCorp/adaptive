@@ -38,11 +38,7 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
     domains = [d for f in forests for d in f.domains]
     servers = [s for d in domains for s in d.servers]
     users = [u for d in domains for u in d.users]
-    applied_vulns = (
-        db.query(AppliedTemplate)
-        .filter(AppliedTemplate.project_id == project_id)
-        .all()
-    )
+    applied_vulns = db.query(AppliedTemplate).filter(AppliedTemplate.project_id == project_id).all()
 
     return {
         "project": {
@@ -51,12 +47,8 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
             "created_at": project.created_at,
         },
         "forests": [{"id": f.id, "fqdn": f.fqdn} for f in forests],
-        "domains": [
-            {"id": d.id, "fqdn": d.fqdn, "forest_id": d.forest_id} for d in domains
-        ],
-        "servers": [
-            {"id": s.id, "fqdn": s.fqdn, "is_dc": s.is_dc, "ip": s.ip} for s in servers
-        ],
+        "domains": [{"id": d.id, "fqdn": d.fqdn, "forest_id": d.forest_id} for d in domains],
+        "servers": [{"id": s.id, "fqdn": s.fqdn, "is_dc": s.is_dc, "ip": s.ip} for s in servers],
         "users": [{"id": u.id, "username": u.username} for u in users],
         "vulnerabilities_count": len(applied_vulns),
     }
@@ -81,7 +73,7 @@ def deploy_project(project_id: int, db: Session = Depends(get_db)):
 
     try:
         return run_deployment(project, db)
-    
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

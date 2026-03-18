@@ -55,6 +55,48 @@
     # Run a playbook via ansible-runner (rarely done manually — use the API)
     uv run ansible-runner run <private_data_dir> -p playbook.yml
 
+## Linting / Formatting (Ruff)
+
+    # Check for lint errors
+    uv run ruff check .
+
+    # Auto-fix lint errors
+    uv run ruff check . --fix
+
+    # Check formatting
+    uv run ruff format --check .
+
+    # Auto-format
+    uv run ruff format .
+
+    # Full lint + format before commit
+    uv run ruff check . --fix && uv run ruff format .
+
+Config in `pyproject.toml` under `[tool.ruff]`.
+
+Enabled rule sets:
+- `E` / `W` — pycodestyle (style errors & warnings)
+- `F` — pyflakes (unused imports, undefined names)
+- `I` — isort (import ordering)
+- `UP` — pyupgrade (modernize syntax to Python 3.12+)
+- `B` — flake8-bugbear (common bugs & design issues)
+- `SIM` — flake8-simplify (simplifiable constructs)
+
+Ignored: `B008` — `Depends()` in argument defaults is required by FastAPI's DI.
+
+## YAML Linting (yamllint)
+
+    # Lint all YAML files
+    uv run yamllint adaptive/api/database/
+
+    # Lint a specific file
+    uv run yamllint adaptive/api/database/templates.yaml
+
+Config in `.yamllint.yml`:
+- Line length: 140 (accommodates embedded PowerShell/Ansible blocks in `content: |`)
+- `document-start` disabled (no `---` required at top of file)
+- `truthy` check on keys disabled (allows `yes`/`no` in Ansible playbooks)
+
 ## Database
 
     # Reset DB (delete and recreate)

@@ -18,6 +18,14 @@ Working directory: `api/`
 - Proxmox API via proxmoxer, Cloudbase-Init for cloud-init on Windows
 - Frontend: TypeScript in `adaptive/web/` (planned, stack TBD)
 
+## Linting
+
+- **Ruff** — Python linter + formatter (config in `pyproject.toml` under `[tool.ruff]`)
+- **yamllint** — YAML linter for `adaptive/api/database/` templates (config in `.yamllint.yml`)
+- Run `uv run ruff check . --fix && uv run ruff format .` before committing Python
+- Run `uv run yamllint adaptive/api/database/` before committing YAML
+- B008 (`Depends()` in defaults) is globally ignored — required by FastAPI's DI pattern
+
 ## Non-negotiable rules
 
 - All Python commands via `uv run` — never bare `python` or `pip`
@@ -27,6 +35,7 @@ Working directory: `api/`
 - `ansible-runner` expects playbooks in `{tmpdir}/project/` with relative filename
 - Proxmox clone: always fetch `newid` from `/cluster/nextid` before cloning
 - Code and comments in English; project docs may be in French
+- Code must pass `ruff check` and `ruff format --check` before commit
 
 ## Load these docs before working on related areas
 

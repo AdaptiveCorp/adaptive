@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "[ANSIBLE]"
 
+
 @dataclass
 class PlaybookResult:
     success: bool
@@ -61,7 +62,11 @@ class AnsibleService:
     ) -> PlaybookResult:
         logger.info(
             "%s Promoting DC '%s' (%s) for domain '%s' (first_dc=%s)",
-            PREFIX, dc_hostname, server_ip, domain_fqdn, is_first_dc,
+            PREFIX,
+            dc_hostname,
+            server_ip,
+            domain_fqdn,
+            is_first_dc,
         )
 
         extravars: dict[str, Any] = {
@@ -88,22 +93,17 @@ class AnsibleService:
         return result
 
     def add_users(
-        self,
-        server_ip: str,
-        users: list[dict[str, str]],
-        base_dn: str,
-        domain_fqdn: str
+        self, server_ip: str, users: list[dict[str, str]], base_dn: str, domain_fqdn: str
     ) -> PlaybookResult:
         logger.info("%s Adding %d user on %s", PREFIX, users, server_ip)
-
 
         extravars: dict[str, Any] = {
             "target_host": server_ip,
             "users_list": users,
             "base_dn": base_dn,
-            "domain_fqdn": domain_fqdn
+            "domain_fqdn": domain_fqdn,
         }
-        
+
         content = self._get_template_content("add_users")
         result = self._run_playbook(content, server_ip, extravars)
 
@@ -121,14 +121,13 @@ class AnsibleService:
         extravars: dict[str, Any],
     ) -> PlaybookResult:
         logger.info("%s Running playbook on %s", PREFIX, target_host)
-       
+
         inventory = {
             "all": {
                 "hosts": {
                     target_host: {
                         "ansible_user": self._user,
                         "ansible_password": self._password,
-                        
                     }
                 }
             }

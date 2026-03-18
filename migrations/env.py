@@ -3,14 +3,15 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+import adaptive.api.models.applied_template  # noqa: F401
+
 # Importer tous les modèles pour qu'ils soient enregistrés sur Base.metadata
 import adaptive.api.models.domain  # noqa: F401
 import adaptive.api.models.forest  # noqa: F401
 import adaptive.api.models.project  # noqa: F401
 import adaptive.api.models.server  # noqa: F401
-import adaptive.api.models.user  # noqa: F401
 import adaptive.api.models.template  # noqa: F401
-import adaptive.api.models.applied_template  # noqa: F401
+import adaptive.api.models.user  # noqa: F401
 import adaptive.api.models.vm_template  # noqa: F401
 from adaptive.api.environment.config import settings
 from adaptive.api.environment.database import Base

@@ -4,16 +4,8 @@ from pathlib import Path
 
 import yaml
 
-from adaptive.api.environment.database import SessionLocal, engine, Base
+from adaptive.api.environment.database import Base, SessionLocal, engine
 from adaptive.api.models.template import Template
-
-# Importer tous les modèles pour résoudre les relationships SQLAlchemy
-import adaptive.api.models.applied_template  # noqa: F401
-import adaptive.api.models.project  # noqa: F401
-import adaptive.api.models.forest  # noqa: F401
-import adaptive.api.models.domain  # noqa: F401
-import adaptive.api.models.server  # noqa: F401
-import adaptive.api.models.user  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +14,7 @@ def load_templates_from_yaml(yaml_path: str | None = None) -> list[dict]:
     if yaml_path is None:
         yaml_path = str(Path(__file__).parent / "templates.yaml")
 
-    with open(yaml_path, "r", encoding="utf-8") as f:
+    with open(yaml_path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
     return data["templates"]
 
@@ -36,9 +28,7 @@ def seed_templates(yaml_path: str | None = None) -> None:
     updated_count = 0
 
     for tpl_data in templates:
-        existing = db.query(Template).filter(
-            Template.code == tpl_data["code"]
-        ).first()
+        existing = db.query(Template).filter(Template.code == tpl_data["code"]).first()
 
         required_params_json = json.dumps(tpl_data.get("required_params", []))
 

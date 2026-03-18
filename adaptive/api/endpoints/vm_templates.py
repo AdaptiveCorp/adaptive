@@ -27,7 +27,10 @@ class VmTemplateResponse(BaseModel):
 def create_vm_template(payload: VmTemplateCreate, db: Session = Depends(get_db)):
     existing = db.query(VmTemplate).filter(VmTemplate.name == payload.name).first()
     if existing:
-        raise HTTPException(status_code=409, detail=f"VmTemplate with name '{payload.name}' already exists")
+        raise HTTPException(
+            status_code=409,
+            detail=f"VmTemplate with name '{payload.name}' already exists",
+        )
 
     vm_template = VmTemplate(
         name=payload.name,
@@ -61,7 +64,10 @@ def delete_vm_template(vm_template_id: int, db: Session = Depends(get_db)):
     if vm_template.servers:
         raise HTTPException(
             status_code=409,
-            detail=f"VmTemplate id={vm_template_id} is still used by {len(vm_template.servers)} server(s)",
+            detail=(
+                f"VmTemplate id={vm_template_id} is still used by"
+                f" {len(vm_template.servers)} server(s)"
+            ),
         )
     db.delete(vm_template)
     db.commit()

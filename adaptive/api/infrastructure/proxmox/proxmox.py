@@ -27,9 +27,7 @@ class ProxmoxProvider(HypervisorProvider):
         self._node = node or settings.proxmox_node
         self._verify_ssl = verify_ssl
         self._api: Any = None
-        logger.info(
-            "%s Provider initialized (host=%s, node=%s)", PREFIX, self._host, self._node
-        )
+        logger.info("%s Provider initialized (host=%s, node=%s)", PREFIX, self._host, self._node)
 
     @property
     def api(self) -> Any:
@@ -57,9 +55,7 @@ class ProxmoxProvider(HypervisorProvider):
                 results.append(result)
             except Exception as e:
                 logger.error("%s Failed to clone server %s: %s", PREFIX, server.fqdn, e)
-                results.append(
-                    CloneResult(success=False, server_id=server.id, error=str(e))
-                )
+                results.append(CloneResult(success=False, server_id=server.id, error=str(e)))
 
         succeeded = sum(1 for r in results if r.success)
         logger.info(
@@ -76,9 +72,7 @@ class ProxmoxProvider(HypervisorProvider):
                 f"Server '{server.fqdn}' (id={server.id}) has no template_vm_id assigned"
             )
         template_id = server.template_vm_id
-        logger.info(
-            "%s Cloning template %d -> '%s'...", PREFIX, template_id, server.fqdn
-        )
+        logger.info("%s Cloning template %d -> '%s'...", PREFIX, template_id, server.fqdn)
 
         new_vm_id = int(self.api.cluster.nextid.get())
         logger.debug("%s Next available VMID: %d", PREFIX, new_vm_id)
@@ -91,9 +85,7 @@ class ProxmoxProvider(HypervisorProvider):
         logger.debug("%s Clone task started: %s", PREFIX, task_upid)
 
         self._wait_for_task(task_upid)
-        logger.info(
-            "%s Clone completed for '%s' (vm_id=%d)", PREFIX, server.fqdn, new_vm_id
-        )
+        logger.info("%s Clone completed for '%s' (vm_id=%d)", PREFIX, server.fqdn, new_vm_id)
 
         # self._configure_cloudinit(new_vm_id, server)
         self.start_vm(new_vm_id)
@@ -102,9 +94,7 @@ class ProxmoxProvider(HypervisorProvider):
 
     def _configure_cloudinit(self, vm_id: int, server: ServerInfo) -> None:
         if not server.ip:
-            logger.warning(
-                "%s No IP for VM %d, skipping cloud-init config", PREFIX, vm_id
-            )
+            logger.warning("%s No IP for VM %d, skipping cloud-init config", PREFIX, vm_id)
             return
 
         ipconfig = f"ip={server.ip}"
@@ -150,13 +140,9 @@ class ProxmoxProvider(HypervisorProvider):
         return ok
 
     def _check_vm_status(self, vm_id: int, expected: str) -> bool:
-        vm_info: dict[str, Any] = (
-            self.api.nodes(self._node).qemu(vm_id).status.current.get()
-        )
+        vm_info: dict[str, Any] = self.api.nodes(self._node).qemu(vm_id).status.current.get()
         status = vm_info.get("status")
-        logger.debug(
-            "%s VM %d status: '%s' (expected: '%s')", PREFIX, vm_id, status, expected
-        )
+        logger.debug("%s VM %d status: '%s' (expected: '%s')", PREFIX, vm_id, status, expected)
         return status == expected
 
     def _wait_for_status(
@@ -168,9 +154,7 @@ class ProxmoxProvider(HypervisorProvider):
         poll_interval: int = 5,
     ) -> bool:
         if initial_wait:
-            logger.debug(
-                "%s Waiting %ds before polling VM %d...", PREFIX, initial_wait, vm_id
-            )
+            logger.debug("%s Waiting %ds before polling VM %d...", PREFIX, initial_wait, vm_id)
             time.sleep(initial_wait)
 
         elapsed = 0
@@ -189,12 +173,8 @@ class ProxmoxProvider(HypervisorProvider):
         )
         return False
 
-    def _wait_for_task(
-        self, task_upid: str, timeout: int = 300, poll_interval: int = 5
-    ) -> None:
-        logger.debug(
-            "%s Waiting for task %s (timeout=%ds)...", PREFIX, task_upid, timeout
-        )
+    def _wait_for_task(self, task_upid: str, timeout: int = 300, poll_interval: int = 5) -> None:
+        logger.debug("%s Waiting for task %s (timeout=%ds)...", PREFIX, task_upid, timeout)
         start_time = time.time()
 
         while True:
@@ -202,9 +182,7 @@ class ProxmoxProvider(HypervisorProvider):
             if elapsed > timeout:
                 raise TimeoutError(f"Task {task_upid} timed out after {timeout}s")
 
-            task_info: dict[str, Any] = (
-                self.api.nodes(self._node).tasks(task_upid).status.get()
-            )
+            task_info: dict[str, Any] = self.api.nodes(self._node).tasks(task_upid).status.get()
             status = task_info.get("status")
             exitstatus = task_info.get("exitstatus")
 
@@ -219,7 +197,5 @@ class ProxmoxProvider(HypervisorProvider):
             if status == "stopped":
                 raise RuntimeError(f"Task {task_upid} failed: {exitstatus}")
 
-            logger.debug(
-                "%s Task %s in progress... (%.0fs elapsed)", PREFIX, task_upid, elapsed
-            )
+            logger.debug("%s Task %s in progress... (%.0fs elapsed)", PREFIX, task_upid, elapsed)
             time.sleep(poll_interval)

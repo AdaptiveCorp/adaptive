@@ -18,20 +18,16 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    
+
     username: Mapped[str] = mapped_column(String(255), nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     firstname: Mapped[str] = mapped_column(String(255), nullable=False)
     lastname: Mapped[str] = mapped_column(String(255), nullable=False)
-    
-    domain_id: Mapped[int | None] = mapped_column(
-        ForeignKey("domains.id"), nullable=True
-    )
+
+    domain_id: Mapped[int | None] = mapped_column(ForeignKey("domains.id"), nullable=True)
     domain: Mapped[Domain | None] = relationship("Domain", back_populates="users")
 
-    server_id: Mapped[int | None] = mapped_column(
-        ForeignKey("servers.id"), nullable=True
-    )
+    server_id: Mapped[int | None] = mapped_column(ForeignKey("servers.id"), nullable=True)
     server: Mapped[Server | None] = relationship("Server", back_populates="users")
 
     def __repr__(self) -> str:

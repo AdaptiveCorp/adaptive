@@ -1,34 +1,35 @@
+import ast
 import logging
 import time
-from sqlalchemy.orm import Session
+from textwrap import dedent
+
 from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from adaptive.api.endpoints.utils import get_root_dc
 from adaptive.api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
 from adaptive.api.infrastructure.base import DeploymentResult, HypervisorProvider
 from adaptive.api.models.applied_template import AppliedTemplate
 from adaptive.api.models.domain import Domain
+from adaptive.api.models.forest import Forest
 from adaptive.api.models.project import Project
 from adaptive.api.models.server import Server
 from adaptive.api.models.user import User
-from adaptive.api.models.forest import Forest
-from adaptive.api.endpoints.utils import get_root_dc
-from sqlalchemy.orm import Session
-from textwrap import dedent
-import ast
 
 logger = logging.getLogger(__name__)
+
 
 def _bare_ip(ip: str) -> str:
     return ip.split("/")[0]
 
 
-def get_template_for_project(project: Project,db: Session) -> list[AppliedTemplate] :
-    
-    stmt = select(AppliedTemplate).where(
-        AppliedTemplate.project_id == project.id
-    )
+def get_template_for_project(project: Project, db: Session) -> list[AppliedTemplate]:
+
+    stmt = select(AppliedTemplate).where(AppliedTemplate.project_id == project.id)
     list_stmt = db.scalars(stmt).all()
 
     return list_stmt
+
 
 def get_dcs_grouped_by_domain(project: Project) -> dict[Domain, list[Server]]:
     grouped: dict[Domain, list[Server]] = {}
@@ -40,23 +41,19 @@ def get_dcs_grouped_by_domain(project: Project) -> dict[Domain, list[Server]]:
     return grouped
 
 
+def get_all_domain_in_project(project: Project, db: Session) -> list[Domain]:
 
-def get_all_domain_in_project(project: Project, db: Session) -> list[Domain] :
-    
-    stmt = select(Forest).where(
-        Forest.project_id == project.id
-    )
+    stmt = select(Forest).where(Forest.project_id == project.id)
     list_foret = db.scalars(stmt).all()
-    
+
     liste_domain = []
 
-    for foret in list_foret :
-        stmt = select(Domain).where(
-            Domain.forest_id == foret.id
-        )
+    for foret in list_foret:
+        stmt = select(Domain).where(Domain.forest_id == foret.id)
         liste_domain.extend(db.scalars(stmt).all())
 
     return liste_domain
+
 
 def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:
     grouped: dict[Domain, list[User]] = {}
@@ -66,14 +63,13 @@ def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:
                 grouped[domain] = list(domain.users)
     return grouped
 
+
 def execute_powershell_winrm(server_ip: int, powershell_script, params, db: Session):
     ansible = AnsibleService(db=db)
-    
+
     vars_block = "\n      ".join([f'{k}: "{v}"' for k, v in params.items()])
-    
-    indented_script = "\n            ".join(
-        line for line in powershell_script.strip().splitlines()
-    )
+
+    indented_script = "\n            ".join(line for line in powershell_script.strip().splitlines())
 
     playbook_content = dedent(f"""
         - name: Exécuter PowerShell
@@ -98,15 +94,14 @@ def execute_powershell_winrm(server_ip: int, powershell_script, params, db: Sess
               debug:
                 var: result
     """).lstrip("\n")
-    
+
     print("server_ip", server_ip)
     print("Content", playbook_content)
     print("params", params)
-    ansible._run_playbook(
-        playbook_content, server_ip, params
-    )
-    
+    ansible._run_playbook(playbook_content, server_ip, params)
+
     return None
+
 
 def deploy_project(
     project: Project,
@@ -114,7 +109,7 @@ def deploy_project(
     hypervisor: HypervisorProvider | None = None,
     ansible: AnsibleService | None = None,
 ) -> DeploymentResult:
-    
+
     logger.info("Starting deployment for project '%s'", project.name)
 
     hypervisor = hypervisor or ProxmoxProvider()
@@ -169,7 +164,7 @@ def deploy_project(
     # # --- 2. DC Promotion ---
     dcs_by_domain = get_dcs_grouped_by_domain(project)
 
-    if dcs_by_domain :
+    if dcs_by_domain:
         logger.info("Starting DC promotions across %d domains", len(dcs_by_domain))
 
     for domain, dcs in dcs_by_domain.items():
@@ -189,9 +184,7 @@ def deploy_project(
             )
 
             if not result.success:
-                logger.error(
-                    "Deployment aborted: DC promotion failed for '%s'", dc.fqdn
-                )
+                logger.error("Deployment aborted: DC promotion failed for '%s'", dc.fqdn)
                 deployment_result.success = False
                 deployment_result.error = result.error
                 return deployment_result
@@ -206,7 +199,7 @@ def deploy_project(
 
     # --- 4. Add Users --- #
     users_by_domain = get_users_grouped_by_domain(project)
-   
+
     if users_by_domain:
         logger.info("Starting user creation across %d domains", len(users_by_domain))
 
@@ -229,40 +222,41 @@ def deploy_project(
         )
 
         user_dicts: list[dict[str, str]] = [
-            {"username": u.username,
-             "firstname": u.firstname,
-             "lastname": u.lastname,
-             "password": u.password} for u in users
+            {
+                "username": u.username,
+                "firstname": u.firstname,
+                "lastname": u.lastname,
+                "password": u.password,
+            }
+            for u in users
         ]
-        base_dn = "DC="+fqdn.split('.')[-2].lower()+","+"DC="+fqdn.split('.')[-1].lower()
-        result = ansible.add_users(server_ip=_bare_ip(dc.ip), users=user_dicts, base_dn=base_dn, domain_fqdn=domain.fqdn)
-        
+        base_dn = "DC=" + fqdn.split(".")[-2].lower() + "," + "DC=" + fqdn.split(".")[-1].lower()
+        result = ansible.add_users(
+            server_ip=_bare_ip(dc.ip), users=user_dicts, base_dn=base_dn, domain_fqdn=domain.fqdn
+        )
+
         if not result.success:
-            logger.error(
-                "User creation failed on domain '%s': %s", domain.fqdn, result.error
-            )
+            logger.error("User creation failed on domain '%s': %s", domain.fqdn, result.error)
             deployment_result.success = False
             deployment_result.error = result.error
             return deployment_result
         None
 
     # --- 5. Push vulnerability --- #
-    
+
     project_id = project.id
     dcs_by_domain = get_dcs_grouped_by_domain(project)
-    
-    
+
     liste_templates = get_template_for_project(project, db)
     liste_domain = get_all_domain_in_project(project, db)
     print(liste_domain)
-    
-    for domain in liste_domain :
-        #Récupère les template associé à un template
-        #Récupère le dc : 
+
+    for domain in liste_domain:
+        # Récupère les template associé à un template
+        # Récupère le dc :
         dc = get_root_dc(domain, db)
-        for template in liste_templates :
-            
-            if template.template.category != "infrastrucutre" :
+        for template in liste_templates:
+            if template.template.category != "infrastrucutre":
                 param_vuln = ast.literal_eval(template.params)
                 powershell_script = template.template.content
                 result = execute_powershell_winrm(dc.ip, powershell_script, param_vuln, db)

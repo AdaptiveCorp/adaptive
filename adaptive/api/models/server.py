@@ -27,14 +27,10 @@ class Server(Base):
     gtw: Mapped[str | None] = mapped_column(String(45))  # gateway
     dns: Mapped[str | None] = mapped_column(String(45))
 
-    domain_id: Mapped[int | None] = mapped_column(
-        ForeignKey("domains.id"), nullable=True
-    )
+    domain_id: Mapped[int | None] = mapped_column(ForeignKey("domains.id"), nullable=True)
     domain: Mapped[Domain | None] = relationship("Domain", back_populates="servers")
 
-    vm_template_id: Mapped[int | None] = mapped_column(
-        ForeignKey("vm_templates.id"), nullable=True
-    )
+    vm_template_id: Mapped[int | None] = mapped_column(ForeignKey("vm_templates.id"), nullable=True)
     vm_template: Mapped[VmTemplate | None] = relationship("VmTemplate", back_populates="servers")
 
     users: Mapped[list[User]] = relationship(
@@ -43,9 +39,7 @@ class Server(Base):
         cascade="all, delete-orphan",
     )
 
-    parent_id: Mapped[int | None] = mapped_column(
-        ForeignKey("servers.id"), nullable=True
-    )
+    parent_id: Mapped[int | None] = mapped_column(ForeignKey("servers.id"), nullable=True)
     servers: Mapped[list[Server]] = relationship(
         "Server",
         back_populates="parent_server",

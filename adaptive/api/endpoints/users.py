@@ -33,21 +33,25 @@ def add_user(
     if not domain_id and not server_id:
         raise HTTPException(status_code=400, detail="domain_id ou server_id requis")
     if domain_id and server_id:
-        raise HTTPException(
-            status_code=400, detail="Fournir domain_id ou server_id, pas les deux"
-        )
+        raise HTTPException(status_code=400, detail="Fournir domain_id ou server_id, pas les deux")
 
     if domain_id:
         domain = db.get(Domain, domain_id)
         if not domain:
             raise HTTPException(status_code=404, detail="Domain not found")
         username = firstname[0].lower() + "." + lastname.lower()
-        user = User(domain_id=domain_id, firstname=firstname, lastname=lastname, username=username, password=password)
+        user = User(
+            domain_id=domain_id,
+            firstname=firstname,
+            lastname=lastname,
+            username=username,
+            password=password,
+        )
     else:
         server = db.get(Server, server_id)
         if not server:
             raise HTTPException(status_code=404, detail="Server not found")
-        #user = User(server_id=server_id, username=username, password=password)
+        # user = User(server_id=server_id, username=username, password=password)
 
     db.add(user)
     db.commit()

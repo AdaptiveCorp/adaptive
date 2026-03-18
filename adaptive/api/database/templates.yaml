@@ -214,16 +214,16 @@ templates:
       $Domain = "{{domain_dn}}"
       $ACL = Get-ACL "AD:$Domain"
       $Identity = [System.Security.Principal.SecurityIdentifier]$User.SID
-      
+
       # DS-Replication-Get-Changes
       $GUID1 = [System.Guid]"1131f6aa-9c07-11d1-f79f-00c04fc2dcd2"
       $Rights = [System.DirectoryServices.ActiveDirectoryRights]::ExtendedRight
       $ACE1 = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, "Allow", $GUID1)
-      
+
       # DS-Replication-Get-Changes-All
       $GUID2 = [System.Guid]"1131f6ad-9c07-11d1-f79f-00c04fc2dcd2"
       $ACE2 = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, "Allow", $GUID2)
-      
+
       $ACL.AddAccessRule($ACE1)
       $ACL.AddAccessRule($ACE2)
       Set-ACL -Path "AD:$Domain" -AclObject $ACL
