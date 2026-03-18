@@ -44,19 +44,16 @@ class ProxmoxProvider(HypervisorProvider):
             logger.info("%s Connected successfully", PREFIX)
         return self._api
 
-    def deploy_lab(
-        self, servers: list[ServerInfo], template_id: int = 102
-    ) -> list[CloneResult]:
+    def deploy_lab(self, servers: list[ServerInfo]) -> list[CloneResult]:
         logger.info(
-            "%s Starting lab deployment: %d servers from template %d",
+            "%s Starting lab deployment: %d servers",
             PREFIX,
             len(servers),
-            template_id,
         )
         results: list[CloneResult] = []
         for server in servers:
             try:
-                result = self.clone_vm(server, template_id)
+                result = self.clone_vm(server)
                 results.append(result)
             except Exception as e:
                 logger.error("%s Failed to clone server %s: %s", PREFIX, server.fqdn, e)
@@ -73,7 +70,12 @@ class ProxmoxProvider(HypervisorProvider):
         )
         return results
 
-    def clone_vm(self, server: ServerInfo, template_id: int) -> CloneResult:
+    def clone_vm(self, server: ServerInfo) -> CloneResult:
+        if server.template_vm_id is None:
+            raise ValueError(
+                f"Server '{server.fqdn}' (id={server.id}) has no template_vm_id assigned"
+            )
+        template_id = server.template_vm_id
         logger.info(
             "%s Cloning template %d -> '%s'...", PREFIX, template_id, server.fqdn
         )

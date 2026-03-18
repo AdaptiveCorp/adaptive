@@ -10,6 +10,7 @@ from adaptive.api.environment.database import Base
 if TYPE_CHECKING:
     from adaptive.api.models.domain import Domain
     from adaptive.api.models.user import User
+    from adaptive.api.models.vm_template import VmTemplate
 
 
 class Server(Base):
@@ -30,6 +31,11 @@ class Server(Base):
         ForeignKey("domains.id"), nullable=True
     )
     domain: Mapped[Domain | None] = relationship("Domain", back_populates="servers")
+
+    vm_template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("vm_templates.id"), nullable=True
+    )
+    vm_template: Mapped[VmTemplate | None] = relationship("VmTemplate", back_populates="servers")
 
     users: Mapped[list[User]] = relationship(
         "User",

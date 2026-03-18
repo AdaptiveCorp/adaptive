@@ -137,7 +137,14 @@ def deploy_project(
 
     # # --- 1. Clone VMs --- #
     server_infos: list[ServerInfo] = [
-        ServerInfo(id=s.id, fqdn=s.fqdn, ip=s.ip, gtw=s.gtw, dns=s.dns)
+        ServerInfo(
+            id=s.id,
+            fqdn=s.fqdn,
+            ip=s.ip,
+            gtw=s.gtw,
+            dns=s.dns,
+            template_vm_id=s.vm_template.vm_id if s.vm_template else None,
+        )
         for s in all_servers
     ]
     clone_results = hypervisor.deploy_lab(server_infos)

@@ -11,6 +11,7 @@ from adaptive.api.endpoints import (
     projects,
     servers,
     users,
+    vm_templates,
     vulnerabilities,
 )
 
@@ -33,5 +34,6 @@ app.include_router(forests.router)
 app.include_router(domains.router)
 app.include_router(servers.router)
 app.include_router(users.router)
+app.include_router(vm_templates.router)
 app.include_router(vulnerabilities.router)
 app.include_router(internals.router)

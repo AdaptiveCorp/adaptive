@@ -9,6 +9,7 @@ class ServerInfo:
     ip: str | None = None
     gtw: str | None = None
     dns: str | None = None
+    template_vm_id: int | None = None
 
 
 @dataclass
@@ -30,12 +31,10 @@ class DeploymentResult:
 
 class HypervisorProvider(ABC):
     @abstractmethod
-    def deploy_lab(
-        self, servers: list[ServerInfo], template_id: int = 102
-    ) -> list[CloneResult]: ...
+    def deploy_lab(self, servers: list[ServerInfo]) -> list[CloneResult]: ...
 
     @abstractmethod
-    def clone_vm(self, server: ServerInfo, template_id: int) -> CloneResult: ...
+    def clone_vm(self, server: ServerInfo) -> CloneResult: ...
 
     @abstractmethod
     def start_vm(self, vm_id: int) -> bool: ...

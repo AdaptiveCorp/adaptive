@@ -21,6 +21,26 @@ cp .env.example .env
 
 ## Lancer l'application
 
+Créer les différentes tables nécessaires. Pour ca il faut lancer la commande `alembic` suivante :
+
+```bash
+uv run alembic upgrade head
+```
+
+Attention, il faut qu'il y'ai au moins un fichier de migration qui créé les tables dans `migrations/verions`. Si il y'en a pas, il faut le générer avec :
+
+```bash
+uv run alembic revision --autogenerate -m "initial"
+```
+
+Cette commande va traduire les modèles de nos objets dans `api/models` en table et colonne SQL.
+
+Pour reset la db et la mettre à jour avec les dernière modification fait tout simplement :
+
+```bash
+rm app.db && rm migrations/versions && uv run alembic revision --autogenerate -m "initial" && uv run alembic upgrade head
+```
+
 ```bash
 # Mode développement (rechargement automatique)
 uv run uvicorn adaptive.api.main:app --reload
