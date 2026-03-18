@@ -103,6 +103,26 @@ def post_vulnerability(project_id: int, domain_id: int, vuln_id : int, request :
     
     return {"id": applied_template.id, "template_id": applied_template.template_id, "params": applied_template.params}
 
+@router.post("/{vuln_id}")
+def deploy_vulnerability(vuln_id : int, db: Session = Depends(get_db)):
+
+    vuln_template = db.get(AppliedTemplate, vuln_id)
+    
+    powershell_script = vuln_template.content
+    param_vuln = ast.literal_eval(vuln_template.params)
+
+    if vuln_template.domain :
+        dc = get_root_dc(vuln_template.domainmain, db)
+        ip = dc.ip
+
+    elif vuln_template.server :
+        ip = vuln_template.server.ip
+
+    
+    result = execute_powershell_winrm(ip, powershell_script,param_vuln)
+
+
+    return None
 
 @router.delete("/{vuln_id}")
 def remove_applied_vulnerability(vuln_id: int, db: Session = Depends(get_db)):

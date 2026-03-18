@@ -73,7 +73,7 @@ def execute_powershell_winrm(server_ip: int, powershell_script, params, db: Sess
     indented_script = "\n            ".join(
         line for line in powershell_script.strip().splitlines()
     )
-    
+
     server_ip = '10.0.0.5'
 
     playbook_content = dedent(f"""
@@ -213,6 +213,7 @@ def deploy_project(
                 domain.fqdn,
             )
             continue
+
         fqdn = dc.fqdn
 
         logger.info(
@@ -228,6 +229,7 @@ def deploy_project(
              "lastname": u.lastname,
              "password": u.password} for u in users
         ]
+
         base_dn = "DC="+fqdn.split('.')[-2].lower()+","+"DC="+fqdn.split('.')[-1].lower()
         result = ansible.add_users(server_ip=_bare_ip(dc.ip), users=user_dicts, base_dn=base_dn, domain_fqdn=domain.fqdn)
         
@@ -243,7 +245,6 @@ def deploy_project(
     # --- 5. Push vulnerability --- #
     project_id = project.id
     dcs_by_domain = get_dcs_grouped_by_domain(project)
-    
     
     liste_templates = get_template_for_project(project, db)
     liste_domain = get_all_domain_in_project(project, db)
