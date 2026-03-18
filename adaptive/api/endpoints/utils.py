@@ -18,7 +18,6 @@ def get_root_dc(domain: Domain, db: Session = Depends(get_db)) -> Server:
         raise HTTPException(status_code=404, detail="Root DC not found")
     return server
 
-
 def get_project_or_404(project_id: int, db: Session = Depends(get_db)) -> Project:
     project = db.get(Project, project_id)
     if not project:

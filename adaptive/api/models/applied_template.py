@@ -58,5 +58,7 @@ class AppliedTemplate(Base):
         DateTime, server_default=func.now(), nullable=False
     )
 
+    status: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     def __repr__(self) -> str:
         return f"<AppliedTemplate id={self.id} template_id={self.template_id}>"

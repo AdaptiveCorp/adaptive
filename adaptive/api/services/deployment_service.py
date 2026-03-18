@@ -70,10 +70,11 @@ def execute_powershell_winrm(server_ip: int, powershell_script, params, db: Sess
     ansible = AnsibleService(db=db)
     
     vars_block = "\n      ".join([f'{k}: "{v}"' for k, v in params.items()])
-    
     indented_script = "\n            ".join(
         line for line in powershell_script.strip().splitlines()
     )
+    
+    server_ip = '10.0.0.5'
 
     playbook_content = dedent(f"""
         - name: Exécuter PowerShell
@@ -135,7 +136,7 @@ def deploy_project(
         len(all_servers),
     )
 
-    # # --- 1. Clone VMs --- #
+    # --- 1. Clone VMs --- #
     server_infos: list[ServerInfo] = [
         ServerInfo(id=s.id, fqdn=s.fqdn, ip=s.ip, gtw=s.gtw, dns=s.dns)
         for s in all_servers
@@ -240,14 +241,13 @@ def deploy_project(
         None
 
     # --- 5. Push vulnerability --- #
-    
     project_id = project.id
     dcs_by_domain = get_dcs_grouped_by_domain(project)
     
     
     liste_templates = get_template_for_project(project, db)
     liste_domain = get_all_domain_in_project(project, db)
-    print(liste_domain)
+
     
     for domain in liste_domain :
         #Récupère les template associé à un template
@@ -255,7 +255,8 @@ def deploy_project(
         dc = get_root_dc(domain, db)
         for template in liste_templates :
             
-            if template.template.category != "infrastrucutre" :
+            if template.template.category != "infrastrucutre" and template.status == "applied" :
+
                 param_vuln = ast.literal_eval(template.params)
                 powershell_script = template.template.content
                 result = execute_powershell_winrm(dc.ip, powershell_script, param_vuln, db)
