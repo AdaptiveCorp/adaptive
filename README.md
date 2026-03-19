@@ -139,3 +139,17 @@ uv run yamllint adaptive/api/database/
 ```bash
 uv run ruff check . --fix && uv run ruff format . && uv run yamllint adaptive/api/database/
 ```
+
+# Docker
+
+Pour build
+
+```bash
+docker build -t adaptive-api .
+```
+
+Pour lancer :
+
+```bash
+docker run --rm -p 8000:8000 --env-file .env adaptive-api
+```
