@@ -23,13 +23,9 @@ COPY --from=builder /app/.venv /app/.venv
 COPY alembic.ini ./
 COPY migrations/ migrations/
 
-COPY adaptive/api/database/templates.yaml adaptive/api/database/templates.yaml
-
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-CMD ["gunicorn", "adaptive.api.main:app", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--bind", "0.0.0.0:8000"]
+CMD ["sh", "-c", "alembic upgrade head && gunicorn adaptive.api.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"]
