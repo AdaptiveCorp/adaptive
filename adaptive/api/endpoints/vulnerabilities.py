@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from adaptive.api.models.applied_template import AppliedTemplate
+from adaptive.api.infrastructure.ansible.ansible_provider import PlaybookResult
 from adaptive.api.models.template import Template, TemplateType
 from adaptive.api.models.domain import Domain
 
@@ -99,7 +100,6 @@ def post_vulnerability(project_id: int, domain_id: int, vuln_id : int, request :
     db.commit()
     db.refresh(domain)
 
-    #result = execute_powershell_winrm(primary_dc.ip, powershell_script, param_req, db)
     
     return {"id": applied_template.id, "template_id": applied_template.template_id, "params": applied_template.params}
 
@@ -112,17 +112,15 @@ def deploy_vulnerability(vuln_id : int, db: Session = Depends(get_db)):
     param_vuln = ast.literal_eval(vuln_template.params)
 
     if vuln_template.domain :
-        dc = get_root_dc(vuln_template.domainmain, db)
+        dc = get_root_dc(vuln_template.domain, db)
         ip = dc.ip
 
     elif vuln_template.server :
         ip = vuln_template.server.ip
-
     
     result = execute_powershell_winrm(ip, powershell_script,param_vuln)
 
-
-    return None
+    return {"etat" : result}
 
 @router.delete("/{vuln_id}")
 def remove_applied_vulnerability(vuln_id: int, db: Session = Depends(get_db)):

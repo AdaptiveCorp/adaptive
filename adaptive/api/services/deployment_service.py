@@ -2,6 +2,7 @@ import logging
 import time
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from adaptive.api.infrastructure.ansible.ansible_provider import PlaybookResult
 from adaptive.api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
 from adaptive.api.infrastructure.base import DeploymentResult, HypervisorProvider
 from adaptive.api.models.applied_template import AppliedTemplate
@@ -103,11 +104,12 @@ def execute_powershell_winrm(server_ip: int, powershell_script, params, db: Sess
     print("server_ip", server_ip)
     print("Content", playbook_content)
     print("params", params)
-    ansible._run_playbook(
+
+    playbook_result = ansible._run_playbook(
         playbook_content, server_ip, params
     )
     
-    return None
+    return playbook_result
 
 def deploy_project(
     project: Project,
@@ -256,7 +258,7 @@ def deploy_project(
         dc = get_root_dc(domain, db)
         for template in liste_templates :
             
-            if template.template.category != "infrastrucutre" and template.status == "applied" :
+            if template.template.category != "infrastructure" and template.status == "applied" :
 
                 param_vuln = ast.literal_eval(template.params)
                 powershell_script = template.template.content
