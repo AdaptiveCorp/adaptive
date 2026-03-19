@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 def _bare_ip(ip: str) -> str:
     return ip.split("/")[0]
 
-def ansible_deploy_user(user : User, db : Session) :
+def ansible_deploy_user(user : User, db : Session) -> PlaybookResult:
     ansible = AnsibleService(db=db)
 
     if user.domain : 
@@ -38,7 +38,7 @@ def ansible_deploy_user(user : User, db : Session) :
         fqdn = primary_dc.fqdn
         base_dn = "DC="+fqdn.split('.')[-2].lower()+","+"DC="+fqdn.split('.')[-1].lower()
         result = ansible.add_users(server_ip=_bare_ip(primary_dc.ip), users=user_dicts, base_dn=base_dn, domain_fqdn=domain.fqdn)
-        return {"succes" : result.success}
+        return result
 
     else : 
         print("Erreur la fonction prend que des users de domain")
