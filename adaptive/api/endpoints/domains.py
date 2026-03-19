@@ -1,31 +1,32 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from adaptive.api.environment.database import get_db
+from adaptive.api.exceptions import ForestNotFoundError
 from adaptive.api.models.domain import Domain
 from adaptive.api.models.forest import Forest
+from adaptive.api.schemas.domain import DomainCreate, DomainResponse
 
 router = APIRouter(prefix="/forests/{forest_id}/domains", tags=["domains"])
 
 
-@router.post("/")
-def create_domain(forest_id: int, fqdn: str, db: Session = Depends(get_db)):
+@router.post("/", response_model=DomainResponse)
+def create_domain(forest_id: int, payload: DomainCreate, db: Session = Depends(get_db)):
     forest = db.get(Forest, forest_id)
     if not forest:
-        raise HTTPException(status_code=404, detail="Forest not found")
+        raise ForestNotFoundError(forest_id)
 
-    domain = Domain(fqdn=fqdn, forest_id=forest_id)
+    domain = Domain(fqdn=payload.fqdn, forest_id=forest_id)
     db.add(domain)
     db.commit()
     db.refresh(domain)
-    return {"id": domain.id, "fqdn": domain.fqdn, "forest_id": domain.forest_id}
+    return domain
 
 
-@router.get("/")
+@router.get("/", response_model=list[DomainResponse])
 def list_domains(forest_id: int, db: Session = Depends(get_db)):
     forest = db.get(Forest, forest_id)
     if not forest:
-        raise HTTPException(status_code=404, detail="Forest not found")
+        raise ForestNotFoundError(forest_id)
 
-    domains = db.query(Domain).filter(Domain.forest_id == forest_id).all()
-    return [{"id": d.id, "fqdn": d.fqdn, "forest_id": d.forest_id} for d in domains]
+    return db.query(Domain).filter(Domain.forest_id == forest_id).all()

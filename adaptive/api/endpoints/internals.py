@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from adaptive.api.infrastructure import HypervisorProvider, ProxmoxProvider
 
@@ -17,10 +17,4 @@ def health_check():
 def hypervisor_health():
     """Test connectivity to the hypervisor."""
     hypervisor: HypervisorProvider = ProxmoxProvider()
-    try:
-        return hypervisor.check_connection()
-    except Exception as e:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Hypervisor unreachable: {e}",
-        ) from e
+    return hypervisor.check_connection()
