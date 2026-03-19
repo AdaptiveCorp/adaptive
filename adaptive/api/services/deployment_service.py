@@ -21,6 +21,30 @@ logger = logging.getLogger(__name__)
 def _bare_ip(ip: str) -> str:
     return ip.split("/")[0]
 
+def ansible_deploy_user(user : User, db : Session) :
+    ansible = AnsibleService(db=db)
+
+    if user.domain : 
+        primary_dc = get_root_dc(user.domain, db)
+        ip = primary_dc.ip
+        domain = primary_dc.domain
+    
+        user_dicts: list[dict[str, str]] = [
+            {"username": user.username,
+                "firstname": user.firstname,
+                "lastname": user.lastname,
+                "password": user.password}
+        ]
+        fqdn = primary_dc.fqdn
+        base_dn = "DC="+fqdn.split('.')[-2].lower()+","+"DC="+fqdn.split('.')[-1].lower()
+        result = ansible.add_users(server_ip=_bare_ip(primary_dc.ip), users=user_dicts, base_dn=base_dn, domain_fqdn=domain.fqdn)
+        return {"succes" : result.success}
+
+    else : 
+        print("Erreur la fonction prend que des users de domain")
+        result = None
+        return result
+    
 
 def get_template_for_project(project: Project,db: Session) -> list[AppliedTemplate] :
     
@@ -215,7 +239,7 @@ def deploy_project(
                 domain.fqdn,
             )
             continue
-
+        
         fqdn = dc.fqdn
 
         logger.info(
@@ -242,7 +266,7 @@ def deploy_project(
             deployment_result.success = False
             deployment_result.error = result.error
             return deployment_result
-        None
+        
 
     # --- 5. Push vulnerability --- #
     project_id = project.id

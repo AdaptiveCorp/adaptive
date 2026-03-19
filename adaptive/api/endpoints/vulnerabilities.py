@@ -34,10 +34,10 @@ def list_vulnerabilities(db: Session = Depends(get_db)):
             "name": v.name,
             "description": v.description,
             "category": v.category,
+            "params": v.required_params,
         }
         for v in vulns
     ]
-
 
 @router.get("/projects/{project_id}")
 def list_applied_vulnerabilities(project_id: int, db: Session = Depends(get_db)):
@@ -89,8 +89,6 @@ def post_vulnerability(project_id: int, domain_id: int, vuln_id : int, request :
     for keys in param_req.keys() :
         if keys not in param_vuln :
             raise HTTPException(status_code=400, detail="Invalid parameters, required params are : "+ vuln_template.required_params)
-    
-    powershell_script = vuln_template.content
 
     param_req = request.params
     param_req_str = json.dumps(param_req)

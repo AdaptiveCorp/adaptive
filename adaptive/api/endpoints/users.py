@@ -6,10 +6,10 @@ from adaptive.api.models.server import Server
 from adaptive.api.models.user import User
 
 from ..environment.database import get_db
+from adaptive.api.endpoints.utils import get_root_dc
+from adaptive.api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
+from adaptive.api.services.deployment_service import ansible_deploy_user
 
-# from ..services.vulnerability_service import VulnerabilityService
-# from ..integrations.ansible_generator import generate_playbook_content
-# from ..integrations.ansible_runner import run_playbook_from_memory
 
 
 router = APIRouter(
@@ -59,6 +59,18 @@ def add_user(
         "server_id": user.server_id,
     }
 
+@router.post("/{user_id}")
+def deploy_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.get(User, user_id)
+    result  = ansible_deploy_user(user, db)
+
+    if result : 
+        return {"success" : False, "message" : "An error ocured during deployement of user"}
+    
+    else : 
+        return {"success" : result.success}
+    
+    
 
 @router.get("/")
 def list_users(
