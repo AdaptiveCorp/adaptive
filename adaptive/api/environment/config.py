@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     project_name: str = "Adaptive"
     db_file: str = "app.db"
+    log_level: str = "INFO"
 
     # Proxmox
     proxmox_host: str = ""
