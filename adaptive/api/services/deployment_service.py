@@ -13,7 +13,7 @@ from adaptive.api.models.user import User
 from adaptive.api.models.forest import Forest
 from adaptive.api.endpoints.utils import get_root_dc
 from sqlalchemy.orm import Session
-from textwrap import dedent
+import textwrap
 import ast
 
 logger = logging.getLogger(__name__)
@@ -91,48 +91,45 @@ def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:
                 grouped[domain] = list(domain.users)
     return grouped
 
-def execute_powershell_winrm(server_ip: int, powershell_script, params, db: Session):
+def execute_powershell_winrm(
+    server_ip: str,
+    powershell_script: str,
+    params: dict,
+    db: Session,
+) -> PlaybookResult:
     ansible = AnsibleService(db=db)
+
     
-    vars_block = "\n      ".join([f'{k}: "{v}"' for k, v in params.items()])
-    indented_script = "\n            ".join(
-        line for line in powershell_script.strip().splitlines()
-    )
+    vars_lines = "\n".join(f'    {k}: "{v}"' for k, v in params.items())
 
-
-    playbook_content = dedent(f"""
-        - name: Exécuter PowerShell
-          hosts: {server_ip}
-          gather_facts: false
-          vars:
-            {vars_block}
-            ansible_connection: winrm
-            ansible_winrm_transport: ntlm
-            ansible_winrm_server_cert_validation: ignore
-            ansible_port: 5985
-            ansible_winrm_read_timeout_sec: 120
-
-          tasks:
-            - name: Run PowerShell script
-              win_shell: |
-                {indented_script}
-              register: result
-              ignore_errors: true
-
-            - name: Debug output
-              debug:
-                var: result
-    """).lstrip("\n")
     
-    print("server_ip", server_ip)
-    print("Content", playbook_content)
-    print("params", params)
+    indented_script = textwrap.indent(powershell_script.strip(), "        ")
 
-    playbook_result = ansible._run_playbook(
-        playbook_content, server_ip, params
-    )
-    
-    return playbook_result
+    playbook_content = "\n".join([
+        f"- name: Exécuter PowerShell",
+        f"  hosts: {server_ip}",
+        f"  gather_facts: false",
+        f"  vars:",
+        vars_lines,                          
+        f"    ansible_connection: winrm",
+        f"    ansible_winrm_transport: ntlm",
+        f"    ansible_winrm_server_cert_validation: ignore",
+        f"    ansible_port: 5985",
+        f"    ansible_winrm_read_timeout_sec: 120",
+        f"",
+        f"  tasks:",
+        f"    - name: Run PowerShell script",
+        f"      win_shell: |",
+        indented_script,                     
+        f"      register: result",
+        f"      ignore_errors: true",
+        f"",
+        f"    - name: Debug output",
+        f"      debug:",
+        f"        var: result",
+    ])
+
+    return ansible._run_playbook(playbook_content, server_ip, params)
 
 def deploy_project(
     project: Project,
