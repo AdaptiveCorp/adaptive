@@ -8,6 +8,7 @@ import ansible_runner
 from sqlalchemy.orm import Session
 
 from adaptive.api.environment.config import settings
+from adaptive.api.exceptions import AnsibleSessionRequiredError, AnsibleTemplateNotFoundError
 from adaptive.api.models.template import Template
 
 logger = logging.getLogger(__name__)
@@ -39,11 +40,11 @@ class AnsibleService:
 
     def _get_template_content(self, code: str) -> str:
         if not self._db:
-            raise RuntimeError("AnsibleService requires a db session to fetch templates")
+            raise AnsibleSessionRequiredError()
 
         template = self._db.query(Template).filter(Template.code == code).first()
         if not template:
-            raise FileNotFoundError(f"Template '{code}' not found in database")
+            raise AnsibleTemplateNotFoundError(code)
 
         logger.info("%s Fetched template '%s' from database", PREFIX, code)
         return template.content

@@ -5,6 +5,12 @@ from typing import Any
 from proxmoxer import ProxmoxAPI
 
 from adaptive.api.environment.config import settings
+from adaptive.api.exceptions import (
+    ProxmoxConnectionError,
+    ProxmoxTaskError,
+    ProxmoxTimeoutError,
+    ServerMissingTemplateError,
+)
 from adaptive.api.infrastructure.base import CloneResult, HypervisorProvider, ServerInfo
 
 logger = logging.getLogger(__name__)
@@ -42,12 +48,15 @@ class ProxmoxProvider(HypervisorProvider):
     def api(self) -> Any:
         if self._api is None:
             logger.info("%s Connecting to Proxmox at %s...", PREFIX, self._host)
-            self._api = ProxmoxAPI(
-                self._host,
-                user=self._user,
-                password=self._password,
-                verify_ssl=self._verify_ssl,
-            )
+            try:
+                self._api = ProxmoxAPI(
+                    self._host,
+                    user=self._user,
+                    password=self._password,
+                    verify_ssl=self._verify_ssl,
+                )
+            except Exception as exc:
+                raise ProxmoxConnectionError(self._host, str(exc)) from exc
             logger.info("%s Connected successfully", PREFIX)
         return self._api
 
@@ -77,9 +86,7 @@ class ProxmoxProvider(HypervisorProvider):
 
     def clone_vm(self, server: ServerInfo) -> CloneResult:
         if server.template_vm_id is None:
-            raise ValueError(
-                f"Server '{server.fqdn}' (id={server.id}) has no template_vm_id assigned"
-            )
+            raise ServerMissingTemplateError(server.id, server.fqdn)
         template_id = server.template_vm_id
         logger.info("%s Cloning template %d -> '%s'...", PREFIX, template_id, server.fqdn)
 
@@ -189,7 +196,7 @@ class ProxmoxProvider(HypervisorProvider):
         while True:
             elapsed = time.time() - start_time
             if elapsed > timeout:
-                raise TimeoutError(f"Task {task_upid} timed out after {timeout}s")
+                raise ProxmoxTimeoutError(task_upid, timeout)
 
             task_info: dict[str, Any] = self.api.nodes(self._node).tasks(task_upid).status.get()
             status = task_info.get("status")
@@ -204,7 +211,7 @@ class ProxmoxProvider(HypervisorProvider):
                 )
                 return
             if status == "stopped":
-                raise RuntimeError(f"Task {task_upid} failed: {exitstatus}")
+                raise ProxmoxTaskError(task_upid, exitstatus)
 
             logger.debug("%s Task %s in progress... (%.0fs elapsed)", PREFIX, task_upid, elapsed)
             time.sleep(poll_interval)

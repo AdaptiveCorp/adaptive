@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from adaptive.api.endpoints.utils import get_root_dc
+from adaptive.api.exceptions import DeploymentNoServersError
 from adaptive.api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
 from adaptive.api.infrastructure.base import DeploymentResult, HypervisorProvider
 from adaptive.api.models.applied_template import AppliedTemplate
@@ -95,9 +96,9 @@ def execute_powershell_winrm(server_ip: int, powershell_script, params, db: Sess
                 var: result
     """).lstrip("\n")
 
-    print("server_ip", server_ip)
-    print("Content", playbook_content)
-    print("params", params)
+    logger.debug("server_ip=%s", server_ip)
+    logger.debug("Playbook content:\n%s", playbook_content)
+    logger.debug("params=%s", params)
     ansible._run_playbook(playbook_content, server_ip, params)
 
     return None
@@ -120,7 +121,7 @@ def deploy_project(
     all_servers: list[Server] = [s for d in domains for s in d.servers]
 
     if not all_servers:
-        raise ValueError("No servers in project")
+        raise DeploymentNoServersError(project.name)
 
     logger.info(
         "Project '%s': %d forests, %d domains, %d servers",
@@ -247,7 +248,7 @@ def deploy_project(
 
     liste_templates = get_template_for_project(project, db)
     liste_domain = get_all_domain_in_project(project, db)
-    print(liste_domain)
+    logger.debug("Domains: %s", [d.fqdn for d in liste_domain])
 
     for domain in liste_domain:
         # Récupère les template associé à un template

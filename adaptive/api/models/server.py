@@ -51,5 +51,9 @@ class Server(Base):
         remote_side="Server.id",
     )
 
+    @property
+    def vm_template_name(self) -> str | None:
+        return self.vm_template.name if self.vm_template else None
+
     def __repr__(self) -> str:
         return f"<Server id={self.id} fqdn={self.fqdn!r} is_dc={self.is_dc}>"

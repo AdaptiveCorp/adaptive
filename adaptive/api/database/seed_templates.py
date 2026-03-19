@@ -55,7 +55,6 @@ def seed_templates(yaml_path: str | None = None) -> None:
 
     db.commit()
     logger.info("Templates : %d ajoutés, %d mis à jour", added_count, updated_count)
-    print(f"Templates : {added_count} ajoutés, {updated_count} mis à jour")
     db.close()
 
 
