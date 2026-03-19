@@ -99,7 +99,6 @@ def execute_powershell_winrm(server_ip: int, powershell_script, params, db: Sess
         line for line in powershell_script.strip().splitlines()
     )
 
-    server_ip = '10.0.0.5'
 
     playbook_content = dedent(f"""
         - name: Exécuter PowerShell

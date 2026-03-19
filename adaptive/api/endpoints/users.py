@@ -63,13 +63,11 @@ def add_user(
 def deploy_user(user_id: int, db: Session = Depends(get_db)):
     user = db.get(User, user_id)
     result  = ansible_deploy_user(user, db)
-
     if result : 
-        return {"success" : False, "message" : "An error ocured during deployement of user"}
-    
-    else : 
         return {"success" : result.success}
     
+    else : 
+        return {"success" : False, "message" : "An error ocured during deployement of user"}
     
 
 @router.get("/")

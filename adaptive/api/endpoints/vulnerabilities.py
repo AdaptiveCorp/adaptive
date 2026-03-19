@@ -106,7 +106,7 @@ def deploy_vulnerability(vuln_id : int, db: Session = Depends(get_db)):
 
     vuln_template = db.get(AppliedTemplate, vuln_id)
     
-    powershell_script = vuln_template.content
+    powershell_script = vuln_template.template.content
     param_vuln = ast.literal_eval(vuln_template.params)
 
     if vuln_template.domain :
@@ -116,7 +116,7 @@ def deploy_vulnerability(vuln_id : int, db: Session = Depends(get_db)):
     elif vuln_template.server :
         ip = vuln_template.server.ip
     
-    result = execute_powershell_winrm(ip, powershell_script,param_vuln)
+    result = execute_powershell_winrm(ip, powershell_script,param_vuln, db)
 
     return {"etat" : result}
 
