@@ -31,6 +31,9 @@ class DeploymentResult:
 
 class HypervisorProvider(ABC):
     @abstractmethod
+    def check_connection(self) -> dict: ...
+
+    @abstractmethod
     def deploy_lab(self, servers: list[ServerInfo]) -> list[CloneResult]: ...
 
     @abstractmethod

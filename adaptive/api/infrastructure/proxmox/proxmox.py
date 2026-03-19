@@ -29,6 +29,15 @@ class ProxmoxProvider(HypervisorProvider):
         self._api: Any = None
         logger.info("%s Provider initialized (host=%s, node=%s)", PREFIX, self._host, self._node)
 
+    def check_connection(self) -> dict:
+        version = self.api.version.get()
+        return {
+            "status": "connected",
+            "host": self._host,
+            "node": self._node,
+            "version": version.get("version"),
+        }
+
     @property
     def api(self) -> Any:
         if self._api is None:
