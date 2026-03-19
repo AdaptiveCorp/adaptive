@@ -11,7 +11,6 @@ from adaptive.api.environment.database import Base
 if TYPE_CHECKING:
     from adaptive.api.models.applied_template import AppliedTemplate
 
-
 class TemplateType(str, enum.Enum):
     CONFIG = "config"
     VULNERABILITY = "vulnerability"
