@@ -103,7 +103,7 @@ templates:
             community.windows.win_domain_user:
               name: "{{ item.username }}"
               firstname: "{{ item.firstname | default(item.username) }}"
-              surname: "{{ item.surname | default('User') }}"
+              surname: "{{ item.lastname | default('User') }}"
               password: "{{ item.password }}"
               state: present
               enabled: yes

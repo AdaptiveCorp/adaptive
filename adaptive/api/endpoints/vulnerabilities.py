@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from adaptive.api.endpoints.utils import get_root_dc
+from adaptive.api.environment.database import get_db
 from adaptive.api.exceptions import (
     AppliedVulnerabilityNotFoundError,
     DomainNotFoundError,
@@ -12,7 +13,6 @@ from adaptive.api.exceptions import (
     VulnerabilityNotFoundError,
 )
 from adaptive.api.models.applied_template import AppliedTemplate
-from adaptive.api.models.domain import Domain
 from adaptive.api.models.template import Template, TemplateType
 from adaptive.api.schemas.common import MessageResponse
 from adaptive.api.schemas.vulnerability import (
@@ -21,8 +21,6 @@ from adaptive.api.schemas.vulnerability import (
     VulnerabilityApply,
     VulnerabilityResponse,
 )
-
-from ..environment.database import get_db
 
 router = APIRouter(
     prefix="/vulnerabilities",
@@ -95,6 +93,26 @@ def post_vulnerability(
     # result = execute_powershell_winrm(primary_dc.ip, powershell_script, param_req, db)
 
     return applied_template
+
+
+@router.post("/{vuln_id}")
+def deploy_vulnerability(vuln_id: int, db: Session = Depends(get_db)):
+
+    vuln_template = db.get(AppliedTemplate, vuln_id)
+
+    powershell_script = vuln_template.template.content
+    param_vuln = ast.literal_eval(vuln_template.params)
+
+    if vuln_template.domain:
+        dc = get_root_dc(vuln_template.domain, db)
+        ip = dc.ip
+
+    elif vuln_template.server:
+        ip = vuln_template.server.ip
+
+    result = execute_powershell_winrm(ip, powershell_script, param_vuln, db)
+
+    return {"etat": result}
 
 
 @router.delete("/{vuln_id}", response_model=MessageResponse)

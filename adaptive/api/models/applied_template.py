@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from adaptive.api.environment.database import Base
 
 if TYPE_CHECKING:
@@ -47,6 +46,8 @@ class AppliedTemplate(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
     )
+
+    status: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     def __repr__(self) -> str:
         return f"<AppliedTemplate id={self.id} template_id={self.template_id}>"

@@ -100,6 +100,15 @@ rm app.db && uv run alembic upgrade head
 
 > **Note :** Les templates de vulnérabilités sont automatiquement injectés au démarrage de l'application depuis `templates.yaml`.
 
+# Status des templates
+
+Un template lorsqu'il est appliqué peut avoir plusieurs status :
+
+- applied
+- failed
+- modified
+- pending
+
 ## Linting
 
 Le projet utilise deux linters, installés automatiquement avec `uv sync` (groupe `dev`) :

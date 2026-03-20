@@ -1,14 +1,14 @@
 import ast
 import logging
+import textwrap
 import time
-from textwrap import dedent
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from adaptive.api.endpoints.utils import get_root_dc
-from adaptive.api.exceptions import DeploymentNoServersError
 from adaptive.api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
+from adaptive.api.infrastructure.ansible.ansible_provider import PlaybookResult
 from adaptive.api.infrastructure.base import DeploymentResult, HypervisorProvider
 from adaptive.api.models.applied_template import AppliedTemplate
 from adaptive.api.models.domain import Domain
@@ -22,6 +22,43 @@ logger = logging.getLogger(__name__)
 
 def _bare_ip(ip: str) -> str:
     return ip.split("/")[0]
+
+
+def ansible_deploy_user(user: User, db: Session) -> PlaybookResult:
+    ansible = AnsibleService(db=db)
+
+    if user.domain:
+        primary_dc = get_root_dc(user.domain, db)
+
+        domain = primary_dc.domain
+
+        user_dicts: list[dict[str, str]] = [
+            {
+                "username": user.username,
+                "firstname": user.firstname,
+                "lastname": user.lastname,
+                "password": user.password,
+            }
+        ]
+        fqdn = primary_dc.fqdn
+        base_dn = "DC=" + fqdn.split(".")[-2].lower() + "," + "DC=" + fqdn.split(".")[-1].lower()
+        result = ansible.add_users(
+            server_ip=_bare_ip(primary_dc.ip),
+            users=user_dicts,
+            base_dn=base_dn,
+            domain_fqdn=domain.fqdn,
+        )
+        return result
+
+    else:
+        print("Erreur la fonction prend que des users de domain")
+        result = None
+        return result
+
+
+def get_template_for_project(project: Project, db: Session) -> list[AppliedTemplate]:
+
+    stmt = select(AppliedTemplate).where(AppliedTemplate.project_id == project.id)
 
 
 def get_template_for_project(project: Project, db: Session) -> list[AppliedTemplate]:
@@ -65,73 +102,56 @@ def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:
     return grouped
 
 
-def execute_powershell_winrm(server_ip: int, powershell_script, params, db: Session):
+def execute_powershell_winrm(
+    server_ip: str,
+    powershell_script: str,
+    params: dict,
+    db: Session,
+) -> PlaybookResult:
     ansible = AnsibleService(db=db)
 
-    vars_block = "\n      ".join([f'{k}: "{v}"' for k, v in params.items()])
+    vars_lines = "\n".join(f'    {k}: "{v}"' for k, v in params.items())
 
-    indented_script = "\n            ".join(line for line in powershell_script.strip().splitlines())
+    indented_script = textwrap.indent(powershell_script.strip(), "        ")
 
-    playbook_content = dedent(f"""
-        - name: Exécuter PowerShell
-          hosts: {server_ip}
-          gather_facts: false
-          vars:
-            {vars_block}
-            ansible_connection: winrm
-            ansible_winrm_transport: ntlm
-            ansible_winrm_server_cert_validation: ignore
-            ansible_port: 5985
-            ansible_winrm_read_timeout_sec: 120
-
-          tasks:
-            - name: Run PowerShell script
-              win_shell: |
-                {indented_script}
-              register: result
-              ignore_errors: true
-
-            - name: Debug output
-              debug:
-                var: result
-    """).lstrip("\n")
-
-    logger.debug("server_ip=%s", server_ip)
-    logger.debug("Playbook content:\n%s", playbook_content)
-    logger.debug("params=%s", params)
-    ansible._run_playbook(playbook_content, server_ip, params)
-
-    return None
-
-
-def deploy_project(
-    project: Project,
-    db: Session,
-    hypervisor: HypervisorProvider | None = None,
-    ansible: AnsibleService | None = None,
-) -> DeploymentResult:
-
-    logger.info("Starting deployment for project '%s'", project.name)
-
-    hypervisor = hypervisor or ProxmoxProvider()
-    ansible = ansible or AnsibleService(db=db)
-
-    forests = project.forests
-    domains: list[Domain] = [d for f in forests for d in f.domains]
-    all_servers: list[Server] = [s for d in domains for s in d.servers]
-
-    if not all_servers:
-        raise DeploymentNoServersError(project.name)
-
-    logger.info(
-        "Project '%s': %d forests, %d domains, %d servers",
-        project.name,
-        len(forests),
-        len(domains),
-        len(all_servers),
+    playbook_content = "\n".join(
+        [
+            "- name: Exécuter PowerShell",
+            f"  hosts: {server_ip}",
+            "  gather_facts: false",
+            "  vars:",
+            vars_lines,
+            "    ansible_connection: winrm",
+            "    ansible_winrm_transport: ntlm",
+            "    ansible_winrm_server_cert_validation: ignore",
+            "    ansible_port: 5985",
+            "    ansible_winrm_read_timeout_sec: 120",
+            "",
+            "  tasks:",
+            "    - name: Run PowerShell script",
+            "      win_shell: |",
+            indented_script,
+            "      register: result",
+            "      ignore_errors: true",
+            "",
+            "    - name: Debug output",
+            "      debug:",
+            "        var: result",
+        ]
     )
 
-    # # --- 1. Clone VMs --- #
+    return ansible._run_playbook(playbook_content, server_ip, params)
+
+
+def _step_clone_vms(
+    project: Project,
+    all_servers: list[Server],
+    hypervisor: HypervisorProvider,
+    db: Session,
+    deployment_result: DeploymentResult,
+) -> DeploymentResult:
+    logger.info("[STEP 1] Cloning %d VMs for project '%s'", len(all_servers), project.name)
+
     server_infos: list[ServerInfo] = [
         ServerInfo(
             id=s.id,
@@ -144,38 +164,52 @@ def deploy_project(
         for s in all_servers
     ]
     clone_results = hypervisor.deploy_lab(server_infos)
+    deployment_result.clone_results = clone_results
+
     for res in clone_results:
         if res.success and res.vm_id:
             srv: Server | None = db.get(Server, res.server_id)
             if srv:
                 srv.vm_id = res.vm_id
-                logger.info("Saved vm_id=%d for server '%s'", res.vm_id, srv.fqdn)
-    db.commit()
+                logger.info("[STEP 1] Saved vm_id=%d for server '%s'", res.vm_id, srv.fqdn)
+        else:
+            logger.warning("[STEP 1] Clone failed or missing vm_id for server_id=%s", res.server_id)
 
-    logger.info("Waiting 60s for VMs to boot...")
+    db.commit()
+    logger.info("[STEP 1] All VMs cloned. Waiting 60s for boot...")
     time.sleep(60)
 
-    deployment_result = DeploymentResult(
-        project_name=project.name,
-        success=True,
-        message="Deployment completed",
-        clone_results=clone_results,
-    )
+    return deployment_result
 
-    # # --- 2. DC Promotion ---
+
+def _step_promote_dcs(
+    project: Project,
+    hypervisor: HypervisorProvider,
+    ansible: AnsibleService,
+    deployment_result: DeploymentResult,
+) -> DeploymentResult:
     dcs_by_domain = get_dcs_grouped_by_domain(project)
 
-    if dcs_by_domain:
-        logger.info("Starting DC promotions across %d domains", len(dcs_by_domain))
+    if not dcs_by_domain:
+        logger.info("[STEP 2] No DCs to promote, skipping.")
+        return deployment_result
+
+    logger.info("[STEP 2] Starting DC promotions across %d domain(s)", len(dcs_by_domain))
 
     for domain, dcs in dcs_by_domain.items():
-        logger.info("Processing domain '%s' (%d DCs)", domain.fqdn, len(dcs))
+        logger.info("[STEP 2] Processing domain '%s' (%d DC(s))", domain.fqdn, len(dcs))
 
         for i, dc in enumerate(dcs):
             if not dc.ip:
-                logger.error("DC '%s' has no IP, skipping", dc.fqdn)
+                logger.error("[STEP 2] DC '%s' has no IP, skipping", dc.fqdn)
                 continue
 
+            logger.info(
+                "[STEP 2] Promoting DC '%s' (is_first_dc=%s) in domain '%s'",
+                dc.fqdn,
+                i == 0,
+                domain.fqdn,
+            )
             result = ansible.dc_promote(
                 server_ip=_bare_ip(dc.ip),
                 dc_hostname=dc.fqdn.split(".")[0],
@@ -185,42 +219,44 @@ def deploy_project(
             )
 
             if not result.success:
-                logger.error("Deployment aborted: DC promotion failed for '%s'", dc.fqdn)
+                logger.error("[STEP 2] DC promotion failed for '%s': %s", dc.fqdn, result.error)
                 deployment_result.success = False
                 deployment_result.error = result.error
                 return deployment_result
 
+            logger.info("[STEP 2] DC promotion succeeded for '%s'", dc.fqdn)
+
             if dc.vm_id:
+                logger.info("[STEP 2] Restarting VM id=%d for '%s'", dc.vm_id, dc.fqdn)
                 hypervisor.restart_vm(dc.vm_id)
 
-    # # --- 3. Wait for DCs to reboot after promotion --- #
-    if dcs_by_domain:
-        logger.info("Waiting 60s for DCs to reboot after promotion...")
-        time.sleep(60)
+    logger.info("[STEP 2] All DC promotions done. Waiting 60s for reboot...")
+    time.sleep(60)
 
-    # --- 4. Add Users --- #
+    return deployment_result
+
+
+def _step_add_users(
+    project: Project,
+    ansible: AnsibleService,
+    deployment_result: DeploymentResult,
+) -> DeploymentResult:
     users_by_domain = get_users_grouped_by_domain(project)
 
-    if users_by_domain:
-        logger.info("Starting user creation across %d domains", len(users_by_domain))
+    if not users_by_domain:
+        logger.info("[STEP 3] No users to create, skipping.")
+        return deployment_result
+
+    logger.info("[STEP 3] Starting user creation across %d domain(s)", len(users_by_domain))
 
     for domain, users in users_by_domain.items():
-        # Find a DC for this domain to run the playbook against
         dc = next((s for s in domain.servers if s.is_dc and s.ip), None)
         if not dc:
-            logger.error(
-                "No reachable DC found for domain '%s', skipping user creation",
-                domain.fqdn,
-            )
+            logger.error("[STEP 3] No reachable DC for domain '%s', skipping", domain.fqdn)
             continue
-        fqdn = dc.fqdn
 
-        logger.info(
-            "Adding %d users to domain '%s' via DC '%s'",
-            len(users),
-            domain.fqdn,
-            dc.fqdn,
-        )
+        fqdn = dc.fqdn
+        base_dn = f"DC={fqdn.split('.')[-2].lower()},DC={fqdn.split('.')[-1].lower()}"
 
         user_dicts: list[dict[str, str]] = [
             {
@@ -231,37 +267,139 @@ def deploy_project(
             }
             for u in users
         ]
-        base_dn = "DC=" + fqdn.split(".")[-2].lower() + "," + "DC=" + fqdn.split(".")[-1].lower()
+
+        logger.info(
+            "[STEP 3] Adding %d user(s) to domain '%s' via DC '%s'",
+            len(users),
+            domain.fqdn,
+            dc.fqdn,
+        )
         result = ansible.add_users(
-            server_ip=_bare_ip(dc.ip), users=user_dicts, base_dn=base_dn, domain_fqdn=domain.fqdn
+            server_ip=_bare_ip(dc.ip),
+            users=user_dicts,
+            base_dn=base_dn,
+            domain_fqdn=domain.fqdn,
         )
 
         if not result.success:
-            logger.error("User creation failed on domain '%s': %s", domain.fqdn, result.error)
+            logger.error("[STEP 3] User creation failed on '%s': %s", domain.fqdn, result.error)
             deployment_result.success = False
             deployment_result.error = result.error
             return deployment_result
 
-    # --- 5. Push vulnerability --- #
+        logger.info("[STEP 3] Users successfully created on domain '%s'", domain.fqdn)
 
-    dcs_by_domain = get_dcs_grouped_by_domain(project)
+    return deployment_result
 
+
+def _step_push_vulnerabilities(
+    project: Project,
+    db: Session,
+    deployment_result: DeploymentResult,
+) -> DeploymentResult:
     liste_templates = get_template_for_project(project, db)
     liste_domain = get_all_domain_in_project(project, db)
-    logger.debug("Domains: %s", [d.fqdn for d in liste_domain])
 
-    for domain in liste_domain:
-        # Récupère les template associé à un template
-        # Récupère le dc :
-        dc = get_root_dc(domain, db)
-        for template in liste_templates:
-            if template.template.category != "infrastrucutre":
-                param_vuln = ast.literal_eval(template.params)
-                powershell_script = template.template.content
-                result = execute_powershell_winrm(dc.ip, powershell_script, param_vuln, db)
+    vuln_templates = [
+        t
+        for t in liste_templates
+        if t.template.category != "infrastructure" and t.status == "applied"
+    ]
+
+    if not vuln_templates:
+        logger.info("[STEP 4] No vulnerability templates to apply, skipping.")
+        return deployment_result
 
     logger.info(
-        "Deployment completed for project '%s' (success=%s)",
+        "[STEP 4] Pushing %d vulnerability template(s) across %d domain(s)",
+        len(vuln_templates),
+        len(liste_domain),
+    )
+
+    for domain in liste_domain:
+        dc = get_root_dc(domain, db)
+
+        for template in vuln_templates:
+            logger.info(
+                "[STEP 4] Applying template '%s' on DC '%s' (domain '%s')",
+                template.template.code,
+                dc.fqdn,
+                domain.fqdn,
+            )
+            param_vuln = ast.literal_eval(template.params)
+            powershell_script = template.template.content
+
+            result = execute_powershell_winrm(dc.ip, powershell_script, param_vuln, db)
+
+            if not result.success:
+                logger.error(
+                    "[STEP 4] Template '%s' failed on '%s': %s",
+                    template.template.code,
+                    dc.fqdn,
+                    result.error,
+                )
+                deployment_result.success = False
+                deployment_result.error = result.error
+                return deployment_result
+
+            logger.info(
+                "[STEP 4] Template '%s' applied successfully on '%s'",
+                template.template.code,
+                dc.fqdn,
+            )
+
+    return deployment_result
+
+
+def deploy_project(
+    project: Project,
+    db: Session,
+    hypervisor: HypervisorProvider | None = None,
+    ansible: AnsibleService | None = None,
+) -> DeploymentResult:
+    logger.info("[DEPLOY] Starting deployment for project '%s'", project.name)
+
+    hypervisor = hypervisor or ProxmoxProvider()
+    ansible = ansible or AnsibleService(db=db)
+
+    domains: list[Domain] = [d for f in project.forests for d in f.domains]
+    all_servers: list[Server] = [s for d in domains for s in d.servers]
+
+    if not all_servers:
+        raise ValueError(f"No servers found in project '{project.name}'")
+
+    logger.info(
+        "[DEPLOY] Project '%s': %d forest(s), %d domain(s), %d server(s)",
+        project.name,
+        len(project.forests),
+        len(domains),
+        len(all_servers),
+    )
+
+    deployment_result = DeploymentResult(
+        project_name=project.name,
+        success=True,
+        message="Deployment completed",
+    )
+
+    steps = [
+        lambda r: _step_clone_vms(project, all_servers, hypervisor, db, r),
+        lambda r: _step_promote_dcs(project, hypervisor, ansible, r),
+        lambda r: _step_add_users(project, ansible, r),
+        lambda r: _step_push_vulnerabilities(project, db, r),
+    ]
+
+    for step in steps:
+        deployment_result = step(deployment_result)
+        if not deployment_result.success:
+            logger.error(
+                "[DEPLOY] Deployment aborted at step: %s",
+                step.__name__ if hasattr(step, "__name__") else str(step),
+            )
+            return deployment_result
+
+    logger.info(
+        "[DEPLOY] Deployment completed for project '%s' (success=%s)",
         project.name,
         deployment_result.success,
     )

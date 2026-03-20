@@ -12,6 +12,7 @@ from adaptive.api.models.domain import Domain
 from adaptive.api.models.server import Server
 from adaptive.api.models.user import User
 from adaptive.api.schemas.user import UserCreate, UserResponse
+from adaptive.api.services.deployment_service import ansible_deploy_user
 
 router = APIRouter(
     prefix="/users",
@@ -54,6 +55,17 @@ def add_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.post("/{user_id}")
+def deploy_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.get(User, user_id)
+    result = ansible_deploy_user(user, db)
+    if result:
+        return {"success": result.success}
+
+    else:
+        return {"success": False, "message": "An error ocured during deployement of user"}
 
 
 @router.get("/", response_model=list[UserResponse])
