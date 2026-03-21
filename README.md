@@ -38,7 +38,7 @@ Cette commande va traduire les modèles de nos objets dans `api/models` en table
 Pour reset la db et la mettre à jour avec les dernière modification fait tout simplement :
 
 ```bash
-rm app.db && rm -rf migrations/versions/* && uv run alembic revision --autogenerate -m "initial" && uv run alembic upgrade head
+rm app.db && rm -rf adaptive/migrations/versions/* && uv run alembic revision --autogenerate -m "initial" && uv run alembic upgrade head
 ```
 
 ```bash

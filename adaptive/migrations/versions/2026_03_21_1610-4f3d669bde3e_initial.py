@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 21c1fc80d15b
+Revision ID: 4f3d669bde3e
 Revises: 
-Create Date: 2026-03-18 16:53:04.036748
+Create Date: 2026-03-21 16:10:10.184855
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '21c1fc80d15b'
+revision: str = '4f3d669bde3e'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -41,6 +41,15 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('code')
     )
+    op.create_table('vm_templates',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('vm_id', sa.Integer(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
+    )
     op.create_table('forests',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('fqdn', sa.String(length=255), nullable=False),
@@ -65,9 +74,11 @@ def upgrade() -> None:
     sa.Column('gtw', sa.String(length=45), nullable=True),
     sa.Column('dns', sa.String(length=45), nullable=True),
     sa.Column('domain_id', sa.Integer(), nullable=True),
+    sa.Column('vm_template_id', sa.Integer(), nullable=True),
     sa.Column('parent_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['domain_id'], ['domains.id'], ),
     sa.ForeignKeyConstraint(['parent_id'], ['servers.id'], ),
+    sa.ForeignKeyConstraint(['vm_template_id'], ['vm_templates.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('fqdn')
     )
@@ -93,6 +104,7 @@ def upgrade() -> None:
     sa.Column('forest_id', sa.Integer(), nullable=True),
     sa.Column('params', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('status', sa.Text(), nullable=True),
     sa.ForeignKeyConstraint(['domain_id'], ['domains.id'], ),
     sa.ForeignKeyConstraint(['forest_id'], ['forests.id'], ),
     sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
@@ -112,6 +124,7 @@ def downgrade() -> None:
     op.drop_table('servers')
     op.drop_table('domains')
     op.drop_table('forests')
+    op.drop_table('vm_templates')
     op.drop_table('templates')
     op.drop_table('projects')
     # ### end Alembic commands ###
