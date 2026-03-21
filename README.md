@@ -162,3 +162,19 @@ Pour lancer :
 ```bash
 docker run --rm -p 8000:8000 --env-file .env adaptive-api
 ```
+
+# Tests
+
+Pour lancer le script de test pour peuplre la base données avec :
+
+- Un vm template
+- Un project
+- Une forêt
+- Un domaine
+- Un user
+
+Lancer :
+
+```
+uv run pytest
+```

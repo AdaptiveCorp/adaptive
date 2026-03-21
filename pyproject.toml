@@ -59,6 +59,6 @@ ignore = [
 known-first-party = ["adaptive"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["adaptive/tests"]
 pythonpath = ["."]
 
