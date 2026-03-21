@@ -55,7 +55,7 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
             {"id": d.id, "fqdn": d.fqdn, "forest_id": d.forest_id} for d in domains
         ],
         "servers": [
-            {"id": s.id, "fqdn": s.fqdn, "is_dc": s.is_dc, "ip": s.ip} for s in servers
+            {"id": s.id, "fqdn": s.fqdn, "is_dc": s.is_dc, "ip": s.ip, "domain_id": s.domain_id} for s in servers
         ],
         "users": [{"id": u.id, "username": u.username} for u in users],
         "vulnerabilities_count": len(applied_vulns),

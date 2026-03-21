@@ -21,9 +21,9 @@ const categoryColors: Record<string, 'red' | 'yellow' | 'blue' | 'green' | 'gray
 }
 
 function categoryVariant(cat: string | null) {
-  if (!cat) return 'gray'
+  if (!cat) return 'gray' as const
   const key = Object.keys(categoryColors).find((k) => cat.toLowerCase().includes(k))
-  return key ? categoryColors[key] : 'gray'
+  return key ? categoryColors[key] : 'gray' as const
 }
 
 export function VulnerabilitiesSection({ projectId }: Props) {
@@ -50,81 +50,141 @@ export function VulnerabilitiesSection({ projectId }: Props) {
   })
 
   return (
-    <div className="card space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-          Vulnérabilités appliquées
-        </h2>
-        <span className="text-xs text-slate-500">
-          {applied?.length ?? 0} / {catalog?.length ?? '…'} disponibles
-        </span>
+    <div className="space-y-5">
+      {/* Applied vulnerabilities */}
+      <div className="card space-y-4">
+        <div className="flex items-center justify-between">
+          <span style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: 10,
+            fontWeight: 600,
+            color: '#475569',
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+          }}>
+            Vulnérabilités appliquées
+          </span>
+          <span style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: 11,
+            color: '#475569',
+          }}>
+            {applied?.length ?? 0} / {catalog?.length ?? '…'}
+          </span>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-6">
+            <Spinner className="w-5 h-5 text-brand-400" />
+          </div>
+        ) : !applied?.length ? (
+          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#475569', textAlign: 'center', padding: '20px 0' }}>
+            Aucune vulnérabilité appliquée à ce projet.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {applied.map((av) => (
+              <div
+                key={av.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  background: 'rgba(15, 32, 52, 0.6)',
+                  border: '1px solid rgba(22, 40, 64, 0.7)',
+                  borderRadius: 8,
+                  padding: '12px 14px',
+                  transition: 'border-color 0.15s',
+                }}
+                className="group"
+              >
+                <ShieldAlert style={{ width: 15, height: 15, color: '#FB7185', marginTop: 2, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#CBD5E1' }}>
+                      {av.vulnerability.name}
+                    </span>
+                    <span style={{
+                      fontFamily: "'Fira Code', monospace",
+                      fontSize: 11,
+                      color: '#64748B',
+                      background: 'rgba(6, 16, 28, 0.8)',
+                      border: '1px solid rgba(22, 40, 64, 0.7)',
+                      borderRadius: 4,
+                      padding: '1px 6px',
+                    }}>
+                      {av.vulnerability.code}
+                    </span>
+                    {av.domain_id && <Badge label={`Domain #${av.domain_id}`} variant="blue" />}
+                    {av.user_id && <Badge label={`User #${av.user_id}`} variant="yellow" />}
+                    {av.server_id && <Badge label={`Server #${av.server_id}`} variant="gray" />}
+                    {av.forest_id && <Badge label={`Forest #${av.forest_id}`} variant="green" />}
+                  </div>
+                  {av.params && (
+                    <pre style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: '#64748B', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {av.params}
+                    </pre>
+                  )}
+                  <p style={{ fontSize: 11, color: '#475569', marginTop: 3, fontFamily: "'IBM Plex Mono', monospace" }}>
+                    {new Date(av.created_at).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setRemoveTarget(av)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: '#475569', transition: 'all 0.15s', padding: 4, borderRadius: 4,
+                    opacity: 0,
+                  }}
+                  className="group-hover:opacity-100"
+                  onMouseEnter={e => { e.currentTarget.style.color = '#FB7185'; e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)'; e.currentTarget.style.opacity = '1' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.background = 'none' }}
+                >
+                  <Trash2 style={{ width: 14, height: 14 }} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* List */}
-      {isLoading ? (
-        <div className="flex justify-center py-6">
-          <Spinner className="w-5 h-5 text-brand-400" />
-        </div>
-      ) : !applied?.length ? (
-        <p className="text-slate-500 text-sm text-center py-4">
-          Aucune vulnérabilité appliquée à ce projet.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {applied.map((av) => (
-            <div
-              key={av.id}
-              className="flex items-start gap-3 bg-dark-700 rounded-xl px-4 py-3 group"
-            >
-              <ShieldAlert className="w-4 h-4 text-danger-400 mt-0.5 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-slate-200">
-                    {av.vulnerability.name}
-                  </span>
-                  <span className="text-xs font-mono text-slate-500 bg-dark-800 px-1.5 py-0.5 rounded">
-                    {av.vulnerability.code}
-                  </span>
-                  {av.domain_id && <Badge label={`Domain #${av.domain_id}`} variant="blue" />}
-                  {av.user_id && <Badge label={`User #${av.user_id}`} variant="yellow" />}
-                  {av.server_id && <Badge label={`Server #${av.server_id}`} variant="gray" />}
-                  {av.forest_id && <Badge label={`Forest #${av.forest_id}`} variant="green" />}
-                </div>
-                {av.params && (
-                  <pre className="text-xs text-slate-500 mt-1 font-mono truncate">{av.params}</pre>
-                )}
-                <p className="text-xs text-slate-600 mt-0.5">
-                  {new Date(av.created_at).toLocaleDateString('fr-FR')}
-                </p>
-              </div>
-              <button
-                onClick={() => setRemoveTarget(av)}
-                className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-danger-400 transition"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Catalog preview */}
+      {/* Catalog */}
       {catalog && catalog.length > 0 && (
-        <div>
-          <h3 className="text-xs font-semibold text-slate-500 uppercase mb-2 flex items-center gap-1.5">
-            <Tag className="w-3.5 h-3.5" /> Catalogue disponible
-          </h3>
-          <div className="flex flex-wrap gap-2">
+        <div className="card space-y-3">
+          <div className="flex items-center gap-2">
+            <Tag style={{ width: 13, height: 13, color: '#475569' }} />
+            <span style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: 10,
+              fontWeight: 600,
+              color: '#475569',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+            }}>
+              Catalogue disponible
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {catalog.map((v) => (
               <div
                 key={v.id}
-                className="flex items-center gap-1.5 bg-dark-700 rounded-lg px-2.5 py-1.5"
                 title={v.description ?? ''}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: 'rgba(15, 32, 52, 0.6)',
+                  border: '1px solid rgba(22, 40, 64, 0.7)',
+                  borderRadius: 6,
+                  padding: '6px 10px',
+                  cursor: 'default',
+                }}
               >
                 <Badge label={v.category ?? 'misc'} variant={categoryVariant(v.category)} />
-                <span className="text-xs text-slate-300 font-mono">{v.code}</span>
-                <span className="text-xs text-slate-500">– {v.name}</span>
+                <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 12, color: '#94A3B8' }}>
+                  {v.code}
+                </span>
+                <span style={{ fontSize: 12, color: '#64748B' }}>— {v.name}</span>
               </div>
             ))}
           </div>
@@ -134,19 +194,17 @@ export function VulnerabilitiesSection({ projectId }: Props) {
       {/* Remove confirm */}
       {removeTarget && (
         <Modal title="Supprimer la vulnérabilité" onClose={() => setRemoveTarget(null)}>
-          <p className="text-slate-300 text-sm">
+          <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20, lineHeight: 1.6 }}>
             Supprimer{' '}
-            <span className="font-semibold text-slate-100">
+            <span style={{ fontFamily: "'Fira Code', monospace", color: '#E2E8F0', fontWeight: 500 }}>
               {removeTarget.vulnerability.name}
             </span>{' '}
             de ce projet ?
           </p>
-          <div className="flex gap-2 justify-end mt-5">
-            <button className="btn-ghost" onClick={() => setRemoveTarget(null)}>
-              Annuler
-            </button>
+          <div className="flex gap-2 justify-end">
+            <button className="btn-ghost" onClick={() => setRemoveTarget(null)}>Annuler</button>
             <button
-              className="btn-danger flex items-center gap-2"
+              className="btn-danger"
               disabled={removeMutation.isPending}
               onClick={() => removeMutation.mutate(removeTarget.id)}
             >

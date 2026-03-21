@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { UserRound, Plus } from 'lucide-react'
+import { Users, Plus } from 'lucide-react'
 import { usersApi } from '../../api/users'
 import { Modal } from '../Modal'
 import { Spinner } from '../Spinner'
@@ -11,7 +11,7 @@ interface Props {
   domains: Domain[]
 }
 
-export function UsersSection({ projectId, domains }: Props) {
+export function UsersTab({ projectId, domains }: Props) {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({
@@ -22,12 +22,10 @@ export function UsersSection({ projectId, domains }: Props) {
     domain_id: '',
   })
 
-  const userQueries = useQuery({
+  const { data: users, isLoading } = useQuery({
     queryKey: ['users', projectId],
     queryFn: async () => {
-      const results = await Promise.all(
-        domains.map((d) => usersApi.list({ domain_id: d.id }))
-      )
+      const results = await Promise.all(domains.map((d) => usersApi.list({ domain_id: d.id })))
       return results.flat()
     },
     enabled: domains.length > 0,
@@ -44,15 +42,16 @@ export function UsersSection({ projectId, domains }: Props) {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] })
       setOpen(false)
       setForm({ firstname: '', lastname: '', username: '', password: '', domain_id: '' })
     },
   })
 
-  const users = userQueries.data ?? []
+  const allUsers = users ?? []
 
   return (
-    <div className="card space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <span style={{
           fontFamily: "'IBM Plex Mono', monospace",
@@ -71,40 +70,63 @@ export function UsersSection({ projectId, domains }: Props) {
           disabled={domains.length === 0}
           title={domains.length === 0 ? "Créez d'abord un domaine" : undefined}
         >
-          <Plus className="w-3.5 h-3.5" /> Utilisateur
+          <Plus className="w-3.5 h-3.5" /> Ajouter
         </button>
       </div>
 
-      {userQueries.isLoading ? (
-        <div className="flex justify-center py-6">
+      {isLoading ? (
+        <div className="flex justify-center py-12">
           <Spinner className="w-5 h-5 text-brand-400" />
         </div>
-      ) : users.length === 0 ? (
-        <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#475569', textAlign: 'center', padding: '16px 0' }}>
-          {domains.length === 0
-            ? "Créez un domaine avant d'ajouter des utilisateurs."
-            : 'Aucun utilisateur — ajoutez-en pour configurer votre lab.'}
-        </p>
+      ) : allUsers.length === 0 ? (
+        <div style={{
+          background: 'rgba(10, 23, 40, 0.6)',
+          border: '1px dashed rgba(22, 40, 64, 0.8)',
+          borderRadius: 10,
+          padding: '48px 24px',
+          textAlign: 'center',
+        }}>
+          <Users style={{ width: 32, height: 32, color: '#475569', margin: '0 auto 12px' }} />
+          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#475569' }}>
+            {domains.length === 0
+              ? "Créez un domaine avant d'ajouter des utilisateurs."
+              : 'Aucun utilisateur — ajoutez-en pour configurer votre lab.'}
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {users.map((user) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {allUsers.map((user) => {
             const domain = domains.find((d) => d.id === user.domain_id)
+            const initials = user.username?.slice(0, 2).toUpperCase() ?? '??'
             return (
-              <div
-                key={user.id}
-                style={{
+              <div key={user.id} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                background: 'rgba(10, 23, 40, 0.85)',
+                border: '1px solid rgba(22, 40, 64, 0.8)',
+                borderRadius: 8,
+                padding: '12px 14px',
+              }}>
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  background: 'rgba(251, 191, 36, 0.1)',
+                  border: '1px solid rgba(251, 191, 36, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10,
-                  background: 'rgba(15, 32, 52, 0.6)',
-                  border: '1px solid rgba(22, 40, 64, 0.7)',
-                  borderRadius: 7,
-                  padding: '10px 12px',
-                }}
-              >
-                <UserRound style={{ width: 14, height: 14, color: '#64748B', flexShrink: 0 }} />
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  color: '#FBBF24',
+                }}>
+                  {initials}
+                </div>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: '#CBD5E1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>
+                  <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: '#CBD5E1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
                     {user.username}
                   </p>
                   {domain && (

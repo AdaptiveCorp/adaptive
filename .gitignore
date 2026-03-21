@@ -4,6 +4,6 @@ app.db
 __pycache__/
 *.pyc
 *.auto.pkrvars.hcl
-adaptive/adaptive_web/dist/
-adaptive/adaptive_web/node_modules/
-adaptive/adaptive_web/.env
+adaptive/web/dist/
+adaptive/web/node_modules/
+adaptive/web/.env

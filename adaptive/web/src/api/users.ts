@@ -2,8 +2,10 @@ import type { User } from '../types'
 import client from './client'
 
 export interface CreateUserParams {
-  username: string
+  firstname: string
+  lastname: string
   password: string
+  username?: string
   domain_id?: number
   server_id?: number
 }
