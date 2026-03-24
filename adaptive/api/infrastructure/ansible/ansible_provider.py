@@ -96,7 +96,7 @@ class AnsibleService:
     def add_users(
         self, server_ip: str, users: list[dict[str, str]], base_dn: str, domain_fqdn: str
     ) -> PlaybookResult:
-        logger.info("%s Adding %d user on %s", PREFIX, users, server_ip)
+        logger.info("%s Adding %d user(s) on %s", PREFIX, len(users), server_ip)
 
         extravars: dict[str, Any] = {
             "target_host": server_ip,
@@ -109,7 +109,7 @@ class AnsibleService:
         result = self._run_playbook(content, server_ip, extravars)
 
         if result.success:
-            logger.info("%s Successfully added %d users on %s", PREFIX, server_ip)
+            logger.info("%s Successfully added %d user(s) on %s", PREFIX, len(users), server_ip)
         else:
             logger.error("%s Failed to add users on %s: %s", PREFIX, server_ip, result.error)
 

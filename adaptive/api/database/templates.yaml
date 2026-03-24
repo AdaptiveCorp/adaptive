@@ -100,7 +100,7 @@ templates:
 
         tasks:
           - name: Create AD users
-            community.windows.win_domain_user:
+            microsoft.ad.user:
               name: "{{ item.username }}"
               firstname: "{{ item.firstname | default(item.username) }}"
               surname: "{{ item.lastname | default('User') }}"

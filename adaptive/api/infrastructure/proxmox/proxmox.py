@@ -126,34 +126,27 @@ class ProxmoxProvider(HypervisorProvider):
     def start_vm(self, vm_id: int) -> bool:
         logger.info("%s Starting VM %d...", PREFIX, vm_id)
         self.api.nodes(self._node).qemu(vm_id).status.start.post()
-        time.sleep(3)
-        ok = self._check_vm_status(vm_id, "running")
+        ok = self._wait_for_status(vm_id, "running", timeout=120, initial_wait=5)
         if ok:
             logger.info("%s VM %d started successfully", PREFIX, vm_id)
         else:
-            logger.warning("%s VM %d failed to start", PREFIX, vm_id)
+            logger.warning("%s VM %d failed to start within timeout", PREFIX, vm_id)
         return ok
 
     def stop_vm(self, vm_id: int) -> bool:
         logger.info("%s Stopping VM %d...", PREFIX, vm_id)
         self.api.nodes(self._node).qemu(vm_id).status.stop.post()
-        time.sleep(3)
-        ok = self._check_vm_status(vm_id, "stopped")
+        ok = self._wait_for_status(vm_id, "stopped", timeout=120, initial_wait=5)
         if ok:
             logger.info("%s VM %d stopped successfully", PREFIX, vm_id)
         else:
-            logger.warning("%s VM %d failed to stop", PREFIX, vm_id)
+            logger.warning("%s VM %d failed to stop within timeout", PREFIX, vm_id)
         return ok
 
     def restart_vm(self, vm_id: int) -> bool:
-        logger.info("%s Restarting VM %d...", PREFIX, vm_id)
-        self.api.nodes(self._node).qemu(vm_id).status.reboot.post()
-        ok = self._wait_for_status(vm_id, "running", timeout=120, initial_wait=20)
-        if ok:
-            logger.info("%s VM %d restarted successfully", PREFIX, vm_id)
-        else:
-            logger.warning("%s VM %d failed to restart within timeout", PREFIX, vm_id)
-        return ok
+        logger.info("%s Restarting VM %d (stop + start)...", PREFIX, vm_id)
+        self.stop_vm(vm_id)
+        return self.start_vm(vm_id)
 
     def _check_vm_status(self, vm_id: int, expected: str) -> bool:
         vm_info: dict[str, Any] = self.api.nodes(self._node).qemu(vm_id).status.current.get()

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import enum
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Text, func
+from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from adaptive.api.environment.database import Base
 
 if TYPE_CHECKING:
@@ -14,6 +16,13 @@ if TYPE_CHECKING:
     from adaptive.api.models.server import Server
     from adaptive.api.models.template import Template
     from adaptive.api.models.user import User
+
+
+class TemplateStatus(enum.StrEnum):
+    PENDING = "pending"
+    APPLIED = "applied"
+    MODIFIED = "modified"
+    ERROR = "error"
 
 
 class AppliedTemplate(Base):
@@ -47,7 +56,9 @@ class AppliedTemplate(Base):
         DateTime, server_default=func.now(), nullable=False
     )
 
-    status: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[TemplateStatus] = mapped_column(
+        String(20), nullable=False, default=TemplateStatus.PENDING
+    )
 
     def __repr__(self) -> str:
         return f"<AppliedTemplate id={self.id} template_id={self.template_id}>"
