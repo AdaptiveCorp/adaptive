@@ -51,6 +51,26 @@ uv run gunicorn adaptive.api.main:app -k uvicorn.workers.UvicornWorker
 
 L'API est disponible sur `http://localhost:8000`. La documentation Swagger est accessible sur `/docs`.
 
+## Lancer le front-end
+
+Le front-end se trouve dans `adaptive/web/` (React + Vite + TypeScript).
+
+```bash
+# Installer les dépendances
+npm --prefix adaptive/web install
+
+# Mode développement (rechargement automatique)
+npm --prefix adaptive/web run dev
+
+# Build de production
+npm --prefix adaptive/web run build
+
+# Prévisualiser le build de production
+npm --prefix adaptive/web run preview
+```
+
+L'application front-end est disponible par défaut sur `http://localhost:5173`.
+
 ## Migrations de base de données
 
 ### Principe
