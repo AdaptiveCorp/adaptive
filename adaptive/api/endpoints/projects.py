@@ -8,7 +8,12 @@ from adaptive.api.exceptions import ProjectNotFoundError
 from adaptive.api.models.applied_template import AppliedTemplate
 from adaptive.api.models.project import Project
 from adaptive.api.schemas.common import MessageResponse
-from adaptive.api.schemas.project import ProjectCreate, ProjectDetail, ProjectResponse
+from adaptive.api.schemas.project import (
+    DeployResponse,
+    ProjectCreate,
+    ProjectDetail,
+    ProjectResponse,
+)
 from adaptive.api.services.deployment_service import deploy_project as run_deployment
 
 logger = logging.getLogger(__name__)
@@ -63,7 +68,7 @@ def delete_project(project_id: int, db: Session = Depends(get_db)):
     return {"message": "Project deleted successfully"}
 
 
-@router.post("/{project_id}/deploy")
+@router.post("/{project_id}/deploy", response_model=DeployResponse)
 def deploy_project(project_id: int, db: Session = Depends(get_db)):
     project = db.get(Project, project_id)
     if not project:

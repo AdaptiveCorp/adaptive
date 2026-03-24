@@ -4,10 +4,12 @@ import logging
 import textwrap
 import time
 
+import winrm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from adaptive.api.endpoints.utils import get_root_dc
+from adaptive.api.environment.config import settings
 from adaptive.api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
 from adaptive.api.infrastructure.ansible.ansible_provider import PlaybookResult
 from adaptive.api.infrastructure.base import DeploymentResult, HypervisorProvider
@@ -26,6 +28,56 @@ def _bare_ip(ip: str) -> str:
     return ip.split("/")[0]
 
 
+def _wait_for_adws(
+    server_ip: str,
+    timeout: int = 600,  # 10 minutes
+    poll_interval: int = 15,
+    initial_wait: int = 30,
+) -> bool:
+    """Poll a DC via WinRM until Active Directory Web Services is running."""
+    if initial_wait:
+        logger.info("[WAIT] Waiting %ds before checking ADWS on %s...", initial_wait, server_ip)
+        time.sleep(initial_wait)
+
+    elapsed = 0
+    while elapsed < timeout:
+        try:
+            session = winrm.Session(
+                f"http://{server_ip}:5985/wsman",
+                auth=(settings.ansible_user, settings.ansible_password),
+                transport="ntlm",
+            )
+            result = session.run_ps("Get-Service ADWS | Select-Object -ExpandProperty Status")
+            if result.status_code == 0 and b"Running" in result.std_out:
+                logger.info(
+                    "[WAIT] ADWS is running on %s (after %ds)",
+                    server_ip,
+                    elapsed + initial_wait,
+                )
+                return True
+            logger.info(
+                "[WAIT] ADWS not ready on %s (rc=%d, stdout=%r, stderr=%r), retrying in %ds...",
+                server_ip,
+                result.status_code,
+                result.std_out,
+                result.std_err,
+                poll_interval,
+            )
+        except Exception as exc:
+            logger.info(
+                "[WAIT] Cannot reach %s yet (%s), retrying in %ds...",
+                server_ip,
+                type(exc).__name__,
+                poll_interval,
+            )
+        time.sleep(poll_interval)
+        elapsed += poll_interval
+
+    logger.error("[WAIT] Timeout (%ds) waiting for ADWS on %s", timeout + initial_wait, server_ip)
+    return False
+
+
+# need to wait for ADWS to be ready because it used in ansible.ad.users
 def ansible_deploy_user(user: User, db: Session) -> PlaybookResult:
     ansible = AnsibleService(db=db)
 
@@ -299,8 +351,14 @@ def _step_promote_dcs(
                 logger.info("[STEP 2] Restarting VM id=%d for '%s'", dc.vm_id, dc.fqdn)
                 hypervisor.restart_vm(dc.vm_id)
 
-    logger.info("[STEP 2] All DC promotions done. Waiting 60s for reboot...")
-    time.sleep(60)
+    logger.info("[STEP 2] All DC promotions done. Waiting for ADWS readiness...")
+    for _domain, dcs in dcs_by_domain.items():
+        for dc in dcs:
+            if dc.ip and not _wait_for_adws(_bare_ip(dc.ip)):
+                logger.error("[STEP 2] ADWS not ready on '%s' after timeout", dc.fqdn)
+                deployment_result.success = False
+                deployment_result.error = f"ADWS readiness timeout on {dc.fqdn}"
+                return deployment_result
 
     return deployment_result
 

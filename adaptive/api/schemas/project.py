@@ -35,6 +35,8 @@ class _ServerSummary(BaseModel):
     fqdn: str
     is_dc: bool
     ip: str | None
+    domain_id: int
+    vm_id: int | None = None
 
     model_config = {"from_attributes": True}
 
@@ -42,6 +44,7 @@ class _ServerSummary(BaseModel):
 class _UserSummary(BaseModel):
     id: int
     username: str
+    domain_id: int | None
 
     model_config = {"from_attributes": True}
 
@@ -53,3 +56,11 @@ class ProjectDetail(BaseModel):
     servers: list[_ServerSummary]
     users: list[_UserSummary]
     vulnerabilities_count: int
+
+
+class DeployResponse(BaseModel):
+    project_name: str
+    success: bool
+    message: str | None = None
+    error: str | None = None
+    clone_results: list = []

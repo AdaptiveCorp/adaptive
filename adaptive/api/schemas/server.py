@@ -15,6 +15,8 @@ class ServerResponse(BaseModel):
     fqdn: str
     is_dc: bool
     ip: str | None
+    gtw: str | None = None
+    dns: str | None = None
     vm_id: int | None = None
     domain_id: int
     vm_template_id: int | None
