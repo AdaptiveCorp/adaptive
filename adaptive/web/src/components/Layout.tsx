@@ -60,6 +60,11 @@ export function Layout({ children }: LayoutProps) {
             }>
               Projets
             </NavLink>
+            <NavLink to="/vm-templates" className={({ isActive }) =>
+              isActive ? 'nav-item-active' : 'nav-item'
+            }>
+              Templates VM
+            </NavLink>
           </nav>
 
           <div className="flex-1" />

@@ -145,7 +145,7 @@ export function ProjectDetailPage() {
         <Modal title="Résultat du déploiement" onClose={() => setDeployResult(null)}>
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              {deployResult.deployment_result.success
+              {deployResult.success
                 ? <CheckCircle className="w-5 h-5 text-success-400 shrink-0" />
                 : <XCircle    className="w-5 h-5 text-danger-400 shrink-0" />
               }
@@ -153,19 +153,19 @@ export function ProjectDetailPage() {
                 fontSize: 14,
                 fontWeight: 600,
                 fontFamily: "'IBM Plex Mono', monospace",
-                color: deployResult.deployment_result.success ? '#34D399' : '#FB7185',
+                color: deployResult.success ? '#34D399' : '#FB7185',
               }}>
-                {deployResult.deployment_result.success ? 'Déploiement réussi' : 'Échec du déploiement'}
+                {deployResult.success ? 'Déploiement réussi' : 'Échec du déploiement'}
               </span>
             </div>
 
-            {deployResult.deployment_result.message && (
+            {deployResult.message && (
               <p style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.6 }}>
-                {deployResult.deployment_result.message}
+                {deployResult.message}
               </p>
             )}
 
-            {deployResult.deployment_result.error && (
+            {deployResult.error && (
               <pre style={{
                 fontSize: 11,
                 color: '#FB7185',
@@ -177,7 +177,7 @@ export function ProjectDetailPage() {
                 maxHeight: 160,
                 fontFamily: "'Fira Code', monospace",
               }}>
-                {deployResult.deployment_result.error}
+                {deployResult.error}
               </pre>
             )}
 

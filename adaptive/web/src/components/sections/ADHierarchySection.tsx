@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronRight,
   Cpu,
@@ -11,6 +11,7 @@ import { useState } from "react";
 import { domainsApi } from "../../api/domains";
 import { forestsApi } from "../../api/forests";
 import { serversApi } from "../../api/servers";
+import { vmTemplatesApi } from "../../api/vm-templates";
 import type { Domain, Forest, Server as ServerType } from "../../types";
 import { Badge } from "../Badge";
 import { Modal } from "../Modal";
@@ -52,6 +53,12 @@ export function ADHierarchySection({
     ip: "",
     gtw: "",
     dns: "",
+    vm_template_id: "",
+  });
+
+  const { data: vmTemplates } = useQuery({
+    queryKey: ["vm-templates"],
+    queryFn: () => vmTemplatesApi.list(),
   });
 
   const addForestMutation = useMutation({
@@ -89,12 +96,13 @@ export function ADHierarchySection({
         ip: form.ip || undefined,
         gtw: form.gtw || undefined,
         dns: form.dns || undefined,
+        vm_template_id: form.vm_template_id ? Number(form.vm_template_id) : undefined,
       }),
     onSuccess: (_data, variables) => {
       setOpenDomains((prev) => new Set([...prev, variables.domainId]));
       invalidate();
       setAddServerTarget(null);
-      setServerForm({ fqdn: "", is_dc: false, ip: "", gtw: "", dns: "" });
+      setServerForm({ fqdn: "", is_dc: false, ip: "", gtw: "", dns: "", vm_template_id: "" });
     },
   });
 
@@ -576,6 +584,23 @@ export function ADHierarchySection({
                   setServerForm({ ...serverForm, dns: e.target.value })
                 }
               />
+            </div>
+            <div>
+              <label>Template VM</label>
+              <select
+                className="input"
+                value={serverForm.vm_template_id}
+                onChange={(e) =>
+                  setServerForm({ ...serverForm, vm_template_id: e.target.value })
+                }
+              >
+                <option value="">— Aucun —</option>
+                {vmTemplates?.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} (VM #{t.vm_id})
+                  </option>
+                ))}
+              </select>
             </div>
             <label
               style={{

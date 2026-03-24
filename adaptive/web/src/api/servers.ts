@@ -7,6 +7,7 @@ export interface CreateServerParams {
   ip?: string
   gtw?: string
   dns?: string
+  vm_template_id?: number
 }
 
 export const serversApi = {
@@ -16,9 +17,7 @@ export const serversApi = {
   },
 
   create: async (domainId: number, params: CreateServerParams): Promise<Server> => {
-    const res = await client.post<Server>(`/domains/${domainId}/servers/`, null, {
-      params: { ...params },
-    })
+    const res = await client.post<Server>(`/domains/${domainId}/servers/`, params)
     return res.data
   },
 }

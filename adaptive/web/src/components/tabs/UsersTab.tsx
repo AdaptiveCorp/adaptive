@@ -17,7 +17,6 @@ export function UsersTab({ projectId, domains }: Props) {
   const [form, setForm] = useState({
     firstname: '',
     lastname: '',
-    username: '',
     password: '',
     domain_id: '',
   })
@@ -37,14 +36,13 @@ export function UsersTab({ projectId, domains }: Props) {
         firstname: form.firstname.trim(),
         lastname: form.lastname.trim(),
         password: form.password,
-        username: form.username.trim() || undefined,
         domain_id: form.domain_id ? Number(form.domain_id) : undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users', projectId] })
       queryClient.invalidateQueries({ queryKey: ['project', projectId] })
       setOpen(false)
-      setForm({ firstname: '', lastname: '', username: '', password: '', domain_id: '' })
+      setForm({ firstname: '', lastname: '', password: '', domain_id: '' })
     },
   })
 
@@ -158,11 +156,6 @@ export function UsersTab({ projectId, domains }: Props) {
                 <input className="input" placeholder="ex: Doe" value={form.lastname}
                   onChange={(e) => setForm({ ...form, lastname: e.target.value })} />
               </div>
-            </div>
-            <div>
-              <label>Nom d'utilisateur <span style={{ color: '#475569', textTransform: 'none', fontSize: 10 }}>(optionnel)</span></label>
-              <input className="input" placeholder="ex: jdoe" value={form.username}
-                onChange={(e) => setForm({ ...form, username: e.target.value })} />
             </div>
             <div>
               <label>Mot de passe</label>

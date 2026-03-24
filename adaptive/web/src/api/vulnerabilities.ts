@@ -14,6 +14,14 @@ export const vulnerabilitiesApi = {
     return res.data
   },
 
+  apply: async (
+    projectId: number,
+    payload: { domain_id: number; vuln_id: number; params?: Record<string, unknown> },
+  ) => {
+    const res = await client.post(`/vulnerabilities/projects/${projectId}`, payload)
+    return res.data
+  },
+
   removeApplied: async (vulnId: number): Promise<void> => {
     await client.delete(`/vulnerabilities/${vulnId}`)
   },

@@ -13,7 +13,7 @@ export const projectsApi = {
   },
 
   create: async (name: string): Promise<Project> => {
-    const res = await client.post<Project>('/projects/', null, { params: { name } })
+    const res = await client.post<Project>('/projects/', { name })
     return res.data
   },
 

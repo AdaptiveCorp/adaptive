@@ -8,9 +8,7 @@ export const forestsApi = {
   },
 
   create: async (projectId: number, fqdn: string): Promise<Forest> => {
-    const res = await client.post<Forest>(`/projects/${projectId}/forests/`, null, {
-      params: { fqdn },
-    })
+    const res = await client.post<Forest>(`/projects/${projectId}/forests/`, { fqdn })
     return res.data
   },
 }

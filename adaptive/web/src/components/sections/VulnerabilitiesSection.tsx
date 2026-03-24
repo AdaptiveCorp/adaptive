@@ -102,7 +102,7 @@ export function VulnerabilitiesSection({ projectId }: Props) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#CBD5E1' }}>
-                      {av.vulnerability.name}
+                      {av.template.name}
                     </span>
                     <span style={{
                       fontFamily: "'Fira Code', monospace",
@@ -113,7 +113,7 @@ export function VulnerabilitiesSection({ projectId }: Props) {
                       borderRadius: 4,
                       padding: '1px 6px',
                     }}>
-                      {av.vulnerability.code}
+                      {av.template.code}
                     </span>
                     {av.domain_id && <Badge label={`Domain #${av.domain_id}`} variant="blue" />}
                     {av.user_id && <Badge label={`User #${av.user_id}`} variant="yellow" />}
@@ -197,7 +197,7 @@ export function VulnerabilitiesSection({ projectId }: Props) {
           <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20, lineHeight: 1.6 }}>
             Supprimer{' '}
             <span style={{ fontFamily: "'Fira Code', monospace", color: '#E2E8F0', fontWeight: 500 }}>
-              {removeTarget.vulnerability.name}
+              {removeTarget.template.name}
             </span>{' '}
             de ce projet ?
           </p>

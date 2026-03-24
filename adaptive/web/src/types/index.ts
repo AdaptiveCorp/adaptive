@@ -32,10 +32,12 @@ export interface Server {
   fqdn: string
   is_dc: boolean
   ip: string | null
-  gtw?: string | null
-  dns?: string | null
-  vm_id?: number | null
-  domain_id: number | null
+  gtw: string | null
+  dns: string | null
+  vm_id: number | null
+  domain_id: number
+  vm_template_id: number | null
+  vm_template_name: string | null
 }
 
 export interface User {
@@ -55,23 +57,29 @@ export interface Vulnerability {
 
 export interface AppliedVulnerability {
   id: number
-  vulnerability: { code: string; name: string }
-  source_user_id: number | null
+  template: { code: string; name: string }
   user_id: number | null
   domain_id: number | null
   server_id: number | null
   forest_id: number | null
   params: string | null
+  status: string
   created_at: string
+}
+
+export interface VmTemplate {
+  id: number
+  name: string
+  vm_id: number
+  description: string | null
 }
 
 // ---- API response shapes ----
 
 export interface DeployResult {
-  project: string
-  deployment_result: {
-    success: boolean
-    error?: string | null
-    message?: string
-  }
+  project_name: string
+  success: boolean
+  message: string | null
+  error: string | null
+  clone_results: { success: boolean; server_id: number; vm_id: number | null; error: string | null }[]
 }

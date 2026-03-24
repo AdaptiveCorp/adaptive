@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Cpu } from 'lucide-react'
 import { serversApi } from '../../api/servers'
+import { vmTemplatesApi } from '../../api/vm-templates'
 import { Modal } from '../Modal'
 import { Spinner } from '../Spinner'
 import type { Domain } from '../../types'
@@ -22,6 +23,12 @@ export function CreateServerModal({ projectId, domains, onSuccess, onClose }: Pr
     gtw: '',
     dns: '',
     domain_id: domains[0]?.id.toString() ?? '',
+    vm_template_id: '',
+  })
+
+  const { data: vmTemplates } = useQuery({
+    queryKey: ['vm-templates'],
+    queryFn: () => vmTemplatesApi.list(),
   })
 
   const mutation = useMutation({
@@ -32,6 +39,7 @@ export function CreateServerModal({ projectId, domains, onSuccess, onClose }: Pr
         ip: form.ip || undefined,
         gtw: form.gtw || undefined,
         dns: form.dns || undefined,
+        vm_template_id: form.vm_template_id ? Number(form.vm_template_id) : undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] })
@@ -100,6 +108,21 @@ export function CreateServerModal({ projectId, domains, onSuccess, onClose }: Pr
             value={form.dns}
             onChange={(e) => setForm({ ...form, dns: e.target.value })}
           />
+        </div>
+        <div>
+          <label className="block text-sm text-slate-400 mb-1.5">Template VM</label>
+          <select
+            className="input"
+            value={form.vm_template_id}
+            onChange={(e) => setForm({ ...form, vm_template_id: e.target.value })}
+          >
+            <option value="">— Aucun —</option>
+            {vmTemplates?.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} (VM #{t.vm_id})
+              </option>
+            ))}
+          </select>
         </div>
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input
