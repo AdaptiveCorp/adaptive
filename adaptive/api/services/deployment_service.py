@@ -47,6 +47,7 @@ def _wait_for_adws(
     )
 
     elapsed = 0
+    
     while elapsed < timeout:
         try:
             result = session.run_ps("echo ok")
@@ -552,12 +553,10 @@ def build_deployment_steps(
     servers_to_promote = get_dcs_to_promote(project, db)
     
     if servers_to_promote :
-        print("hello")
         steps.append(
             lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
         )
     
-    feur = _wait_for_adws('10.0.0.3')
     # steps += [
     #     lambda r: _step_promote_dcs(project, hypervisor, ansible, db, r),
     #     lambda r: _step_add_users(project, ansible, db, r),
