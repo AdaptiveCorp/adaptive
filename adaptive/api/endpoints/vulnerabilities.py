@@ -48,7 +48,6 @@ def list_applied_vulnerabilities(project_id: int, db: Session = Depends(get_db))
         .join(Template)
         .filter(
             AppliedTemplate.project_id == project_id,
-            Template.type == TemplateType.VULNERABILITY,
         )
         .all()
     )

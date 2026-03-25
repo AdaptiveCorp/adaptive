@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String
@@ -12,6 +13,12 @@ if TYPE_CHECKING:
     from adaptive.api.models.user import User
     from adaptive.api.models.vm_template import VmTemplate
 
+class ServerStatus(enum.StrEnum):
+    PENDING = "pending"
+    APPLIED = "applied"
+    MODIFIED = "modified"
+    ERROR = "error"
+    
 
 class Server(Base):
     """Représente un serveur Active Directory."""
@@ -49,6 +56,10 @@ class Server(Base):
         "Server",
         back_populates="servers",
         remote_side="Server.id",
+    )
+
+    status: Mapped[ServerStatus] = mapped_column(
+        String(20), nullable=False, default=ServerStatus.PENDING
     )
 
     @property

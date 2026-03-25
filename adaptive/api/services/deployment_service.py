@@ -5,7 +5,7 @@ import textwrap
 import time
 
 import winrm
-from sqlalchemy import select
+from sqlalchemy import select, exists
 from sqlalchemy.orm import Session
 
 from adaptive.api.endpoints.utils import get_root_dc
@@ -17,9 +17,10 @@ from adaptive.api.models.applied_template import AppliedTemplate, TemplateStatus
 from adaptive.api.models.domain import Domain
 from adaptive.api.models.forest import Forest
 from adaptive.api.models.project import Project
-from adaptive.api.models.server import Server
+from adaptive.api.models.server import Server, ServerStatus
 from adaptive.api.models.template import Template
 from adaptive.api.models.user import User
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -30,51 +31,38 @@ def _bare_ip(ip: str) -> str:
 
 def _wait_for_adws(
     server_ip: str,
-    timeout: int = 600,  # 10 minutes
+    timeout: int = 600,
     poll_interval: int = 15,
     initial_wait: int = 30,
 ) -> bool:
-    """Poll a DC via WinRM until Active Directory Web Services is running."""
+    """Poll a DC via WinRM until connection is successful."""
     if initial_wait:
-        logger.info("[WAIT] Waiting %ds before checking ADWS on %s...", initial_wait, server_ip)
+        logger.info("[WAIT] Waiting %ds before checking WinRM on %s...", initial_wait, server_ip)
         time.sleep(initial_wait)
+
+    session = winrm.Session(
+        f"http://{server_ip}:5985/wsman",
+        auth=(settings.ansible_user, settings.ansible_password),
+        transport="ntlm",
+    )
 
     elapsed = 0
     while elapsed < timeout:
         try:
-            session = winrm.Session(
-                f"http://{server_ip}:5985/wsman",
-                auth=(settings.ansible_user, settings.ansible_password),
-                transport="ntlm",
-            )
-            result = session.run_ps("Get-Service ADWS | Select-Object -ExpandProperty Status")
-            if result.status_code == 0 and b"Running" in result.std_out:
-                logger.info(
-                    "[WAIT] ADWS is running on %s (after %ds)",
-                    server_ip,
-                    elapsed + initial_wait,
-                )
+            result = session.run_ps("echo ok")
+            if result.status_code == 0:
+                logger.info("[WAIT] WinRM is reachable on %s (after %ds)", server_ip, elapsed + initial_wait)
                 return True
-            logger.info(
-                "[WAIT] ADWS not ready on %s (rc=%d, stdout=%r, stderr=%r), retrying in %ds...",
-                server_ip,
-                result.status_code,
-                result.std_out,
-                result.std_err,
-                poll_interval,
-            )
         except Exception as exc:
-            logger.info(
-                "[WAIT] Cannot reach %s yet (%s), retrying in %ds...",
-                server_ip,
-                type(exc).__name__,
-                poll_interval,
-            )
+            logger.info("[WAIT] Cannot reach %s yet (%s), retrying in %ds...", server_ip, type(exc).__name__, poll_interval)
+
         time.sleep(poll_interval)
         elapsed += poll_interval
 
-    logger.error("[WAIT] Timeout (%ds) waiting for ADWS on %s", timeout + initial_wait, server_ip)
+    logger.error("[WAIT] Timeout (%ds) waiting for WinRM on %s", timeout + initial_wait, server_ip)
     return False
+
+
 
 
 # need to wait for ADWS to be ready because it used in ansible.ad.users
@@ -179,6 +167,30 @@ def get_dcs_grouped_by_domain(project: Project) -> dict[Domain, list[Server]]:
                 grouped[domain] = dcs
     return grouped
 
+def is_server_promoted(server: Server, db: Session) -> bool:
+    return db.query(
+        db.query(AppliedTemplate)
+        .join(AppliedTemplate.template)
+        .filter(
+            AppliedTemplate.server_id == server.id,
+            AppliedTemplate.status == TemplateStatus.APPLIED,
+            Template.code == "dc_promo",
+        )
+        .exists()
+    ).scalar()
+
+def get_dcs_to_promote(project: Project, db: Session) -> dict[Domain, list[Server]] :
+    grouped: dict[Domain, list[Server]] = {}
+
+    for forest in project.forests:
+        for domain in forest.domains:
+            
+            dcs = [s for s in domain.servers if s.is_dc and not is_server_promoted(s, db)]
+
+            if dcs:
+                grouped[domain] = dcs
+
+    return grouped
 
 def get_all_domain_in_project(project: Project, db: Session) -> list[Domain]:
 
@@ -251,6 +263,7 @@ def _step_clone_vms(
     db: Session,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
+    
     logger.info("[STEP 1] Cloning %d VMs for project '%s'", len(all_servers), project.name)
 
     server_infos: list[ServerInfo] = [
@@ -272,8 +285,10 @@ def _step_clone_vms(
             srv: Server | None = db.get(Server, res.server_id)
             if srv:
                 srv.vm_id = res.vm_id
+                srv.status = ServerStatus.APPLIED
                 logger.info("[STEP 1] Saved vm_id=%d for server '%s'", res.vm_id, srv.fqdn)
         else:
+            srv.status = ServerStatus.ERROR
             logger.warning("[STEP 1] Clone failed or missing vm_id for server_id=%s", res.server_id)
 
     db.commit()
@@ -287,11 +302,11 @@ def _step_promote_dcs(
     project: Project,
     hypervisor: HypervisorProvider,
     ansible: AnsibleService,
+    dcs_by_domain: dict[Domain, list[Server]],
     db: Session,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
-    dcs_by_domain = get_dcs_grouped_by_domain(project)
-
+    
     if not dcs_by_domain:
         logger.info("[STEP 2] No DCs to promote, skipping.")
         return deployment_result
@@ -516,6 +531,44 @@ def _step_push_vulnerabilities(
     return deployment_result
 
 
+def build_deployment_steps(
+    project: Project,
+    all_servers: list[Server],
+    hypervisor: HypervisorProvider,
+    ansible: AnsibleService,
+    db: Session,
+) -> list[Callable[[DeploymentResult], DeploymentResult]]:
+    steps: list[Callable[[DeploymentResult], DeploymentResult]] = []
+
+    # Serveurs qui n'ont pas encore été clonés
+    servers_to_clone = [s for s in all_servers if s.status != ServerStatus.APPLIED]
+
+    if servers_to_clone:
+        steps.append(
+            lambda r, s=servers_to_clone: _step_clone_vms(project, s, hypervisor, db, r)
+        )
+
+    # Serveurs qui n'ont pas été promu
+    servers_to_promote = get_dcs_to_promote(project, db)
+    
+    if servers_to_promote :
+        print("hello")
+        steps.append(
+            lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
+        )
+    
+    feur = _wait_for_adws('10.0.0.3')
+    # steps += [
+    #     lambda r: _step_promote_dcs(project, hypervisor, ansible, db, r),
+    #     lambda r: _step_add_users(project, ansible, db, r),
+    #     lambda r: _step_push_vulnerabilities(project, db, r),
+    # ]
+
+    return steps
+
+
+
+
 def deploy_project(
     project: Project,
     db: Session,
@@ -547,12 +600,7 @@ def deploy_project(
         message="Deployment completed",
     )
 
-    steps = [
-        lambda r: _step_clone_vms(project, all_servers, hypervisor, db, r),
-        lambda r: _step_promote_dcs(project, hypervisor, ansible, db, r),
-        lambda r: _step_add_users(project, ansible, db, r),
-        lambda r: _step_push_vulnerabilities(project, db, r),
-    ]
+    steps = build_deployment_steps(project, all_servers, hypervisor, ansible, db)
 
     for step in steps:
         deployment_result = step(deployment_result)
@@ -562,6 +610,8 @@ def deploy_project(
                 step.__name__ if hasattr(step, "__name__") else str(step),
             )
             return deployment_result
+
+
 
     logger.info(
         "[DEPLOY] Deployment completed for project '%s' (success=%s)",
