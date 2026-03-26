@@ -35,7 +35,7 @@ def _wait_for_adws(
     poll_interval: int = 15,
     initial_wait: int = 30,
 ) -> bool:
-    """Poll a DC via WinRM until connection is successful."""
+    """Poll a DC via WinRM until connection is successful, then enable ADWS."""
     if initial_wait:
         logger.info("[WAIT] Waiting %ds before checking WinRM on %s...", initial_wait, server_ip)
         time.sleep(initial_wait)
@@ -47,13 +47,28 @@ def _wait_for_adws(
     )
 
     elapsed = 0
-    
+
     while elapsed < timeout:
         try:
             result = session.run_ps("echo ok")
             if result.status_code == 0:
                 logger.info("[WAIT] WinRM is reachable on %s (after %ds)", server_ip, elapsed + initial_wait)
+
+                # Activer et démarrer ADWS
+                logger.info("[WAIT] Enabling and starting ADWS on %s...", server_ip)
+                adws_result = session.run_ps(
+                    "Set-Service ADWS -StartupType Automatic; Start-Service ADWS"
+                )
+
+                if adws_result.status_code == 0:
+                    logger.info("[WAIT] ADWS successfully started on %s", server_ip)
+                else:
+                    error_msg = adws_result.std_err.decode(errors="replace").strip()
+                    logger.error("[WAIT] Failed to start ADWS on %s: %s", server_ip, error_msg)
+                    return False
+
                 return True
+
         except Exception as exc:
             logger.info("[WAIT] Cannot reach %s yet (%s), retrying in %ds...", server_ip, type(exc).__name__, poll_interval)
 
@@ -62,6 +77,7 @@ def _wait_for_adws(
 
     logger.error("[WAIT] Timeout (%ds) waiting for WinRM on %s", timeout + initial_wait, server_ip)
     return False
+
 
 
 
@@ -116,6 +132,7 @@ def _create_applied_template(
     user_id: int | None = None,
     params: dict | None = None,
 ) -> AppliedTemplate:
+    
     """Create a pending AppliedTemplate record for tracking."""
     template = db.query(Template).filter(Template.code == template_code).first()
     if not template:
@@ -131,6 +148,7 @@ def _create_applied_template(
         params=json.dumps(params) if params else None,
         status=TemplateStatus.PENDING,
     )
+
     db.add(applied)
     db.commit()
     db.refresh(applied)
@@ -215,7 +233,43 @@ def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:
                 grouped[domain] = list(domain.users)
     return grouped
 
+def get_users_not_push_by_domain(project: Project, db : Session) -> dict[Domain, list[User]] :
+    
+    #Récupère tout les templates de type user push
+    users = get_users_grouped_by_domain(project)
 
+    for domain, users_list in users.items() :
+        stmt = select(AppliedTemplate).join(Template).where(
+            AppliedTemplate.project_id == project.id,
+            (AppliedTemplate.status == TemplateStatus.APPLIED) | (AppliedTemplate.status == TemplateStatus.ERROR),
+            AppliedTemplate.domain_id == domain.id,
+            Template.code == "add_users",
+        )
+
+        liste_applied_template = db.execute(stmt).scalars().all()
+        username_applied = []
+
+        for applied_template in liste_applied_template :
+            params = applied_template.params
+            params_json = json.loads(params)
+            users_in_applied_template = params_json["usernames"]
+            username_applied.extend(users_in_applied_template)
+
+
+        usernames_not_applied = [user for user in users_list if user.username not in username_applied]
+        users[domain] = usernames_not_applied
+
+    return users
+
+
+
+
+            
+
+        
+        
+
+    
 def execute_powershell_winrm(
     server_ip: str,
     powershell_script: str,
@@ -383,10 +437,10 @@ def _step_add_users(
     project: Project,
     ansible: AnsibleService,
     db: Session,
+    users_by_domain  : dict[Domain, list[User]] | None,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
-    users_by_domain = get_users_grouped_by_domain(project)
-
+    
     if not users_by_domain:
         logger.info("[STEP 3] No users to create, skipping.")
         return deployment_result
@@ -556,7 +610,16 @@ def build_deployment_steps(
         steps.append(
             lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
         )
-    
+
+    # Utilisateur qui n'ont pas encore été pushé
+    users_not_pushed = get_users_not_push_by_domain(project, db)
+    if any(users_list for users_list in users_not_pushed.values()):
+        steps.append(
+            lambda r: _step_add_users(project, ansible, db, users_not_pushed, r)
+        )
+
+
+
     # steps += [
     #     lambda r: _step_promote_dcs(project, hypervisor, ansible, db, r),
     #     lambda r: _step_add_users(project, ansible, db, r),
