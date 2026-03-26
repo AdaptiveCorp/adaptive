@@ -161,6 +161,14 @@ class VulnerabilityNotFoundError(NotFoundError):
             detail={"template_id": template_id},
         )
 
+class VulnerabilityAlreadyExist(ConflictError) :
+    """This vulnerability already exist"""
+    def __init__(self, applied_vuln_id: int, applied_vuln_code : str, applied_vuln_params : str):
+        super().__init__(
+            #Changer pour afficher la vuln qui existe déjà
+            f"Vulnerability already exist id={applied_vuln_id} already exists",
+            detail={"code": applied_vuln_code,"params" : applied_vuln_params},
+        )
 
 class AppliedVulnerabilityNotFoundError(NotFoundError):
     """Applied vulnerability does not exist."""

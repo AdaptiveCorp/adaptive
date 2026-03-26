@@ -262,14 +262,6 @@ def get_users_not_push_by_domain(project: Project, db : Session) -> dict[Domain,
     return users
 
 
-
-
-            
-
-        
-        
-
-    
 def execute_powershell_winrm(
     server_ip: str,
     powershell_script: str,
@@ -511,6 +503,7 @@ def _step_push_vulnerabilities(
     db: Session,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
+    
     liste_templates = get_template_for_project(project, db)
     liste_domain = get_all_domain_in_project(project, db)
 
