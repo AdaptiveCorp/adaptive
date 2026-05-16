@@ -31,10 +31,11 @@ def _bare_ip(ip: str) -> str:
 
 def _wait_for_adws(
     server_ip: str,
-    timeout: int = 600,
+    timeout: int = 45,
     poll_interval: int = 15,
     initial_wait: int = 30,
 ) -> bool:
+    
     """Poll a DC via WinRM until connection is successful, then enable ADWS."""
     if initial_wait:
         logger.info("[WAIT] Waiting %ds before checking WinRM on %s...", initial_wait, server_ip)
@@ -63,7 +64,7 @@ def _wait_for_adws(
                 if adws_result.status_code == 0:
                     logger.info("[WAIT] ADWS successfully started on %s", server_ip)
                 else:
-                    error_msg = adws_result.std_err.decode(errors="replace").strip()
+                    error_msg = adws_result.std_out.decode(errors="replace").strip()
                     logger.error("[WAIT] Failed to start ADWS on %s: %s", server_ip, error_msg)
                     return False
 
@@ -79,7 +80,74 @@ def _wait_for_adws(
     return False
 
 
+def _wait_for_ad_ready(
+    server_ip: str,
+    timeout: int = 600,        # promotion AD peut être longue, 10 min n'est pas déraisonnable
+    poll_interval: int = 30,
+    initial_wait: int = 60,    # tu peux garder 30, mais 60 est plus safe
+) -> bool:
+    """Attendre que le DC soit réellement fonctionnel (AD DS + ADWS)."""
 
+    if initial_wait:
+        logger.info("[WAIT] Waiting %ds before checking AD on %s...", initial_wait, server_ip)
+        time.sleep(initial_wait)
+
+    session = winrm.Session(
+        f"http://{server_ip}:5985/wsman",
+        auth=(settings.ansible_user, settings.ansible_password),
+        transport="ntlm",  # ici tu peux laisser ntlm, c'est uniquement pour ce check Python
+    )
+
+    elapsed = 0
+
+    while elapsed < timeout:
+        try:
+            # 1) Vérifier que WinRM répond encore
+            ping = session.run_ps("echo ok")
+            if ping.status_code != 0:
+                raise RuntimeError("WinRM not ready yet")
+
+            # 2) Vérifier que les cmdlets AD fonctionnent
+            #    - Get-ADDomain renvoie une erreur tant que le DC n'est pas complètement prêt
+            ps_script = r"""
+            try {
+                Import-Module ActiveDirectory -ErrorAction Stop
+                $d = Get-ADDomain -ErrorAction Stop
+                Write-Output "AD_READY"
+                exit 0
+            } catch {
+                Write-Output "AD_NOT_READY: $($_.Exception.Message)"
+                exit 1
+            }
+            """
+
+            result = session.run_ps(ps_script)
+            output = result.std_out.decode(errors="replace").strip()
+
+            if result.status_code == 0 and "AD_READY" in output:
+                logger.info("[WAIT] AD domain is ready on %s (after %ds)", server_ip, elapsed + initial_wait)
+                return True
+
+            logger.info(
+                "[WAIT] AD not ready yet on %s (%s), retrying in %ds...",
+                server_ip,
+                output,
+                poll_interval,
+            )
+
+        except Exception as exc:
+            logger.info(
+                "[WAIT] Cannot reach %s or AD not ready yet (%s), retrying in %ds...",
+                server_ip,
+                type(exc).__name__,
+                poll_interval,
+            )
+
+        time.sleep(poll_interval)
+        elapsed += poll_interval
+
+    logger.error("[WAIT] Timeout (%ds) waiting for AD readiness on %s", timeout + initial_wait, server_ip)
+    return False
 
 
 # need to wait for ADWS to be ready because it used in ansible.ad.users
@@ -324,6 +392,7 @@ def _step_clone_vms(
         )
         for s in all_servers
     ]
+
     clone_results = hypervisor.deploy_lab(server_infos)
     deployment_result.clone_results = clone_results
 
@@ -340,7 +409,8 @@ def _step_clone_vms(
 
     db.commit()
     logger.info("[STEP 1] All VMs cloned. Waiting 60s for boot...")
-    time.sleep(60)
+
+    time.sleep(30)
 
     return deployment_result
 
@@ -353,13 +423,15 @@ def _step_promote_dcs(
     db: Session,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
-    
+    """STEP 2: promouvoir les DC, puis attendre que AD soit réellement prêt."""
+
     if not dcs_by_domain:
         logger.info("[STEP 2] No DCs to promote, skipping.")
         return deployment_result
 
     logger.info("[STEP 2] Starting DC promotions across %d domain(s)", len(dcs_by_domain))
 
+    # 1) Envoyer les commandes de promotion sur chaque DC
     for domain, dcs in dcs_by_domain.items():
         logger.info("[STEP 2] Processing domain '%s' (%d DC(s))", domain.fqdn, len(dcs))
 
@@ -369,6 +441,7 @@ def _step_promote_dcs(
                 continue
 
             is_first_dc = i == 0
+
             applied = _create_applied_template(
                 db,
                 project_id=project.id,
@@ -391,6 +464,9 @@ def _step_promote_dcs(
                 is_first_dc,
                 domain.fqdn,
             )
+
+            # Le playbook dc_promo fait Install-ADDSForest/DomainController
+            # et laisse Windows rebooter tout seul (plus de -NoRebootOnCompletion)
             result = ansible.dc_promote(
                 server_ip=_bare_ip(dc.ip),
                 dc_hostname=dc.fqdn.split(".")[0],
@@ -407,20 +483,29 @@ def _step_promote_dcs(
                 return deployment_result
 
             _update_template_status(db, applied, TemplateStatus.APPLIED)
-            logger.info("[STEP 2] DC promotion succeeded for '%s'", dc.fqdn)
+            logger.info("[STEP 2] DC promotion command sent successfully for '%s'", dc.fqdn)
 
-            if dc.vm_id:
-                logger.info("[STEP 2] Restarting VM id=%d for '%s'", dc.vm_id, dc.fqdn)
-                hypervisor.restart_vm(dc.vm_id)
+            # IMPORTANT : on NE redémarre PAS la VM via l'hyperviseur ici,
+            # c'est Windows qui reboot tout seul après Install-ADDS*
 
-    logger.info("[STEP 2] All DC promotions done. Waiting for ADWS readiness...")
+    # 2) Attendre que chaque DC soit réellement prêt côté AD (AD DS + ADWS + Get-ADDomain OK)
+    logger.info("[STEP 2] All DC promotion commands sent. Waiting for AD readiness...")
+
     for _domain, dcs in dcs_by_domain.items():
         for dc in dcs:
-            if dc.ip and not _wait_for_adws(_bare_ip(dc.ip)):
-                logger.error("[STEP 2] ADWS not ready on '%s' after timeout", dc.fqdn)
+            if not dc.ip:
+                continue
+
+            ip = _bare_ip(dc.ip)
+            logger.info("[STEP 2] Waiting for AD readiness on DC '%s' (%s)...", dc.fqdn, ip)
+
+            if not _wait_for_ad_ready(ip):
+                logger.error("[STEP 2] AD not ready on '%s' after timeout", dc.fqdn)
                 deployment_result.success = False
-                deployment_result.error = f"ADWS readiness timeout on {dc.fqdn}"
+                deployment_result.error = f"AD readiness timeout on {dc.fqdn}"
                 return deployment_result
+
+            logger.info("[STEP 2] AD is ready on DC '%s'", dc.fqdn)
 
     return deployment_result
 
@@ -592,6 +677,7 @@ def build_deployment_steps(
     servers_to_clone = [s for s in all_servers if s.status != ServerStatus.APPLIED]
 
     if servers_to_clone:
+        #print("There is serveur to clone")
         steps.append(
             lambda r, s=servers_to_clone: _step_clone_vms(project, s, hypervisor, db, r)
         )
@@ -600,6 +686,7 @@ def build_deployment_steps(
     servers_to_promote = get_dcs_to_promote(project, db)
     
     if servers_to_promote :
+        print("There is serveur to promote")
         steps.append(
             lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
         )
@@ -612,7 +699,7 @@ def build_deployment_steps(
         )
 
 
-
+    #lol = _wait_for_adws('10.0.0.3')
     # steps += [
     #     lambda r: _step_promote_dcs(project, hypervisor, ansible, db, r),
     #     lambda r: _step_add_users(project, ansible, db, r),
@@ -630,6 +717,7 @@ def deploy_project(
     hypervisor: HypervisorProvider | None = None,
     ansible: AnsibleService | None = None,
 ) -> DeploymentResult:
+    
     logger.info("[DEPLOY] Starting deployment for project '%s'", project.name)
 
     hypervisor = hypervisor or ProxmoxProvider()

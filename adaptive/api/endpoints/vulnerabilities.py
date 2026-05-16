@@ -82,7 +82,6 @@ def post_vulnerability(
 
     param_req_str = json.dumps(param_req)
 
-
     #Vérifie si ya pas déjà un vuln template qui existe déjà
     stmt = select(AppliedTemplate).join(Template).where(
         AppliedTemplate.project_id == project_id,
@@ -96,7 +95,6 @@ def post_vulnerability(
         raise VulnerabilityAlreadyExist(applied_vuln_id=applied_template.id, 
                                          applied_vuln_code=applied_template.template.code,
                                          applied_vuln_params=applied_template.params)
-
 
     applied_template = AppliedTemplate(
         project_id=project_id,
@@ -126,8 +124,10 @@ def deploy_vulnerability(vuln_id: int, db: Session = Depends(get_db)):
     if vuln_template.domain:
         dc = get_root_dc(vuln_template.domain, db)
         ip = dc.ip
+
     elif vuln_template.server:
         ip = vuln_template.server.ip
+
     else:
         raise VulnerabilityInvalidParamsError("No domain or server target")
 

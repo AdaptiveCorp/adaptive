@@ -30,7 +30,6 @@ templates:
               name: AD-Domain-Services
               include_management_tools: yes
               state: present
-            register: ad_install
 
           - name: Create new forest (First DC)
             ansible.windows.win_shell: |
@@ -42,12 +41,8 @@ templates:
                 -DomainMode "{{ domain_mode | default('WinThreshold') }}" `
                 -InstallDns:${{ install_dns | default(true) | string | lower }} `
                 -SafeModeAdministratorPassword $Password `
-                -Force `
-                -NoRebootOnCompletion
+                -Force
             when: is_first_dc | bool
-            register: forest_creation
-            async: 600
-            poll: 10
 
           - name: Join existing domain (Additional DC)
             ansible.windows.win_shell: |
@@ -59,23 +54,13 @@ templates:
                 -Credential $DomainCred `
                 -SafeModeAdministratorPassword $Password `
                 -InstallDns:${{ install_dns | default(true) | string | lower }} `
-                -Force `
-                -NoRebootOnCompletion
+                -Force
             when: not (is_first_dc | bool)
-            register: dc_join
-            async: 600
-            poll: 10
 
-          - name: Mark DC promotion complete
-            set_fact:
-              dc_promoted: true
-            when: forest_creation.changed or dc_join.changed
-
-          - name: Display pre-reboot message
+          - name: Display post-promo info
             debug:
-              msg: "DC promotion complete. Server will reboot. Credentials will change to {{ domain_fqdn }}\\Administrator"
-            when: dc_promoted is defined
-
+              msg: "DC promotion command sent. Server will reboot automatically. New credentials: {{ domain_fqdn }}\\Administrator"
+              
   - code: add_users
     name: Ajout d'utilisateurs AD
     type: config

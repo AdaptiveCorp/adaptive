@@ -14,3 +14,9 @@ class VmTemplateResponse(BaseModel):
     description: str | None
 
     model_config = {"from_attributes": True}
+
+class VmTemplateUpdate(BaseModel):
+    name: str | None = None
+    vm_id: int | None = None
+    description: str | None = None
+    

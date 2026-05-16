@@ -129,11 +129,19 @@ class AnsibleService:
                     target_host: {
                         "ansible_user": self._user,
                         "ansible_password": self._password,
+
                     }
                 }
             }
         }
-
+        merged_extravars = {
+            "ansible_connection": "winrm",
+            "ansible_winrm_transport": "basic",
+            "ansible_winrm_scheme": "http",
+            "ansible_winrm_server_cert_validation": "ignore",
+            "ansible_port": 5985,
+            **extravars,  # ← les extravars métier par dessus
+        }
         with tempfile.TemporaryDirectory() as tmpdir:
             project_dir = Path(tmpdir) / "project"
             project_dir.mkdir()
@@ -144,7 +152,7 @@ class AnsibleService:
                 private_data_dir=tmpdir,
                 playbook="playbook.yaml",
                 inventory=inventory,
-                extravars=extravars,
+                extravars=merged_extravars,
                 verbosity=2,
             )
 
