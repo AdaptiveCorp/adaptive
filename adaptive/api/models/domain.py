@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from adaptive.api.models.forest import Forest
     from adaptive.api.models.server import Server
     from adaptive.api.models.user import User
+    from adaptive.api.models.group import Group
 
 
 class Domain(Base):
@@ -34,6 +35,11 @@ class Domain(Base):
         "Server",
         back_populates="domain",
         cascade="all, delete-orphan",
+    )
+
+    groups: Mapped[list["Group"]] = relationship(
+        "Group",
+        back_populates="domain",
     )
 
     def __repr__(self) -> str:

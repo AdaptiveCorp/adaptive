@@ -77,11 +77,14 @@ def test_full_crud_flow(client):
     ]
 
     created_usernames = []
+    created_users = []
 
     for payload in users_payloads:
         resp = client.post("/users/", json=payload)
         assert resp.status_code == 200, resp.text
-        created_usernames.append(resp.json()["username"])
+        body = resp.json()
+        created_usernames.append(body["username"])
+        created_users.append(body)
 
     assert "j.snow" in created_usernames
 
@@ -101,3 +104,38 @@ def test_full_crud_flow(client):
     assert len(detail["users"]) == 7
     usernames_in_detail = {u["username"] for u in detail["users"]}
     assert "j.snow" in usernames_in_detail
+
+    # ── Create Group with some users ──
+    user_ids = [u["id"] for u in created_users[:3]]  # Jon, Arya, Sansa par exemple
+
+    resp = client.post(
+        "/groups/",
+        json={
+            "name": "Starks",
+            "description": "House Stark members",
+            "user_ids": user_ids,
+            "member_group_ids": [],
+            "domain_id": domain_id,   # <<< important : groupe de domaine GOT.LAN
+            # "server_id": server["id"],  # alternative pour un groupe local au serveur
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    group = resp.json()
+    group_id = group["id"]
+
+    assert group["name"] == "Starks"
+    assert set(group["user_ids"]) == set(user_ids)
+
+    # ── List groups ──
+    resp = client.get("/groups/")
+    assert resp.status_code == 200
+    groups_list = resp.json()
+    assert any(g["id"] == group_id for g in groups_list)
+
+    # ── Get group detail ──
+    resp = client.get(f"/groups/{group_id}")
+    assert resp.status_code == 200
+    group_detail = resp.json()
+    assert group_detail["name"] == "Starks"
+    assert set(group_detail["user_ids"]) == set(user_ids)
+    assert group_detail["member_group_ids"] == []

@@ -24,7 +24,6 @@ class ProxmoxConnectionError(ProxmoxError):
             detail={"host": host, "cause": cause},
         )
 
-
 class ProxmoxTaskError(ProxmoxError):
     """A Proxmox task failed."""
 
@@ -232,3 +231,9 @@ class VulnerabilityInvalidParamsError(ValidationError):
             f"Invalid parameters, required params are: {required_params}",
             detail={"required_params": required_params},
         )
+
+class GroupTargetRequiredError(ValidationError):
+    """Group must be linked to a domain or server."""
+
+    def __init__(self):
+        super().__init__("domain_id or server_id is required")
