@@ -270,3 +270,66 @@ templates:
       $ACL.AddAccessRule($ACE1)
       $ACL.AddAccessRule($ACE2)
       Set-ACL -Path "AD:$Domain" -AclObject $ACL
+
+
+  - code: genericwrite
+    name: GenericWrite
+    type: vulnerability
+    description: >
+      Donne le droit à un objet AD (user ou groupe) de modifier certains attributs
+      d'une cible (SPN, scriptPath, membres de groupe, msDS-KeyCredentialLink…)
+    category: acl
+    required_params:
+      - source_username
+      - target_username
+    content: |
+      $SourceObj = Get-ADObject -Filter {SamAccountName -eq "{{source_username}}"} -Properties ObjectSID
+      $TargetObj = Get-ADObject -Filter {SamAccountName -eq "{{target_username}}"} -Properties *
+      $ACL = Get-ACL "AD:$($TargetObj.DistinguishedName)"
+      $Identity = [System.Security.Principal.SecurityIdentifier]$SourceObj.ObjectSID
+      $Rights = [System.DirectoryServices.ActiveDirectoryRights]::WriteProperty
+      $Type = [System.Security.AccessControl.AccessControlType]::Allow
+      $ACE = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, $Type)
+      $ACL.AddAccessRule($ACE)
+      Set-ACL -Path "AD:$($TargetObj.DistinguishedName)" -AclObject $ACL
+
+  - code: writeowner
+    name: WriteOwner
+    type: vulnerability
+    description: >
+      Donne le droit à un objet AD (user ou groupe) de changer l'Owner d'une cible.
+      L'Owner peut ensuite se donner WriteDACL puis GenericAll.
+    category: acl
+    required_params:
+      - source_username
+      - target_username
+    content: |
+      $SourceObj = Get-ADObject -Filter {SamAccountName -eq "{{source_username}}"} -Properties ObjectSID
+      $TargetObj = Get-ADObject -Filter {SamAccountName -eq "{{target_username}}"} -Properties *
+      $ACL = Get-ACL "AD:$($TargetObj.DistinguishedName)"
+      $Identity = [System.Security.Principal.SecurityIdentifier]$SourceObj.ObjectSID
+      $Rights = [System.DirectoryServices.ActiveDirectoryRights]::WriteOwner
+      $Type = [System.Security.AccessControl.AccessControlType]::Allow
+      $ACE = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, $Type)
+      $ACL.AddAccessRule($ACE)
+      Set-ACL -Path "AD:$($TargetObj.DistinguishedName)" -AclObject $ACL
+
+  - code: owns
+    name: Owns
+    type: vulnerability
+    description: >
+      Place directement un objet AD (user ou groupe) comme Owner d'une cible.
+      L'Owner a un contrôle implicite sur l'objet, peut modifier ses ACL.
+    category: acl
+    required_params:
+      - source_username
+      - target_username
+    content: |
+      $SourceObj = Get-ADObject -Filter {SamAccountName -eq "{{source_username}}"} -Properties ObjectSID
+      $TargetObj = Get-ADObject -Filter {SamAccountName -eq "{{target_username}}"} -Properties *
+      $ACL = Get-ACL "AD:$($TargetObj.DistinguishedName)"
+      $NewOwner = [System.Security.Principal.SecurityIdentifier]$SourceObj.ObjectSID
+      $ACL.SetOwner($NewOwner)
+      Set-ACL -Path "AD:$($TargetObj.DistinguishedName)" -AclObject $ACL
+
+      
