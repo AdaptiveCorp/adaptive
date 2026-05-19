@@ -79,15 +79,13 @@ export function ProjectDetailPage() {
             alignItems: 'center',
             gap: 5,
             fontSize: 12,
-            color: '#475569',
+            color: 'var(--text-dim)',
             textDecoration: 'none',
             marginBottom: 14,
             transition: 'color 0.15s',
             fontFamily: "'IBM Plex Mono', monospace",
             letterSpacing: '0.02em',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#64748B' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#475569' }}
         >
           <ArrowLeft style={{ width: 13, height: 13 }} />
           Projets
@@ -98,14 +96,14 @@ export function ProjectDetailPage() {
             <h1 style={{
               fontFamily: "'IBM Plex Mono', monospace",
               fontWeight: 600,
-              fontSize: 20,
-              color: '#E2E8F0',
-              letterSpacing: '-0.02em',
+              fontSize: 24,
+              color: 'var(--text-bright)',
+              letterSpacing: '-0.03em',
               marginBottom: 3,
             }}>
               {project.name}
             </h1>
-            <p style={{ fontSize: 12, color: '#475569', fontFamily: "'IBM Plex Mono', monospace" }}>
+            <p style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: "'IBM Plex Mono', monospace" }}>
               ID: {project.id} · {new Date(project.created_at).toLocaleDateString('fr-FR', {
                 day: '2-digit', month: 'long', year: 'numeric'
               })}
@@ -160,7 +158,7 @@ export function ProjectDetailPage() {
             </div>
 
             {deployResult.message && (
-              <p style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.6 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
                 {deployResult.message}
               </p>
             )}
@@ -169,8 +167,8 @@ export function ProjectDetailPage() {
               <pre style={{
                 fontSize: 11,
                 color: '#FB7185',
-                background: 'rgba(6, 16, 28, 0.8)',
-                border: '1px solid rgba(22, 40, 64, 0.8)',
+                background: 'var(--bg-tbl-head)',
+                border: '1px solid var(--border-card)',
                 borderRadius: 6,
                 padding: '10px 12px',
                 overflow: 'auto',

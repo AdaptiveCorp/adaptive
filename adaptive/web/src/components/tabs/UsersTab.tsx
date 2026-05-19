@@ -55,7 +55,7 @@ export function UsersTab({ projectId, domains }: Props) {
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: 10,
           fontWeight: 600,
-          color: '#475569',
+          color: 'var(--text-muted)',
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
         }}>
@@ -78,14 +78,14 @@ export function UsersTab({ projectId, domains }: Props) {
         </div>
       ) : allUsers.length === 0 ? (
         <div style={{
-          background: 'rgba(10, 23, 40, 0.6)',
-          border: '1px dashed rgba(22, 40, 64, 0.8)',
+          background: 'var(--bg-card)',
+          border: '1px dashed var(--border-input)',
           borderRadius: 10,
           padding: '48px 24px',
           textAlign: 'center',
         }}>
-          <Users style={{ width: 32, height: 32, color: '#475569', margin: '0 auto 12px' }} />
-          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#475569' }}>
+          <Users style={{ width: 32, height: 32, color: 'var(--text-dim)', margin: '0 auto 12px' }} />
+          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: 'var(--text-dim)' }}>
             {domains.length === 0
               ? "Créez un domaine avant d'ajouter des utilisateurs."
               : 'Aucun utilisateur — ajoutez-en pour configurer votre lab.'}
@@ -101,8 +101,8 @@ export function UsersTab({ projectId, domains }: Props) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
-                background: 'rgba(10, 23, 40, 0.85)',
-                border: '1px solid rgba(22, 40, 64, 0.8)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-card)',
                 borderRadius: 8,
                 padding: '12px 14px',
               }}>
@@ -124,11 +124,11 @@ export function UsersTab({ projectId, domains }: Props) {
                   {initials}
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: '#CBD5E1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
+                  <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: 'var(--text-bright)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
                     {user.username}
                   </p>
                   {domain && (
-                    <p style={{ fontSize: 11, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Fira Code', monospace" }}>
+                    <p style={{ fontSize: 11, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Fira Code', monospace" }}>
                       {domain.fqdn}
                     </p>
                   )}
@@ -184,7 +184,7 @@ export function UsersTab({ projectId, domains }: Props) {
               </button>
             </div>
             {addMutation.isError && (
-              <p style={{ fontSize: 12, color: '#FB7185', fontFamily: "'IBM Plex Mono', monospace" }}>
+              <p style={{ fontSize: 12, color: '#FB7185', fontFamily: "'IBM Plex Mono', monospace", marginTop: 8 }}>
                 Erreur lors de la création.
               </p>
             )}
