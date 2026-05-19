@@ -1,8 +1,8 @@
-"""Integration tests: create, list, detail, and delete via API endpoints."""
+"""Integration tests: create, list, detail, groups, and vulnerabilities."""
 
 
-def test_full_crud_flow(client):
-    """Create all entities, list them, get details, then delete."""
+def test_full_crud_flow_with_groups_and_vulns(client):
+    """Create all entities, list them, get details, including groups and vulnerabilities."""
 
     # ── Create VmTemplate ──
     resp = client.post(
@@ -47,9 +47,8 @@ def test_full_crud_flow(client):
         json={"fqdn": "GOT.LAN"},
     )
     assert resp.status_code == 200, resp.text
-    
     domain_id = resp.json()["id"]
-    
+
     # ── Create Server (DC) ──
     resp = client.post(
         f"/domains/{domain_id}/servers/",
@@ -68,13 +67,13 @@ def test_full_crud_flow(client):
 
     # ── Create Users ──
     users_payloads = [
-        {"firstname": "Jon", "lastname": "Snow", "password": "Winter2026!", "domain_id": domain_id},
-        {"firstname": "Arya", "lastname": "Stark", "password": "Needle2026!", "domain_id": domain_id},
-        {"firstname": "Sansa", "lastname": "Stark", "password": "QueenInNorth2026!", "domain_id": domain_id},
-        {"firstname": "Bran", "lastname": "Stark", "password": "ThreeEyed2026!", "domain_id": domain_id},
-        {"firstname": "Tyrion", "lastname": "Lannister", "password": "ImpsMind2026!", "domain_id": domain_id},
-        {"firstname": "Daenerys", "lastname": "Targaryen", "password": "Dragons2026!", "domain_id": domain_id},
-        {"firstname": "Sandor", "lastname": "Clegane", "password": "Hound2026!", "domain_id": domain_id},
+        {"firstname": "Jon",      "lastname": "Snow",       "password": "Winter2026!",       "domain_id": domain_id},
+        {"firstname": "Arya",     "lastname": "Stark",      "password": "Needle2026!",       "domain_id": domain_id},
+        {"firstname": "Sansa",    "lastname": "Stark",      "password": "QueenInNorth2026!", "domain_id": domain_id},
+        {"firstname": "Bran",     "lastname": "Stark",      "password": "ThreeEyed2026!",    "domain_id": domain_id},
+        {"firstname": "Tyrion",   "lastname": "Lannister",  "password": "ImpsMind2026!",     "domain_id": domain_id},
+        {"firstname": "Daenerys", "lastname": "Targaryen",  "password": "Dragons2026!",      "domain_id": domain_id},
+        {"firstname": "Sandor",   "lastname": "Clegane",    "password": "Hound2026!",        "domain_id": domain_id},
     ]
 
     created_usernames = []
@@ -88,27 +87,25 @@ def test_full_crud_flow(client):
         created_users.append(body)
 
     assert "j.snow" in created_usernames
+    j_snow  = next(u for u in created_users if u["username"] == "j.snow")
+    a_stark = next(u for u in created_users if u["username"] == "a.stark")
+    s_stark = next(u for u in created_users if u["username"] == "s.stark")
 
-    # ── GET project detail (lists everything) ──
+    # ── GET project detail ──
     resp = client.get(f"/projects/{project_id}")
     assert resp.status_code == 200
     detail = resp.json()
-
     assert detail["project"]["name"] == "GOT-Lab"
     assert len(detail["forests"]) == 1
     assert detail["forests"][0]["fqdn"] == "GOT.LAN"
     assert len(detail["domains"]) == 1
     assert len(detail["servers"]) == 1
     assert detail["servers"][0]["fqdn"] == "DC01.GOT.LAN"
-
-    # on s'attend maintenant à 7 users au total
     assert len(detail["users"]) == 7
-    usernames_in_detail = {u["username"] for u in detail["users"]}
-    assert "j.snow" in usernames_in_detail
+    assert "j.snow" in {u["username"] for u in detail["users"]}
 
-    # ── Create Group with some users ──
-    user_ids = [u["id"] for u in created_users[:3]]  # Jon, Arya, Sansa par exemple
-
+    # ── Create Group "Starks" with Jon, Arya, Sansa ──
+    user_ids = [u["id"] for u in created_users[:3]]
     resp = client.post(
         "/groups/",
         json={
@@ -116,27 +113,140 @@ def test_full_crud_flow(client):
             "description": "House Stark members",
             "user_ids": user_ids,
             "member_group_ids": [],
-            "domain_id": domain_id,   # <<< important : groupe de domaine GOT.LAN
-            # "server_id": server["id"],  # alternative pour un groupe local au serveur
+            "domain_id": domain_id,
         },
     )
     assert resp.status_code == 200, resp.text
-    group = resp.json()
-    group_id = group["id"]
+    group_starks    = resp.json()
+    group_starks_id = group_starks["id"]
+    assert group_starks["name"] == "Starks"
+    assert set(group_starks["user_ids"]) == set(user_ids)
 
-    assert group["name"] == "Starks"
-    assert set(group["user_ids"]) == set(user_ids)
+    # ── Create nested group "NorthLords" containing "Starks" ──
+    resp = client.post(
+        "/groups/",
+        json={
+            "name": "NorthLords",
+            "description": "Northern lords group",
+            "user_ids": [],
+            "member_group_ids": [group_starks_id],
+            "domain_id": domain_id,
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    group_northlords    = resp.json()
+    group_northlords_id = group_northlords["id"]
+    assert group_northlords["member_group_ids"] == [group_starks_id]
 
-    # ── List groups ──
+    # ── List & detail groups ──
     resp = client.get("/groups/")
     assert resp.status_code == 200
     groups_list = resp.json()
-    assert any(g["id"] == group_id for g in groups_list)
+    assert any(g["id"] == group_starks_id    for g in groups_list)
+    assert any(g["id"] == group_northlords_id for g in groups_list)
 
-    # ── Get group detail ──
-    resp = client.get(f"/groups/{group_id}")
+    resp = client.get(f"/groups/{group_starks_id}")
     assert resp.status_code == 200
-    group_detail = resp.json()
-    assert group_detail["name"] == "Starks"
-    assert set(group_detail["user_ids"]) == set(user_ids)
-    assert group_detail["member_group_ids"] == []
+    assert resp.json()["name"] == "Starks"
+    assert set(resp.json()["user_ids"]) == set(user_ids)
+    assert resp.json()["member_group_ids"] == []
+
+    resp = client.get(f"/groups/{group_northlords_id}")
+    assert resp.status_code == 200
+    assert resp.json()["member_group_ids"] == [group_starks_id]
+
+    # ─────────────────────────────────────────────────────────────────
+    # ── VULNERABILITIES ──────────────────────────────────────────────
+    # ─────────────────────────────────────────────────────────────────
+
+    # 1) Récupérer le catalogue  →  GET /vulnerabilities/
+    resp = client.get("/vulnerabilities/")
+    assert resp.status_code == 200
+    vuln_catalog = resp.json()
+    vuln_by_code = {v["code"]: v for v in vuln_catalog}
+
+    for expected_code in ("asrep_roasting", "kerberoasting", "genericall_dacl",
+                          "writedacl", "forcechangepassword", "dcsync"):
+        assert expected_code in vuln_by_code, f"Missing vuln in catalogue: {expected_code}"
+
+    # Helper pour créer une vuln appliquée  →  POST /vulnerabilities/projects/{project_id}
+    def apply_vuln(code: str, params: dict) -> int:
+        r = client.post(
+            f"/vulnerabilities/projects/{project_id}",
+            json={
+                "vuln_id":   vuln_by_code[code]["id"],
+                "domain_id": domain_id,
+                "params":    params,
+            },
+        )
+        assert r.status_code == 200, f"[{code}] {r.text}"
+        return r.json()["id"]
+
+    applied_ids = []
+
+    # 2) AS-REP Roasting  →  user Jon Snow (user only)
+    applied_ids.append(apply_vuln("asrep_roasting", {
+        "username": j_snow["username"],
+    }))
+
+    # 3) Kerberoasting  →  user Arya Stark (user only)
+    applied_ids.append(apply_vuln("kerberoasting", {
+        "username": a_stark["username"],
+        "spn_name": "HTTP/dc01.got.lan",
+    }))
+
+    # 4) GenericAll DACL  →  source = groupe "Starks", target = user Sansa
+    applied_ids.append(apply_vuln("genericall_dacl", {
+        "source_username": "Starks",
+        "target_username": s_stark["username"],
+    }))
+
+    # 5) WriteDACL  →  source = user Jon, target = groupe "Starks"
+    applied_ids.append(apply_vuln("writedacl", {
+        "source_username": j_snow["username"],
+        "target_username": "Starks",
+    }))
+
+    # 6) ForceChangePassword  →  source = groupe "NorthLords", target = user Arya
+    applied_ids.append(apply_vuln("forcechangepassword", {
+        "source_username": "NorthLords",
+        "target_username": a_stark["username"],
+    }))
+
+    # 7) DCSync  →  source = groupe "NorthLords" sur le domaine
+    applied_ids.append(apply_vuln("dcsync", {
+        "username":  "NorthLords",
+        "domain_dn": "DC=got,DC=lan",
+    }))
+
+    # ── Vérifier que toutes les vulns sont listées pour ce projet ──
+    #    GET /vulnerabilities/projects/{project_id}
+    resp = client.get(f"/vulnerabilities/projects/{project_id}")
+    assert resp.status_code == 200
+    applied_list = resp.json()
+    applied_ids_in_db = {v["id"] for v in applied_list}
+    for vid in applied_ids:
+        assert vid in applied_ids_in_db, f"Applied vuln {vid} not found in project list"
+
+    # ── Vérifier qu'on ne peut pas créer deux fois la même vuln avec les mêmes params ──
+    resp = client.post(
+        f"/vulnerabilities/projects/{project_id}",
+        json={
+            "vuln_id":   vuln_by_code["asrep_roasting"]["id"],
+            "domain_id": domain_id,
+            "params":    {"username": j_snow["username"]},
+        },
+    )
+    assert resp.status_code == 409, f"Expected 409 on duplicate vuln, got {resp.status_code}"
+
+    # ── Delete une vuln appliquée et vérifier qu'elle disparaît ──
+    #    DELETE /vulnerabilities/{vuln_id}
+    vuln_to_delete = applied_ids[0]
+    resp = client.delete(f"/vulnerabilities/{vuln_to_delete}")
+    assert resp.status_code == 200
+    assert resp.json()["message"] == "Vulnerability removed successfully"
+
+    resp = client.get(f"/vulnerabilities/projects/{project_id}")
+    assert resp.status_code == 200
+    remaining_ids = {v["id"] for v in resp.json()}
+    assert vuln_to_delete not in remaining_ids

@@ -634,8 +634,6 @@ def _step_add_users(
     return deployment_result
 
 
-from adaptive.api.models.group import Group  # pour le type
-
 def _step_add_groups(
     project: Project,
     ansible: AnsibleService,
@@ -643,13 +641,9 @@ def _step_add_groups(
     groups_by_domain: dict[Domain, list[Group]] | None,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
-    """STEP X: créer les groupes AD dans chaque domaine + y ajouter les membres."""
-
     if not groups_by_domain:
-        logger.info("[STEP ?] No groups to create, skipping.")
+        logger.info("[STEP ADD_GROUPS] No groups to create, skipping.")
         return deployment_result
-
-    logger.info("[STEP ?] Starting group creation across %d domain(s)", len(groups_by_domain))
 
     for domain, groups in groups_by_domain.items():
         if not groups:
@@ -657,25 +651,16 @@ def _step_add_groups(
 
         dc = next((s for s in domain.servers if s.is_dc and s.ip), None)
         if not dc or not dc.ip:
-            logger.error("[STEP ?] No reachable DC for domain '%s', skipping", domain.fqdn)
+            logger.error("[STEP ADD_GROUPS] No reachable DC for '%s', skipping", domain.fqdn)
             continue
 
         fqdn = dc.fqdn
         base_dn = f"DC={fqdn.split('.')[-2].lower()},DC={fqdn.split('.')[-1].lower()}"
 
-        # Préparer pour Ansible : nom, description, membres users, membres groupes
-        group_dicts: list[dict[str, Any]] = []
-        for g in groups:
-            group_dicts.append(
-                {
-                    "name": g.name,
-                    "description": g.description or "",
-                    # on passe les usernames des membres
-                    "member_usernames": [u.username for u in g.users],
-                    # et les noms des groupes membres (nesting)
-                    "member_group_names": [mg.name for mg in g.member_groups],
-                }
-            )
+        group_dicts: list[dict[str, Any]] = [
+            {"name": g.name, "description": g.description or ""}
+            for g in groups
+        ]
 
         applied = _create_applied_template(
             db,
@@ -691,13 +676,6 @@ def _step_add_groups(
             },
         )
 
-        logger.info(
-            "[STEP ?] Adding %d group(s) to domain '%s' via DC '%s'",
-            len(groups),
-            domain.fqdn,
-            dc.fqdn,
-        )
-
         result = ansible.add_groups(
             server_ip=_bare_ip(dc.ip),
             groups=group_dicts,
@@ -707,13 +685,86 @@ def _step_add_groups(
 
         if not result.success:
             _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
-            logger.error("[STEP ?] Group creation failed on '%s': %s", domain.fqdn, result.error)
             deployment_result.success = False
             deployment_result.error = result.error
             return deployment_result
 
         _update_template_status(db, applied, TemplateStatus.APPLIED)
-        logger.info("[STEP ?] Groups successfully created on domain '%s'", domain.fqdn)
+        logger.info("[STEP ADD_GROUPS] Groups created on domain '%s'", domain.fqdn)
+
+    return deployment_result
+
+
+def _step_add_group_members(
+    project: Project,
+    ansible: AnsibleService,
+    db: Session,
+    groups_by_domain: dict[Domain, list[Group]] | None,
+    deployment_result: DeploymentResult,
+) -> DeploymentResult:
+    if not groups_by_domain:
+        logger.info("[STEP ADD_GROUP_MEMBERS] No memberships to set, skipping.")
+        return deployment_result
+
+    for domain, groups in groups_by_domain.items():
+        # Garder uniquement les groupes qui ont au moins un membre
+        groups_with_members = [
+            g for g in groups
+            if g.users or g.member_groups
+        ]
+
+        if not groups_with_members:
+            logger.info(
+                "[STEP ADD_GROUP_MEMBERS] No group with members in domain '%s', skipping",
+                domain.fqdn
+            )
+            continue
+
+        dc = next((s for s in domain.servers if s.is_dc and s.ip), None)
+        if not dc or not dc.ip:
+            logger.error("[STEP ADD_GROUP_MEMBERS] No reachable DC for '%s', skipping", domain.fqdn)
+            continue
+
+        memberships: list[dict[str, Any]] = []
+        for g in groups_with_members:
+            members = (
+                [u.username for u in g.users]
+                + [mg.name for mg in g.member_groups]
+            )
+            if members:
+                memberships.append({"group_name": g.name, "members": members})
+
+        applied = _create_applied_template(
+            db,
+            project_id=project.id,
+            template_code="add_group_members",
+            domain_id=domain.id,
+            server_id=dc.id,
+            params={
+                "target_host": _bare_ip(dc.ip),
+                "memberships": memberships,
+            },
+        )
+
+        logger.info(
+            "[STEP ADD_GROUP_MEMBERS] Adding members to %d group(s) on domain '%s'",
+            len(memberships),
+            domain.fqdn,
+        )
+
+        result = ansible.add_group_members(
+            server_ip=_bare_ip(dc.ip),
+            memberships=memberships,
+        )
+
+        if not result.success:
+            _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
+            deployment_result.success = False
+            deployment_result.error = result.error
+            return deployment_result
+
+        _update_template_status(db, applied, TemplateStatus.APPLIED)
+        logger.info("[STEP ADD_GROUP_MEMBERS] Memberships set on domain '%s'", domain.fqdn)
 
     return deployment_result
 
@@ -833,17 +884,24 @@ def build_deployment_steps(
 
 
     # Groupes qui n'ont pas encore été pushés
+    # STEP : Créer les groupes (sans membres)
     groups_not_pushed = get_groups_not_push_by_domain(project, db)
-    if any(groups_list for groups_list in groups_not_pushed.values()):
+    if any(gl for gl in groups_not_pushed.values()):
         steps.append(
             lambda r: _step_add_groups(project, ansible, db, groups_not_pushed, r)
         )
 
-    # steps += [
-    #     lambda r: _step_promote_dcs(project, hypervisor, ansible, db, r),
-    #     lambda r: _step_add_users(project, ansible, db, r),
-    #     lambda r: _step_push_vulnerabilities(project, db, r),
-    # ]
+    # STEP : Ajouter les membres dans les groupes
+    # On réutilise groups_not_pushed : tous les groupes, qu'ils aient des membres ou non.
+    # La step filtrera elle-même les groupes sans membres.
+    if any(gl for gl in groups_not_pushed.values()):
+        steps.append(
+            lambda r: _step_add_group_members(project, ansible, db, groups_not_pushed, r)
+        )
+        
+    steps += [
+        lambda r: _step_push_vulnerabilities(project, db, r),
+    ]
 
     return steps
 

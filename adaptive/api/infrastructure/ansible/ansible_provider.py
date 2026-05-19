@@ -141,7 +141,32 @@ class AnsibleService:
 
         return result
 
+    def add_group_members(
+        self,
+        server_ip: str,
+        memberships: list[dict[str, Any]],  # [{"group_name": "Starks", "members": ["j.snow", "NorthLords"]}]
+    ) -> PlaybookResult:
+        logger.info(
+            "%s Adding members to %d group(s) on %s",
+            PREFIX, len(memberships), server_ip
+        )
 
+        extravars: dict[str, Any] = {
+            "target_host": server_ip,
+            "memberships": memberships,
+        }
+
+        content = self._get_template_content("add_group_members")
+        result = self._run_playbook(content, server_ip, extravars)
+
+        if result.success:
+            logger.info("%s Successfully updated group memberships on %s", PREFIX, server_ip)
+        else:
+            logger.error("%s Failed to update group memberships on %s: %s", PREFIX, server_ip, result.error)
+
+        return result
+    
+    
     def _run_playbook(
         self,
         playbook_content: str,

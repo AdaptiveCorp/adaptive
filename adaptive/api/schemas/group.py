@@ -10,7 +10,7 @@ class GroupCreate(BaseModel):
     domain_id: int | None = None
     server_id: int | None = None
 
-class GroupResponse(BaseModel):
+class GroupResponse(BaseModel) :
     id: int
     name: str
     description: str | None = None

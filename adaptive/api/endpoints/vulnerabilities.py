@@ -108,7 +108,6 @@ def post_vulnerability(
     db.refresh(domain)
 
     # result = execute_powershell_winrm(primary_dc.ip, powershell_script, param_req, db)
-
     return applied_template
 
 
