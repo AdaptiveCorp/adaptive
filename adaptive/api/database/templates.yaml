@@ -343,39 +343,61 @@ templates:
       $User = Get-ADUser -Identity "{{username}}"
       Set-ADUser -Identity $User -Enabled $true
 
-  - code: enable_anonymous_ldap
-    name: Enable Anonymous LDAP Bind
+  - code: delete_user_by_sam
+    name: Delete User by sAMAccountName
     type: vulnerability
-    description: Active l'accès LDAP anonyme sur la forêt en positionnant dSHeuristics (7e caractère = 2)
-    category: ldap
-    required_params: []
+    description: Supprime un compte utilisateur AD en fonction de son sAMAccountName
+    category: account
+    required_params:
+      - username
     content: |
       Import-Module ActiveDirectory
 
-      # Récupère le contexte de configuration
-      $rootDSE = Get-ADRootDSE
-      $configNC = $rootDSE.ConfigurationNamingContext
+      # Recherche l'objet par sAMAccountName (username)
+      $User = Get-ADUser -Filter { SamAccountName -eq "{{username}}" }
 
-      # Chemin de l'objet Directory Service
-      $dsPath = "CN=Directory Service,CN=Windows NT,CN=Services,$configNC"
-
-      $dsObj = Get-ADObject -Identity $dsPath -Properties dSHeuristics
-
-      # Valeur actuelle de dSHeuristics (souvent non définie)
-      $current = $dsObj.dSHeuristics
-      if ([string]::IsNullOrEmpty($current)) {
-          $current = ""
+      if ($null -ne $User) {
+          Remove-ADUser -Identity $User.DistinguishedName -Confirm:$false
+      } else {
+          Write-Warning "User with sAMAccountName '{{username}}' not found"
       }
 
-      # On s'assure d'avoir au moins 7 caractères (on pad avec des '0')
-      while ($current.Length -lt 7) {
-          $current += "0"
+  - code: delete_group_by_sam
+    name: Delete Group by sAMAccountName
+    type: vulnerability
+    description: Supprime un groupe AD en fonction de son sAMAccountName
+    category: group
+    required_params:
+      - groupname
+    content: |
+      Import-Module ActiveDirectory
+
+      $Group = Get-ADGroup -Filter { SamAccountName -eq "{{groupname}}" }
+
+      if ($null -ne $Group) {
+          Remove-ADGroup -Identity $Group.DistinguishedName -Confirm:$false
+      } else {
+          Write-Warning "Group with sAMAccountName '{{groupname}}' not found"
       }
 
-      # On force le 7e caractère (index 6) à '2'
-      $chars = $current.ToCharArray()
-      $chars[6] = '2'
-      $newValue = -join $chars
+  - code: remove_member_from_group
+    name: Remove Member From Group
+    type: vulnerability
+    description: Retire l'appartenance d'un objet AD (user ou groupe) à un groupe cible
+    category: group
+    required_params:
+      - group_name
+      - member_sam
+    content: |
+      Import-Module ActiveDirectory
 
-      # Applique la nouvelle valeur
-      Set-ADObject -Identity $dsPath -Replace @{ dSHeuristics = $newValue }
+      $GroupName = "{{group_name}}"
+      $MemberSam = "{{member_sam}}"
+
+      # Remove-ADGroupMember accepte utilisateurs ou groupes, identifiés par sAMAccountName
+      try {
+          Remove-ADGroupMember -Identity $GroupName -Members $MemberSam -Confirm:$false -ErrorAction Stop
+          Write-Output "Removed $MemberSam from $GroupName"
+      } catch {
+          Write-Warning "Failed to remove $MemberSam from $GroupName : $($_.Exception.Message)"
+      }
