@@ -20,6 +20,8 @@ from adaptive.api.models.project import Project
 from adaptive.api.models.server import Server, ServerStatus
 from adaptive.api.models.template import Template
 from adaptive.api.models.user import User
+from adaptive.api.models.group import Group
+
 from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
@@ -149,7 +151,6 @@ def _wait_for_ad_ready(
     logger.error("[WAIT] Timeout (%ds) waiting for AD readiness on %s", timeout + initial_wait, server_ip)
     return False
 
-
 # need to wait for ADWS to be ready because it used in ansible.ad.users
 def ansible_deploy_user(user: User, db: Session) -> PlaybookResult:
     ansible = AnsibleService(db=db)
@@ -183,6 +184,54 @@ def ansible_deploy_user(user: User, db: Session) -> PlaybookResult:
         domain_fqdn=domain.fqdn,
     )
 
+def get_groups_grouped_by_domain(project: Project) -> dict[Domain, list[Group]]:
+    grouped: dict[Domain, list[Group]] = {}
+    for forest in project.forests:
+        for domain in forest.domains:
+            print(domain)
+            print(domain.users)
+            if domain.groups:
+                print("there is this")
+                grouped[domain] = list(domain.groups)
+    return grouped
+
+
+def get_groups_not_push_by_domain(project: Project, db: Session) -> dict[Domain, list[Group]]:
+    """Retourne, par domaine, les groupes qui n'ont pas encore été poussés dans l'AD
+       via le template 'add_groups' (sur le même principe que les users)."""
+
+    groups_by_domain = get_groups_grouped_by_domain(project)
+    print("Groups by domain : ", len(groups_by_domain))
+    for domain, groups_list in groups_by_domain.items():
+        stmt = (
+            select(AppliedTemplate)
+            .join(Template)
+            .where(
+                AppliedTemplate.project_id == project.id,
+                (AppliedTemplate.status == TemplateStatus.APPLIED)
+                | (AppliedTemplate.status == TemplateStatus.ERROR),
+                AppliedTemplate.domain_id == domain.id,
+                Template.code == "add_groups",
+            )
+        )
+        applied_templates = db.execute(stmt).scalars().all()
+
+        # extraire les noms de groupes déjà poussés
+        groupnames_applied: list[str] = []
+        for applied in applied_templates:
+            if not applied.params:
+                continue
+            params_json = json.loads(applied.params)
+            print(params_json)
+            # on décidera que params["groupnames"] contiendra la liste des noms poussés
+            groupnames_applied.extend(params_json.get("groupnames", []))
+
+        groups_not_applied = [
+            g for g in groups_list if g.name not in groupnames_applied
+        ]
+        groups_by_domain[domain] = groups_not_applied
+
+    return groups_by_domain
 
 def get_template_for_project(project: Project, db: Session) -> list[AppliedTemplate]:
     stmt = select(AppliedTemplate).where(AppliedTemplate.project_id == project.id)
@@ -198,6 +247,7 @@ def _create_applied_template(
     server_id: int | None = None,
     forest_id: int | None = None,
     user_id: int | None = None,
+    group_id: int | None = None,
     params: dict | None = None,
 ) -> AppliedTemplate:
     
@@ -213,6 +263,7 @@ def _create_applied_template(
         server_id=server_id,
         forest_id=forest_id,
         user_id=user_id,
+        group_id=group_id,
         params=json.dumps(params) if params else None,
         status=TemplateStatus.PENDING,
     )
@@ -583,6 +634,82 @@ def _step_add_users(
     return deployment_result
 
 
+def _step_add_groups(
+    project: Project,
+    ansible: AnsibleService,
+    db: Session,
+    groups_by_domain: dict[Domain, list[Group]] | None,
+    deployment_result: DeploymentResult,
+) -> DeploymentResult:
+    """STEP X: créer les groupes AD dans chaque domaine."""
+
+    if not groups_by_domain:
+        logger.info("[STEP ?] No groups to create, skipping.")
+        return deployment_result
+
+    logger.info("[STEP ?] Starting group creation across %d domain(s)", len(groups_by_domain))
+
+    for domain, groups in groups_by_domain.items():
+        if not groups:
+            continue
+
+        dc = next((s for s in domain.servers if s.is_dc and s.ip), None)
+        if not dc or not dc.ip:
+            logger.error("[STEP ?] No reachable DC for domain '%s', skipping", domain.fqdn)
+            continue
+
+        fqdn = dc.fqdn
+        base_dn = f"DC={fqdn.split('.')[-2].lower()},DC={fqdn.split('.')[-1].lower()}"
+
+        group_dicts: list[dict[str, str]] = [
+            {
+                "name": g.name,
+                "description": g.description or "",
+
+            }
+            for g in groups
+        ]
+
+        applied = _create_applied_template(
+            db,
+            project_id=project.id,
+            template_code="add_groups",
+            domain_id=domain.id,
+            server_id=dc.id,
+            params={
+                "target_host": _bare_ip(dc.ip),
+                "groupnames": [g.name for g in groups],
+                "base_dn": base_dn,
+                "domain_fqdn": domain.fqdn,
+            },
+        )
+
+        logger.info(
+            "[STEP ?] Adding %d group(s) to domain '%s' via DC '%s'",
+            len(groups),
+            domain.fqdn,
+            dc.fqdn,
+        )
+
+        result = ansible.add_groups(
+            server_ip=_bare_ip(dc.ip),
+            groups=group_dicts,
+            base_dn=base_dn,
+            domain_fqdn=domain.fqdn,
+        )
+
+        if not result.success:
+            _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
+            logger.error("[STEP ?] Group creation failed on '%s': %s", domain.fqdn, result.error)
+            deployment_result.success = False
+            deployment_result.error = result.error
+            return deployment_result
+
+        _update_template_status(db, applied, TemplateStatus.APPLIED)
+        logger.info("[STEP ?] Groups successfully created on domain '%s'", domain.fqdn)
+
+    return deployment_result
+
 def _step_push_vulnerabilities(
     project: Project,
     db: Session,
@@ -677,7 +804,6 @@ def build_deployment_steps(
     servers_to_clone = [s for s in all_servers if s.status != ServerStatus.APPLIED]
 
     if servers_to_clone:
-        #print("There is serveur to clone")
         steps.append(
             lambda r, s=servers_to_clone: _step_clone_vms(project, s, hypervisor, db, r)
         )
@@ -699,7 +825,13 @@ def build_deployment_steps(
         )
 
 
-    #lol = _wait_for_adws('10.0.0.3')
+    # Groupes qui n'ont pas encore été pushés
+    groups_not_pushed = get_groups_not_push_by_domain(project, db)
+    if any(groups_list for groups_list in groups_not_pushed.values()):
+        steps.append(
+            lambda r: _step_add_groups(project, ansible, db, groups_not_pushed, r)
+        )
+
     # steps += [
     #     lambda r: _step_promote_dcs(project, hypervisor, ansible, db, r),
     #     lambda r: _step_add_users(project, ansible, db, r),

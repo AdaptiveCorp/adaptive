@@ -115,6 +115,33 @@ class AnsibleService:
 
         return result
 
+    def add_groups(
+        self,
+        server_ip: str,
+        groups: list[dict[str, str]],
+        base_dn: str,
+        domain_fqdn: str,
+    ) -> PlaybookResult:
+        logger.info("%s Adding %d group(s) on %s", PREFIX, len(groups), server_ip)
+
+        extravars: dict[str, Any] = {
+            "target_host": server_ip,
+            "groups_list": groups,
+            "base_dn": base_dn,
+            "domain_fqdn": domain_fqdn,
+        }
+
+        content = self._get_template_content("add_groups")
+        result = self._run_playbook(content, server_ip, extravars)
+
+        if result.success:
+            logger.info("%s Successfully added %d group(s) on %s", PREFIX, len(groups), server_ip)
+        else:
+            logger.error("%s Failed to add groups on %s: %s", PREFIX, server_ip, result.error)
+
+        return result
+
+
     def _run_playbook(
         self,
         playbook_content: str,

@@ -14,7 +14,6 @@ router = APIRouter(
     tags=["groups"],
 )
 
-
 @router.post("/", response_model=GroupResponse)
 def add_group(
     payload: GroupCreate,
@@ -28,10 +27,13 @@ def add_group(
         raise GroupTargetRequiredError()
     if payload.domain_id and payload.server_id:
         raise GroupTargetRequiredError()
-
+    
+    print("DOMAIN ID :", payload.domain_id)
     group = Group(
         name=payload.name,
         description=payload.description,
+        domain_id=payload.domain_id,
+        server_id=payload.server_id,
     )
 
     # Ajouter les users membres si des IDs sont fournis
@@ -54,6 +56,7 @@ def add_group(
         description=group.description,
         user_ids=[u.id for u in group.users],
         member_group_ids=[g.id for g in group.member_groups],
+        domain_id=group.domain_id,
     )
 
 
@@ -72,6 +75,7 @@ def list_groups(
             description=g.description,
             user_ids=[u.id for u in g.users],
             member_group_ids=[mg.id for mg in g.member_groups],
+            domain_id=g.domain_id,
         )
         for g in groups
     ]

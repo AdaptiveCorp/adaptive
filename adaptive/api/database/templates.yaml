@@ -105,6 +105,44 @@ templates:
               msg: "User {{ item.username }} created successfully"
             loop: "{{ users_list }}"
 
+  - code: add_groups
+    name: Ajout de groupes AD
+    type: config
+    description: Création de groupes dans un domaine Active Directory
+    category: infrastructure
+    required_params:
+      - target_host
+      - groups_list
+      - base_dn
+      - domain_fqdn
+    content: |
+      ---
+      - name: Create Active Directory Groups
+        hosts: "{{ target_host }}"
+        gather_facts: no
+        vars:
+          ansible_connection: winrm
+          ansible_winrm_transport: ntlm
+          ansible_winrm_server_cert_validation: ignore
+          ansible_port: 5985
+          ansible_winrm_read_timeout_sec: 120
+
+        tasks:
+          - name: Create AD groups
+            microsoft.ad.group:
+              name: "{{ item.name }}"
+              scope: "{{ item.scope | default('Global') }}"
+              category: "{{ item.category | default('Security') }}"
+              path: "{{ item.ou_path | default('CN=Users,' + base_dn) }}"
+              description: "{{ item.description | default('Created by Ansible') }}"
+              state: present
+            loop: "{{ groups_list }}"
+            register: group_creation
+
+          - name: Debug created groups
+            debug:
+              var: group_creation
+
   # --- VULNERABILITY templates ---
   - code: asrep_roasting
     name: AS-REP Roasting

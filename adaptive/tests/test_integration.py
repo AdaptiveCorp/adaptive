@@ -47,8 +47,9 @@ def test_full_crud_flow(client):
         json={"fqdn": "GOT.LAN"},
     )
     assert resp.status_code == 200, resp.text
+    
     domain_id = resp.json()["id"]
-
+    
     # ── Create Server (DC) ──
     resp = client.post(
         f"/domains/{domain_id}/servers/",

@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: e45962125ad0
+Revision ID: e3ce4a245c24
 Revises: 
-Create Date: 2026-05-16 18:54:53.360148
+Create Date: 2026-05-19 15:54:58.630983
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e45962125ad0'
+revision: str = 'e3ce4a245c24'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -111,6 +111,7 @@ def upgrade() -> None:
     sa.Column('project_id', sa.Integer(), nullable=False),
     sa.Column('template_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('group_id', sa.Integer(), nullable=True),
     sa.Column('domain_id', sa.Integer(), nullable=True),
     sa.Column('server_id', sa.Integer(), nullable=True),
     sa.Column('forest_id', sa.Integer(), nullable=True),
@@ -119,6 +120,7 @@ def upgrade() -> None:
     sa.Column('status', sa.String(length=20), nullable=False),
     sa.ForeignKeyConstraint(['domain_id'], ['domains.id'], ),
     sa.ForeignKeyConstraint(['forest_id'], ['forests.id'], ),
+    sa.ForeignKeyConstraint(['group_id'], ['groups.id'], ),
     sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
     sa.ForeignKeyConstraint(['server_id'], ['servers.id'], ),
     sa.ForeignKeyConstraint(['template_id'], ['templates.id'], ),

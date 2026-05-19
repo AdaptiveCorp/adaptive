@@ -33,7 +33,6 @@ class ProxmoxTaskError(ProxmoxError):
             detail={"task_upid": task_upid, "exitstatus": exitstatus},
         )
 
-
 class ProxmoxTimeoutError(ProxmoxError):
     """A Proxmox task timed out."""
 
