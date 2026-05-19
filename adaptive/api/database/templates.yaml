@@ -30,7 +30,6 @@ templates:
               name: AD-Domain-Services
               include_management_tools: yes
               state: present
-            register: ad_install
 
           - name: Create new forest (First DC)
             ansible.windows.win_shell: |
@@ -42,12 +41,8 @@ templates:
                 -DomainMode "{{ domain_mode | default('WinThreshold') }}" `
                 -InstallDns:${{ install_dns | default(true) | string | lower }} `
                 -SafeModeAdministratorPassword $Password `
-                -Force `
-                -NoRebootOnCompletion
+                -Force
             when: is_first_dc | bool
-            register: forest_creation
-            async: 600
-            poll: 10
 
           - name: Join existing domain (Additional DC)
             ansible.windows.win_shell: |
@@ -59,23 +54,13 @@ templates:
                 -Credential $DomainCred `
                 -SafeModeAdministratorPassword $Password `
                 -InstallDns:${{ install_dns | default(true) | string | lower }} `
-                -Force `
-                -NoRebootOnCompletion
+                -Force
             when: not (is_first_dc | bool)
-            register: dc_join
-            async: 600
-            poll: 10
 
-          - name: Mark DC promotion complete
-            set_fact:
-              dc_promoted: true
-            when: forest_creation.changed or dc_join.changed
-
-          - name: Display pre-reboot message
+          - name: Display post-promo info
             debug:
-              msg: "DC promotion complete. Server will reboot. Credentials will change to {{ domain_fqdn }}\\Administrator"
-            when: dc_promoted is defined
-
+              msg: "DC promotion command sent. Server will reboot automatically. New credentials: {{ domain_fqdn }}\\Administrator"
+              
   - code: add_users
     name: Ajout d'utilisateurs AD
     type: config
@@ -119,6 +104,44 @@ templates:
             debug:
               msg: "User {{ item.username }} created successfully"
             loop: "{{ users_list }}"
+
+  - code: add_groups
+    name: Ajout de groupes AD
+    type: config
+    description: Création de groupes dans un domaine Active Directory
+    category: infrastructure
+    required_params:
+      - target_host
+      - groups_list
+      - base_dn
+      - domain_fqdn
+    content: |
+      ---
+      - name: Create Active Directory Groups
+        hosts: "{{ target_host }}"
+        gather_facts: no
+        vars:
+          ansible_connection: winrm
+          ansible_winrm_transport: ntlm
+          ansible_winrm_server_cert_validation: ignore
+          ansible_port: 5985
+          ansible_winrm_read_timeout_sec: 120
+
+        tasks:
+          - name: Create AD groups
+            microsoft.ad.group:
+              name: "{{ item.name }}"
+              scope: "{{ item.scope | default('Global') }}"
+              category: "{{ item.category | default('Security') }}"
+              path: "{{ item.ou_path | default('CN=Users,' + base_dn) }}"
+              description: "{{ item.description | default('Created by Ansible') }}"
+              state: present
+            loop: "{{ groups_list }}"
+            register: group_creation
+
+          - name: Debug created groups
+            debug:
+              var: group_creation
 
   # --- VULNERABILITY templates ---
   - code: asrep_roasting

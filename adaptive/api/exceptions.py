@@ -24,7 +24,6 @@ class ProxmoxConnectionError(ProxmoxError):
             detail={"host": host, "cause": cause},
         )
 
-
 class ProxmoxTaskError(ProxmoxError):
     """A Proxmox task failed."""
 
@@ -33,7 +32,6 @@ class ProxmoxTaskError(ProxmoxError):
             f"Task {task_upid} failed: {exitstatus}",
             detail={"task_upid": task_upid, "exitstatus": exitstatus},
         )
-
 
 class ProxmoxTimeoutError(ProxmoxError):
     """A Proxmox task timed out."""
@@ -161,6 +159,14 @@ class VulnerabilityNotFoundError(NotFoundError):
             detail={"template_id": template_id},
         )
 
+class VulnerabilityAlreadyExist(ConflictError) :
+    """This vulnerability already exist"""
+    def __init__(self, applied_vuln_id: int, applied_vuln_code : str, applied_vuln_params : str):
+        super().__init__(
+            #Changer pour afficher la vuln qui existe déjà
+            f"Vulnerability already exist id={applied_vuln_id} already exists",
+            detail={"code": applied_vuln_code,"params" : applied_vuln_params},
+        )
 
 class AppliedVulnerabilityNotFoundError(NotFoundError):
     """Applied vulnerability does not exist."""
@@ -224,3 +230,9 @@ class VulnerabilityInvalidParamsError(ValidationError):
             f"Invalid parameters, required params are: {required_params}",
             detail={"required_params": required_params},
         )
+
+class GroupTargetRequiredError(ValidationError):
+    """Group must be linked to a domain or server."""
+
+    def __init__(self):
+        super().__init__("domain_id or server_id is required")

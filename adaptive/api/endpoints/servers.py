@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from adaptive.api.environment.database import get_db
 from adaptive.api.exceptions import DomainNotFoundError, VmTemplateNotFoundError
 from adaptive.api.models.domain import Domain
-from adaptive.api.models.server import Server
+from adaptive.api.models.server import Server, ServerStatus
 from adaptive.api.models.vm_template import VmTemplate
 from adaptive.api.schemas.server import ServerCreate, ServerResponse
 

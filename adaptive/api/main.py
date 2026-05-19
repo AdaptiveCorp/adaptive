@@ -14,6 +14,7 @@ from adaptive.api.endpoints import (
     users,
     vm_templates,
     vulnerabilities,
+    groups,
 )
 from adaptive.api.environment.logging import setup_logging
 from adaptive.api.exceptions import (
@@ -76,3 +77,4 @@ app.include_router(users.router)
 app.include_router(vm_templates.router)
 app.include_router(vulnerabilities.router)
 app.include_router(internals.router)
+app.include_router(groups.router)
