@@ -634,6 +634,8 @@ def _step_add_users(
     return deployment_result
 
 
+from adaptive.api.models.group import Group  # pour le type
+
 def _step_add_groups(
     project: Project,
     ansible: AnsibleService,
@@ -641,7 +643,7 @@ def _step_add_groups(
     groups_by_domain: dict[Domain, list[Group]] | None,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
-    """STEP X: créer les groupes AD dans chaque domaine."""
+    """STEP X: créer les groupes AD dans chaque domaine + y ajouter les membres."""
 
     if not groups_by_domain:
         logger.info("[STEP ?] No groups to create, skipping.")
@@ -661,14 +663,19 @@ def _step_add_groups(
         fqdn = dc.fqdn
         base_dn = f"DC={fqdn.split('.')[-2].lower()},DC={fqdn.split('.')[-1].lower()}"
 
-        group_dicts: list[dict[str, str]] = [
-            {
-                "name": g.name,
-                "description": g.description or "",
-
-            }
-            for g in groups
-        ]
+        # Préparer pour Ansible : nom, description, membres users, membres groupes
+        group_dicts: list[dict[str, Any]] = []
+        for g in groups:
+            group_dicts.append(
+                {
+                    "name": g.name,
+                    "description": g.description or "",
+                    # on passe les usernames des membres
+                    "member_usernames": [u.username for u in g.users],
+                    # et les noms des groupes membres (nesting)
+                    "member_group_names": [mg.name for mg in g.member_groups],
+                }
+            )
 
         applied = _create_applied_template(
             db,

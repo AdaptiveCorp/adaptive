@@ -108,7 +108,7 @@ templates:
   - code: add_groups
     name: Ajout de groupes AD
     type: config
-    description: Création de groupes dans un domaine Active Directory
+    description: Création de groupes dans un domaine Active Directory + ajout des membres
     category: infrastructure
     required_params:
       - target_host
@@ -117,7 +117,7 @@ templates:
       - domain_fqdn
     content: |
       ---
-      - name: Create Active Directory Groups
+      - name: Create Active Directory Groups and members
         hosts: "{{ target_host }}"
         gather_facts: no
         vars:
@@ -128,7 +128,7 @@ templates:
           ansible_winrm_read_timeout_sec: 120
 
         tasks:
-          - name: Create AD groups
+          - name: Ensure AD group exists
             microsoft.ad.group:
               name: "{{ item.name }}"
               scope: "{{ item.scope | default('Global') }}"
@@ -139,9 +139,20 @@ templates:
             loop: "{{ groups_list }}"
             register: group_creation
 
-          - name: Debug created groups
-            debug:
-              var: group_creation
+          - name: Add user members to group
+            microsoft.ad.group:
+              name: "{{ item.0.name }}"
+              members:
+                add: "{{ item.1 }}"
+              state: present
+            vars:
+              # pour chaque groupe, on construit une liste de DN ou de samAccountName
+              member_users: >-
+                {{
+                  item.member_usernames | map('regex_replace', '^(.*)$', '\\1@' + domain_fqdn) | list
+                }}
+            loop: "{{ groups_list | subelements('member_usernames', skip_missing=True) }}"
+            when: item.1 is defined and item.1 | length > 0
 
   # --- VULNERABILITY templates ---
   - code: asrep_roasting
