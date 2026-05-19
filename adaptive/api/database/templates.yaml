@@ -332,4 +332,50 @@ templates:
       $ACL.SetOwner($NewOwner)
       Set-ACL -Path "AD:$($TargetObj.DistinguishedName)" -AclObject $ACL
 
-      
+  - code: enable_guest_account
+    name: Enable Guest Account
+    type: vulnerability
+    description: Active un compte AD (par défaut le compte Guest) et le rend utilisable
+    category: account
+    required_params:
+      - username
+    content: |
+      $User = Get-ADUser -Identity "{{username}}"
+      Set-ADUser -Identity $User -Enabled $true
+
+  - code: enable_anonymous_ldap
+    name: Enable Anonymous LDAP Bind
+    type: vulnerability
+    description: Active l'accès LDAP anonyme sur la forêt en positionnant dSHeuristics (7e caractère = 2)
+    category: ldap
+    required_params: []
+    content: |
+      Import-Module ActiveDirectory
+
+      # Récupère le contexte de configuration
+      $rootDSE = Get-ADRootDSE
+      $configNC = $rootDSE.ConfigurationNamingContext
+
+      # Chemin de l'objet Directory Service
+      $dsPath = "CN=Directory Service,CN=Windows NT,CN=Services,$configNC"
+
+      $dsObj = Get-ADObject -Identity $dsPath -Properties dSHeuristics
+
+      # Valeur actuelle de dSHeuristics (souvent non définie)
+      $current = $dsObj.dSHeuristics
+      if ([string]::IsNullOrEmpty($current)) {
+          $current = ""
+      }
+
+      # On s'assure d'avoir au moins 7 caractères (on pad avec des '0')
+      while ($current.Length -lt 7) {
+          $current += "0"
+      }
+
+      # On force le 7e caractère (index 6) à '2'
+      $chars = $current.ToCharArray()
+      $chars[6] = '2'
+      $newValue = -join $chars
+
+      # Applique la nouvelle valeur
+      Set-ADObject -Identity $dsPath -Replace @{ dSHeuristics = $newValue }
