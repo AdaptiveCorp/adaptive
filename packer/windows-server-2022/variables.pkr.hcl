@@ -1,96 +1,77 @@
-# --- Proxmox credentials ---
-
-variable "proxmox_api_url" {
-  type        = string
-  description = "Proxmox API endpoint (e.g. https://10.0.0.10:8006/api2/json)"
+variable "proxmox_url" {
+  type = string
 }
-
 variable "proxmox_username" {
-  type        = string
-  description = "Proxmox user (user@realm or user@realm!token)"
+  type = string
 }
-
 variable "proxmox_password" {
   type      = string
   sensitive = true
 }
 
-variable "admin_password" {
-  type        = string
-  description = "Windows Administrator password (used in autounattend + WinRM)"
-  sensitive   = true
+variable "proxmox_skip_tls_verify" {
+  type    = bool
+  default = true
 }
-
-# --- VM template settings ---
-
+variable "proxmox_node" {
+  type = string
+}
+variable "proxmox_storage" {
+  type    = string
+  default = "local-lvm"
+}
+variable "iso_storage_pool" {
+  type    = string
+  default = "local"
+}
+variable "iso_file" {
+  type = string
+}
+# variable "iso_checksum" {
+#   type = string
+# }
+variable "virtio_iso_file" {
+  type    = string
+  default = "local:iso/virtio-win.iso"
+}
+variable "vm_id" {
+  type    = number
+  default = 9000
+}
 variable "vm_name" {
   type    = string
-  default = "windows-server-2022-template"
+  default = "tpl-windows-server-2022"
 }
-
-variable "disk_size" {
+variable "template_description" {
   type    = string
-  default = "60G"
+  default = "Windows Server 2022 - VirtIO + Cloudbase-Init"
 }
-
-variable "memory" {
+variable "vm_cpu_cores" {
+  type    = number
+  default = 2
+}
+variable "vm_cpu_sockets" {
+  type    = number
+  default = 1
+}
+variable "vm_memory" {
   type    = number
   default = 4096
 }
-
-variable "cpus" {
-  type    = number
-  default = 4
-}
-
-variable "proxmox_node" {
+variable "vm_disk_size" {
   type    = string
-  default = "pve-01"
+  default = "60G"
 }
-
-variable "storage_pool" {
-  type        = string
-  description = "Storage for VM disks (LVM-thin, e.g. local-lvm)"
-  default     = "local-lvm"
-}
-
-variable "iso_storage_pool" {
-  type        = string
-  description = "Storage for ISO files (must be dir-type, e.g. local)"
-  default     = "local"
-}
-
-variable "iso_file" {
-  type        = string
-  description = "Proxmox path to Windows Server 2022 ISO"
-  default     = "local:iso/Windows_2022.iso"
-}
-
-variable "virtio_iso" {
-  type        = string
-  description = "Proxmox path to VirtIO drivers ISO"
-  default     = "local:iso/virtio-win-0.1.285.iso"
-}
-
-# --- Build network (temporary static IP for Packer WinRM) ---
-
-variable "build_ip" {
-  type        = string
-  description = "Temporary static IP assigned during build"
-  default     = "10.0.0.100"
-}
-
-variable "build_netmask" {
+variable "network_bridge" {
   type    = string
-  default = "255.255.255.0"
+  default = "vmbr0"
 }
-
-variable "build_gateway" {
+variable "winrm_username" {
   type    = string
-  default = "10.0.0.1"
+  default = "Administrator"
 }
-
-variable "build_dns" {
-  type    = string
-  default = "10.0.0.1"
+variable "winrm_password" {
+  type      = string
+  sensitive = true
+  default   = "P@cker2022!"
 }

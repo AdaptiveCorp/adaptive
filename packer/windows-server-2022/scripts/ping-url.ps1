@@ -1,0 +1,17 @@
+$ErrorActionPreference = "SilentlyContinue"
+$MaxRetries = 5
+$RetryDelay = 10
+$Url = "http://10.0.1.3:8000/lol"
+
+for ($i = 1; $i -le $MaxRetries; $i++) {
+    try {
+        $response = Invoke-WebRequest -Uri $Url -Method GET -UseBasicParsing -TimeoutSec 10
+        Write-Host "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') [OK] $($response.StatusCode)"
+        exit 0
+    }
+    catch {
+        Write-Host "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') [RETRY $i/$MaxRetries] $_"
+        Start-Sleep -Seconds $RetryDelay
+    }
+}
+exit 1
