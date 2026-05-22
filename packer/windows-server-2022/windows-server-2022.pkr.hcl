@@ -130,6 +130,10 @@ build {
     destination = "C:\\Scripts\\ping-url.ps1"
   }
 
+  provisioner "windows-restart" {
+    restart_timeout = "15m"
+  }
+
   provisioner "powershell" {
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
