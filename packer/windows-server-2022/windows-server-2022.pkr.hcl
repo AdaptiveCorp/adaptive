@@ -7,6 +7,7 @@ packer {
   }
 }
 
+
 source "proxmox-iso" "windows-server-2022" {
   proxmox_url              = var.proxmox_url
   username                 = var.proxmox_username
@@ -19,10 +20,6 @@ source "proxmox-iso" "windows-server-2022" {
   template_name        = var.vm_name
   template_description = var.template_description
 
-  http_directory   = "${path.root}/http"
-  http_port_min    = 8100
-  http_port_max    = 8100
-
   os   = "win11"
   bios = "seabios"
 
@@ -34,10 +31,17 @@ source "proxmox-iso" "windows-server-2022" {
   }
 
   additional_iso_files {
-    type             = "ide"
-    index            = 0
-    iso_file         = var.virtio_iso_file
-    unmount          = true
+    type     = "ide"
+    index    = 0
+    iso_file = var.virtio_iso_file
+    unmount  = true
+  }
+
+  additional_iso_files {
+    type     = "ide"
+    index    = 1
+    iso_file = "local:iso/CloudbaseInitSetup_1_1_8_x64.iso"
+    unmount  = true
   }
 
   additional_iso_files {
@@ -45,7 +49,7 @@ source "proxmox-iso" "windows-server-2022" {
     index    = 0
     cd_label = "Unattend"
     cd_content = {
-      "autounattend.xml" = templatefile("${path.root}/http/autounattend.xml.pkrtpl", {
+      "autounattend.xml" = templatefile("${path.root}/iso/autounattend.xml.pkrtpl", {
         winrm_password = var.winrm_password
       })
     }
@@ -85,7 +89,7 @@ source "proxmox-iso" "windows-server-2022" {
   qemu_agent = true
 
   communicator   = "winrm"
-  winrm_host     = "10.0.0.50" 
+  winrm_host     = "10.0.0.50"
   winrm_username = var.winrm_username
   winrm_password = var.winrm_password
   winrm_use_ssl  = false
@@ -94,6 +98,7 @@ source "proxmox-iso" "windows-server-2022" {
   winrm_timeout  = "90m"
 }
 
+
 build {
   name    = "windows-server-2022"
   sources = ["source.proxmox-iso.windows-server-2022"]
@@ -101,39 +106,13 @@ build {
   provisioner "powershell" {
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
-    inline = [
-      "$driverPath = 'E:\\vioscsi\\w10\\amd64'",
-      "if (Test-Path $driverPath) { pnputil /add-driver \"$driverPath\\vioscsi.inf\" /install }",
-      "$netPath = 'E:\\NetKVM\\2k22\\amd64'",
-      "if (Test-Path $netPath) { pnputil /add-driver \"$netPath\\netkvm.inf\" /install }",
-      "elseif (Test-Path 'E:\\NetKVM\\w10\\amd64') { pnputil /add-driver 'E:\\NetKVM\\w10\\amd64\\netkvm.inf' /install }",
-      "$balloonPath = 'E:\\Balloon\\2k22\\amd64'",
-      "if (Test-Path $balloonPath) { pnputil /add-driver \"$balloonPath\\balloon.inf\" /install }",
-      "$qemuGa = 'E:\\guest-agent\\qemu-ga-x86_64.msi'",
-      "if (Test-Path $qemuGa) { Start-Process msiexec.exe -ArgumentList \"/i `\"$qemuGa`\" /qn /norestart\" -Wait }"
-    ]
+    script            = "${path.root}/scripts/install-virtio.ps1"
   }
 
   provisioner "powershell" {
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
-    inline = [
-      "New-Item -ItemType Directory -Force -Path 'C:\\Scripts' | Out-Null",
-      "New-Item -ItemType Directory -Force -Path 'C:\\Temp'    | Out-Null"
-    ]
-  }
-
-  provisioner "file" {
-    source      = "${path.root}/files/CloudbaseInitSetup_1_1_8_x64.msi"
-    destination = "C:\\Temp\\CloudbaseInitSetup_1_1_8_x64.msi"
-  }
-
-  provisioner "powershell" {
-    elevated_user     = var.winrm_username
-    elevated_password = var.winrm_password
-    inline = [
-      "Invoke-WebRequest -Uri \"http://{{ .HTTPIP }}:{{ .HTTPPort }}/CloudbaseInitSetup_1_1_8_x64.msi\" -OutFile 'C:\\Temp\\CloudbaseInitSetup_1_1_8_x64.msi' -UseBasicParsing"
-    ]
+    script            = "${path.root}/scripts/init-dirs.ps1"
   }
 
   provisioner "file" {
@@ -152,37 +131,21 @@ build {
   }
 
   provisioner "powershell" {
-  elevated_user     = var.winrm_username
-  elevated_password = var.winrm_password
-  inline = [
-    "Start-Process msiexec.exe -ArgumentList '/i C:\\Temp\\CloudbaseInitSetup_1_1_8_x64.msi /qn /l*v C:\\Temp\\cbinit.log ADDLOCAL=CloudbaseInitService' -Wait",
-    "if (-not (Test-Path 'C:\\Program Files\\Cloudbase Solutions\\Cloudbase-Init\\conf')) { Get-Content 'C:\\Temp\\cbinit.log' -Tail 30 | Write-Host; throw 'Cloudbase-Init installation failed' }",
-    "$confDir = 'C:\\Program Files\\Cloudbase Solutions\\Cloudbase-Init\\conf'",
-    "Copy-Item 'C:\\Temp\\cloudbase-init.conf' \"$confDir\\cloudbase-init.conf\" -Force",
-    "Copy-Item 'C:\\Temp\\cloudbase-init-unattend.conf' \"$confDir\\cloudbase-init-unattend.conf\" -Force",
-    "Set-Service -Name 'cloudbase-init' -StartupType Automatic"
-  ]
-}
-
-  provisioner "powershell" {
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
-    inline = [
-      "$action    = New-ScheduledTaskAction -Execute 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe' -Argument '-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\Scripts\\ping-url.ps1\"'",
-      "$trigger   = New-ScheduledTaskTrigger -AtStartup",
-      "$settings  = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 5) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)",
-      "$principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest",
-      "Register-ScheduledTask -TaskName 'ping-url' -TaskPath '\\' -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Force | Out-Null"
-    ]
+    script            = "${path.root}/scripts/install-cloudbase.ps1"
   }
 
   provisioner "powershell" {
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
-    inline = [
-      "$unattend = 'C:\\Program Files\\Cloudbase Solutions\\Cloudbase-Init\\conf\\Unattend.xml'",
-      "& C:\\Windows\\System32\\Sysprep\\Sysprep.exe /generalize /oobe /shutdown \"/unattend:$unattend\""
-    ]
-    valid_exit_codes = [0, 1]
+    script            = "${path.root}/scripts/register-ping-url-task.ps1"
+  }
+
+  provisioner "powershell" {
+    elevated_user     = var.winrm_username
+    elevated_password = var.winrm_password
+    script            = "${path.root}/scripts/sysprep.ps1"
+    valid_exit_codes  = [0, 1]
   }
 }
