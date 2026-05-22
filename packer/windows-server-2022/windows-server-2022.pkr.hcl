@@ -19,6 +19,10 @@ source "proxmox-iso" "windows-server-2022" {
   template_name        = var.vm_name
   template_description = var.template_description
 
+  http_directory   = "${path.root}/http"
+  http_port_min    = 8100
+  http_port_max    = 8100
+
   os   = "win11"
   bios = "seabios"
 
@@ -81,6 +85,7 @@ source "proxmox-iso" "windows-server-2022" {
   qemu_agent = true
 
   communicator   = "winrm"
+  winrm_host     = "10.0.0.50" 
   winrm_username = var.winrm_username
   winrm_password = var.winrm_password
   winrm_use_ssl  = false
@@ -123,32 +128,41 @@ build {
     destination = "C:\\Temp\\CloudbaseInitSetup_1_1_8_x64.msi"
   }
 
-  provisioner "file" {
-    source      = "${path.root}/config/cloudbase-init.conf"
-    destination = "C:\\Temp\\cloudbase-init.conf"
-  }
-
-  provisioner "file" {
-    source      = "${path.root}/config/cloudbase-init-unattend.conf"
-    destination = "C:\\Temp\\cloudbase-init-unattend.conf"
-  }
-
-  provisioner "file" {
-    source      = "${path.root}/scripts/ping-url.ps1"
-    destination = "C:\\Scripts\\ping-url.ps1"
-  }
-
   provisioner "powershell" {
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
     inline = [
-      "Start-Process msiexec.exe -ArgumentList \"/i C:\\Temp\\CloudbaseInitSetup_1_1_8_x64.msi /qn /l*v C:\\Temp\\cbinit.log ADDLOCAL=CloudbaseInitService\" -Wait",
-      "$confDir = 'C:\\Program Files\\Cloudbase Solutions\\Cloudbase-Init\\conf'",
-      "Copy-Item 'C:\\Temp\\cloudbase-init.conf'          \"$confDir\\cloudbase-init.conf\"          -Force",
-      "Copy-Item 'C:\\Temp\\cloudbase-init-unattend.conf' \"$confDir\\cloudbase-init-unattend.conf\" -Force",
-      "Set-Service -Name 'cloudbase-init' -StartupType Automatic"
+      "Invoke-WebRequest -Uri \"http://{{ .HTTPIP }}:{{ .HTTPPort }}/CloudbaseInitSetup_1_1_8_x64.msi\" -OutFile 'C:\\Temp\\CloudbaseInitSetup_1_1_8_x64.msi' -UseBasicParsing"
     ]
   }
+
+  provisioner "file" {
+    source      = "${path.root}/files/cloudbase-init.conf"
+    destination = "C:\\Temp\\cloudbase-init.conf"
+  }
+
+  provisioner "file" {
+    source      = "${path.root}/files/cloudbase-init-unattend.conf"
+    destination = "C:\\Temp\\cloudbase-init-unattend.conf"
+  }
+
+  provisioner "file" {
+    source      = "${path.root}/files/ping-url.ps1"
+    destination = "C:\\Scripts\\ping-url.ps1"
+  }
+
+  provisioner "powershell" {
+  elevated_user     = var.winrm_username
+  elevated_password = var.winrm_password
+  inline = [
+    "Start-Process msiexec.exe -ArgumentList '/i C:\\Temp\\CloudbaseInitSetup_1_1_8_x64.msi /qn /l*v C:\\Temp\\cbinit.log ADDLOCAL=CloudbaseInitService' -Wait",
+    "if (-not (Test-Path 'C:\\Program Files\\Cloudbase Solutions\\Cloudbase-Init\\conf')) { Get-Content 'C:\\Temp\\cbinit.log' -Tail 30 | Write-Host; throw 'Cloudbase-Init installation failed' }",
+    "$confDir = 'C:\\Program Files\\Cloudbase Solutions\\Cloudbase-Init\\conf'",
+    "Copy-Item 'C:\\Temp\\cloudbase-init.conf' \"$confDir\\cloudbase-init.conf\" -Force",
+    "Copy-Item 'C:\\Temp\\cloudbase-init-unattend.conf' \"$confDir\\cloudbase-init-unattend.conf\" -Force",
+    "Set-Service -Name 'cloudbase-init' -StartupType Automatic"
+  ]
+}
 
   provisioner "powershell" {
     elevated_user     = var.winrm_username

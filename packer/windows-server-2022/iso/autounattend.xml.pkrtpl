@@ -98,7 +98,7 @@
           <InstallFrom>
             <MetaData wcm:action="add">
               <Key>/IMAGE/INDEX</Key>
-              <Value>4</Value>
+              <Value>2</Value>
             </MetaData>
           </InstallFrom>
           <InstallTo>
@@ -195,52 +195,32 @@
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>3</Order>
-          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds 5; $a = Get-NetAdapter | Where-Object {$_.Status -eq 'Disconnected' -or $_.Status -eq 'Up'} | Select-Object -First 1; New-NetIPAddress -InterfaceIndex $a.InterfaceIndex -IPAddress '10.0.0.50' -PrefixLength 24 -DefaultGateway '10.0.0.1'"</CommandLine>
+          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds 15"</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>4</Order>
-          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Set-DnsClientServerAddress -InterfaceIndex (Get-NetAdapter | Select-Object -First 1).InterfaceIndex -ServerAddresses '10.0.0.1'"</CommandLine>
+          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "$a = Get-NetAdapter | Where-Object {$_.Status -eq 'Up' -or $_.Status -eq 'Disconnected'} | Select-Object -First 1; if ($a) { New-NetIPAddress -InterfaceIndex $a.InterfaceIndex -IPAddress '10.0.0.50' -PrefixLength 24 -DefaultGateway '10.0.0.1' -ErrorAction SilentlyContinue }"</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>5</Order>
-          <CommandLine>cmd.exe /c Netsh Advfirewall set allprofiles state off</CommandLine>
+          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Set-DnsClientServerAddress -InterfaceIndex (Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | Select-Object -First 1).InterfaceIndex -ServerAddresses '10.0.0.1' -ErrorAction SilentlyContinue"</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>6</Order>
-          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private"</CommandLine>
+          <CommandLine>cmd.exe /c Netsh Advfirewall set allprofiles state off</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>7</Order>
-          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Enable-PSRemoting -Force -SkipNetworkProfileCheck"</CommandLine>
+          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private"</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>8</Order>
-          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "winrm quickconfig -quiet -transport:http"</CommandLine>
-          <RequiresUserInput>false</RequiresUserInput>
-        </SynchronousCommand>
-        <SynchronousCommand wcm:action="add">
-          <Order>9</Order>
-          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "winrm set winrm/config/service '@{AllowUnencrypted=`"true`"}'"</CommandLine>
-          <RequiresUserInput>false</RequiresUserInput>
-        </SynchronousCommand>
-        <SynchronousCommand wcm:action="add">
-          <Order>10</Order>
-          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "winrm set winrm/config/service/auth '@{Basic=`"true`"}'"</CommandLine>
-          <RequiresUserInput>false</RequiresUserInput>
-        </SynchronousCommand>
-        <SynchronousCommand wcm:action="add">
-          <Order>11</Order>
-          <CommandLine>netsh advfirewall firewall add rule name="WinRM-HTTP" dir=in action=allow protocol=TCP localport=5985</CommandLine>
-          <RequiresUserInput>false</RequiresUserInput>
-        </SynchronousCommand>
-        <SynchronousCommand wcm:action="add">
-          <Order>12</Order>
-          <CommandLine>netsh advfirewall firewall add rule name="WinRM-HTTPS" dir=in action=allow protocol=TCP localport=5986</CommandLine>
+          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Set-WSManInstance -ResourceURI WinRM/Config/Service -ValueSet @{AllowUnencrypted = 'true'}; Set-WSManInstance -ResourceURI WinRM/Config/Service/Auth -ValueSet @{Basic = 'true'}; Restart-Service WinRM"</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
       </FirstLogonCommands>
