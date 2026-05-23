@@ -11,6 +11,7 @@ templates:
       - domain_fqdn
       - domain_netbios
       - is_first_dc
+
     content: |
       ---
       - name: Promote Windows Server to Domain Controller
@@ -60,6 +61,11 @@ templates:
             debug:
               msg: "DC promotion command sent. Server will reboot automatically. New credentials: {{ domain_fqdn }}\\Administrator"
 
+    reverse_type : null
+    reverse_content: null
+
+
+      
   - code: add_users
     name: Ajout d'utilisateurs AD
     type: config
@@ -103,10 +109,11 @@ templates:
             debug:
               msg: "User {{ item.username }} created successfully"
             loop: "{{ users_list }}"
-    # Rollback : supprimer les utilisateurs créés (même users_list)
+
+    reverse_type: deletion
     reverse_content: |
       Import-Module ActiveDirectory
-      $usernames = "{{ users_list | map(attribute='username') | join(',') }}" -split ","
+      $usernames = "{{ users_list | join(',') }}" -split ","
       foreach ($u in $usernames) {
           $u = $u.Trim()
           $User = Get-ADUser -Filter { SamAccountName -eq $u }
@@ -143,7 +150,8 @@ templates:
               description: "{{ item.description | default('') }}"
               state: present
             loop: "{{ groups_list }}"
-    # Rollback : supprimer les groupes créés (même groups_list)
+
+    reverse_type: deletion
     reverse_content: |
       Import-Module ActiveDirectory
       $groupnames = "{{ groups_list | map(attribute='name') | join(',') }}" -split ","
@@ -191,24 +199,8 @@ templates:
                   }
               }
             loop: "{{ memberships }}"
-    # Rollback : retirer les mêmes membres des mêmes groupes (même memberships)
-    reverse_content: |
-      Import-Module ActiveDirectory
-      {% for membership in memberships %}
-      $groupName = "{{ membership.group_name }}"
-      $members   = "{{ membership.members | join(',') }}" -split ","
-      foreach ($m in $members) {
-          $m = $m.Trim()
-          if (-not [string]::IsNullOrEmpty($m)) {
-              try {
-                  Remove-ADGroupMember -Identity $groupName -Members $m -Confirm:$false -ErrorAction Stop
-                  Write-Output "Removed $m from $groupName"
-              } catch {
-                  Write-Warning "Failed to remove $m from $groupName : $($_.Exception.Message)"
-              }
-          }
-      }
-      {% endfor %}
+    reverse_type : null
+    reverse_content: null
 
   # --- VULNERABILITY templates ---
   - code: asrep_roasting
@@ -220,7 +212,7 @@ templates:
       - username
     content: |
       Set-ADAccountControl -Identity "{{username}}" -DoesNotRequirePreAuth $true
-    # Rollback : réactiver la pré-auth Kerberos
+    reverse_type : null
     reverse_content: |
       Set-ADAccountControl -Identity "{{username}}" -DoesNotRequirePreAuth $false
 
@@ -234,7 +226,7 @@ templates:
       - spn_name
     content: |
       Set-ADUser -Identity "{{username}}" -ServicePrincipalNames @{Add='{{spn_name}}/{{username}}'}
-    # Rollback : retirer le SPN ajouté
+    reverse_type : null
     reverse_content: |
       Set-ADUser -Identity "{{username}}" -ServicePrincipalNames @{Remove='{{spn_name}}/{{username}}'}
 
@@ -256,7 +248,7 @@ templates:
       $ACE = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, $Type)
       $ACL.AddAccessRule($ACE)
       Set-ACL -Path "AD:$($TargetObj.DistinguishedName)" -AclObject $ACL
-    # Rollback : retirer le droit GenericAll
+    reverse_type : null
     reverse_content: |
       $SourceObj = Get-ADObject -Filter {SamAccountName -eq "{{source_username}}"} -Properties ObjectSID
       $TargetObj = Get-ADObject -Filter {SamAccountName -eq "{{target_username}}"} -Properties *
@@ -286,7 +278,7 @@ templates:
       $ACE = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, $Type)
       $ACL.AddAccessRule($ACE)
       Set-ACL -Path "AD:$($TargetObj.DistinguishedName)" -AclObject $ACL
-    # Rollback : retirer WriteDACL
+    reverse_type : null
     reverse_content: |
       $SourceObj = Get-ADObject -Filter {SamAccountName -eq "{{source_username}}"} -Properties ObjectSID
       $TargetObj = Get-ADObject -Filter {SamAccountName -eq "{{target_username}}"} -Properties *
@@ -317,7 +309,7 @@ templates:
       $ACE = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, $Type, $GUID)
       $ACL.AddAccessRule($ACE)
       Set-ACL -Path "AD:$($TargetObj.DistinguishedName)" -AclObject $ACL
-    # Rollback : retirer le droit ForceChangePassword
+    reverse_type : null
     reverse_content: |
       $SourceObj = Get-ADObject -Filter {SamAccountName -eq "{{source_username}}"} -Properties ObjectSID
       $TargetObj = Get-ADObject -Filter {SamAccountName -eq "{{target_username}}"} -Properties *
@@ -351,7 +343,7 @@ templates:
       $ACL.AddAccessRule($ACE1)
       $ACL.AddAccessRule($ACE2)
       Set-ACL -Path "AD:$Domain" -AclObject $ACL
-    # Rollback : retirer les droits de réplication DCSync
+    reverse_type : null
     reverse_content: |
       $SourceObj = Get-ADObject -Filter {SamAccountName -eq "{{username}}"} -Properties ObjectSID
       $Domain = "{{domain_dn}}"
@@ -386,7 +378,7 @@ templates:
       $ACE = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, $Type)
       $ACL.AddAccessRule($ACE)
       Set-ACL -Path "AD:$($TargetObj.DistinguishedName)" -AclObject $ACL
-    # Rollback : retirer WriteProperty
+    reverse_type : null
     reverse_content: |
       $SourceObj = Get-ADObject -Filter {SamAccountName -eq "{{source_username}}"} -Properties ObjectSID
       $TargetObj = Get-ADObject -Filter {SamAccountName -eq "{{target_username}}"} -Properties *
@@ -417,7 +409,7 @@ templates:
       $ACE = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($Identity, $Rights, $Type)
       $ACL.AddAccessRule($ACE)
       Set-ACL -Path "AD:$($TargetObj.DistinguishedName)" -AclObject $ACL
-    # Rollback : retirer le droit WriteOwner
+    reverse_type : null
     reverse_content: |
       $SourceObj = Get-ADObject -Filter {SamAccountName -eq "{{source_username}}"} -Properties ObjectSID
       $TargetObj = Get-ADObject -Filter {SamAccountName -eq "{{target_username}}"} -Properties *
@@ -445,7 +437,7 @@ templates:
       $NewOwner = [System.Security.Principal.SecurityIdentifier]$SourceObj.ObjectSID
       $ACL.SetOwner($NewOwner)
       Set-ACL -Path "AD:$($TargetObj.DistinguishedName)" -AclObject $ACL
-    # Rollback : remettre BUILTIN\Administrators comme Owner par défaut
+    reverse_type : null
     reverse_content: |
       $TargetObj = Get-ADObject -Filter {SamAccountName -eq "{{target_username}}"} -Properties *
       $ACL = Get-ACL "AD:$($TargetObj.DistinguishedName)"
@@ -463,7 +455,7 @@ templates:
     content: |
       $User = Get-ADUser -Identity "{{username}}"
       Set-ADUser -Identity $User -Enabled $true
-    # Rollback : désactiver le compte Guest
+    reverse_type : null
     reverse_content: |
       $User = Get-ADUser -Identity "{{username}}"
       Set-ADUser -Identity $User -Enabled $false
@@ -487,7 +479,7 @@ templates:
       $chars[6] = '2'
       $newValue = -join $chars
       Set-ADObject -Identity $dsPath -Replace @{ dSHeuristics = $newValue }
-    # Rollback : remettre le 7e caractère à 0
+    reverse_type : null
     reverse_content: |
       Import-Module ActiveDirectory
       $rootDSE = Get-ADRootDSE
@@ -501,69 +493,3 @@ templates:
       $chars[6] = '0'
       $newValue = -join $chars
       Set-ADObject -Identity $dsPath -Replace @{ dSHeuristics = $newValue }
-
-  - code: delete_user_by_sam
-    name: Delete User by sAMAccountName
-    type: vulnerability
-    description: Supprime un compte utilisateur AD en fonction de son sAMAccountName
-    category: account
-    required_params:
-      - username
-    content: |
-      Import-Module ActiveDirectory
-      $User = Get-ADUser -Filter { SamAccountName -eq "{{username}}" }
-      if ($null -ne $User) {
-          Remove-ADUser -Identity $User.DistinguishedName -Confirm:$false
-      } else {
-          Write-Warning "User with sAMAccountName '{{username}}' not found"
-      }
-    # Pas de reverse_content : on ne peut pas recréer un user supprimé sans son mot de passe
-    reverse_content: null
-
-  - code: delete_group_by_sam
-    name: Delete Group by sAMAccountName
-    type: vulnerability
-    description: Supprime un groupe AD en fonction de son sAMAccountName
-    category: group
-    required_params:
-      - groupname
-    content: |
-      Import-Module ActiveDirectory
-      $Group = Get-ADGroup -Filter { SamAccountName -eq "{{groupname}}" }
-      if ($null -ne $Group) {
-          Remove-ADGroup -Identity $Group.DistinguishedName -Confirm:$false
-      } else {
-          Write-Warning "Group with sAMAccountName '{{groupname}}' not found"
-      }
-    # Pas de reverse_content : on ne peut pas recréer un groupe supprimé sans ses membres
-    reverse_content: null
-
-  - code: remove_member_from_group
-    name: Remove Member From Group
-    type: vulnerability
-    description: Retire l'appartenance d'un objet AD (user ou groupe) à un groupe cible
-    category: group
-    required_params:
-      - group_name
-      - member_sam
-    content: |
-      Import-Module ActiveDirectory
-      $GroupName = "{{group_name}}"
-      $MemberSam = "{{member_sam}}"
-      try {
-          Remove-ADGroupMember -Identity $GroupName -Members $MemberSam -Confirm:$false -ErrorAction Stop
-          Write-Output "Removed $MemberSam from $GroupName"
-      } catch {
-          Write-Warning "Failed to remove $MemberSam from $GroupName : $($_.Exception.Message)"
-      }
-    # Rollback : réajouter le membre au groupe
-    reverse_content: |
-      Import-Module ActiveDirectory
-      $GroupName = "{{group_name}}"
-      $MemberSam = "{{member_sam}}"
-      try {
-          Add-ADGroupMember -Identity $GroupName -Members $MemberSam -ErrorAction Stop
-          Write-Output "Re-added $MemberSam to $GroupName"
-      } catch {
-          Write-Warning "Failed to re-add $MemberSam to $GroupName : $($_.Exception.Message)"
-      }

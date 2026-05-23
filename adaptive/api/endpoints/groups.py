@@ -8,7 +8,7 @@ from adaptive.api.exceptions import (
 )
 from adaptive.api.models.user import User
 from adaptive.api.schemas.group import GroupCreate, GroupResponse
-
+from adaptive.api.exceptions import GroupNotFoundError
 router = APIRouter(
     prefix="/groups",
     tags=["groups"],
@@ -114,8 +114,7 @@ def delete_group(
     """
     group = db.get(Group, group_id)
     if not group:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail=f"Group {group_id} not found")
+        raise GroupNotFoundError(group_id=group_id)
 
     db.delete(group)
     db.commit()

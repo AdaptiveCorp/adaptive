@@ -21,7 +21,9 @@ from adaptive.api.models.server import Server, ServerStatus
 from adaptive.api.models.template import Template
 from adaptive.api.models.user import User
 from adaptive.api.models.group import Group
-
+from adaptive.api.exceptions import (
+    AppliedTemplateNotFoundError
+)
 from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
@@ -360,7 +362,7 @@ def get_users_not_push_by_domain(project: Project, db : Session) -> dict[Domain,
     for domain, users_list in users.items() :
         stmt = select(AppliedTemplate).join(Template).where(
             AppliedTemplate.project_id == project.id,
-            (AppliedTemplate.status == TemplateStatus.APPLIED) | (AppliedTemplate.status == TemplateStatus.ERROR),
+            (AppliedTemplate.status == TemplateStatus.APPLIED) | (AppliedTemplate.status == TemplateStatus.ERROR) | (AppliedTemplate.status == TemplateStatus.REVERTED_APPLIED) | (AppliedTemplate.status == TemplateStatus.REVERTED_PENDING),
             AppliedTemplate.domain_id == domain.id,
             Template.code == "add_users",
         )
@@ -371,7 +373,7 @@ def get_users_not_push_by_domain(project: Project, db : Session) -> dict[Domain,
         for applied_template in liste_applied_template :
             params = applied_template.params
             params_json = json.loads(params)
-            users_in_applied_template = params_json["usernames"]
+            users_in_applied_template = params_json["users_list"]
             username_applied.extend(users_in_applied_template)
 
 
@@ -389,17 +391,23 @@ def execute_powershell_winrm(
 ) -> PlaybookResult:
     ansible = AnsibleService(db=db)
 
-    vars_lines = "\n".join(f'    {k}: "{v}"' for k, v in params.items())
+    # Sérialisation correcte : strings entre guillemets, listes/dicts en YAML natif
+    vars_lines = []
+    for k, v in params.items():
+        if isinstance(v, (list, dict)):
+            # Valeur complexe : on la sérialise en JSON inline (YAML-compatible)
+            vars_lines.append(f"    {k}: {json.dumps(v)}")
+        else:
+            vars_lines.append(f'    {k}: "{v}"')
 
     indented_script = textwrap.indent(powershell_script.strip(), "        ")
-
     playbook_content = "\n".join(
         [
             "- name: Exécuter PowerShell",
             f"  hosts: {server_ip}",
             "  gather_facts: false",
             "  vars:",
-            vars_lines,
+            "\n".join(vars_lines),
             "    ansible_connection: winrm",
             "    ansible_winrm_transport: ntlm",
             "    ansible_winrm_server_cert_validation: ignore",
@@ -411,7 +419,6 @@ def execute_powershell_winrm(
             "      win_shell: |",
             indented_script,
             "      register: result",
-            "      ignore_errors: true",
             "",
             "    - name: Debug output",
             "      debug:",
@@ -565,10 +572,10 @@ def _step_add_users(
     project: Project,
     ansible: AnsibleService,
     db: Session,
-    users_by_domain  : dict[Domain, list[User]] | None,
+    users_by_domain: dict[Domain, list[User]] | None,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
-    
+
     if not users_by_domain:
         logger.info("[STEP 3] No users to create, skipping.")
         return deployment_result
@@ -594,19 +601,24 @@ def _step_add_users(
             for u in users
         ]
 
-        applied = _create_applied_template(
-            db,
-            project_id=project.id,
-            template_code="add_users",
-            domain_id=domain.id,
-            server_id=dc.id,
-            params={
-                "target_host": _bare_ip(dc.ip),
-                "usernames": [u.username for u in users],
-                "base_dn": base_dn,
-                "domain_fqdn": domain.fqdn,
-            },
-        )
+        # 1 AppliedTemplate par user, chacun référence son user_id
+        applied_list = [
+            _create_applied_template(
+                db,
+                project_id=project.id,
+                template_code="add_users",
+                domain_id=domain.id,
+                server_id=dc.id,
+                user_id=u.id,                        # ← référence directe à l'user
+                params={
+                    "target_host": _bare_ip(dc.ip),
+                    "users_list": [u.username],       # ← liste à 1 élément
+                    "base_dn": base_dn,
+                    "domain_fqdn": domain.fqdn,
+                },
+            )
+            for u in users
+        ]
 
         logger.info(
             "[STEP 3] Adding %d user(s) to domain '%s' via DC '%s'",
@@ -614,6 +626,8 @@ def _step_add_users(
             domain.fqdn,
             dc.fqdn,
         )
+
+        # L'appel Ansible reste groupé pour l'efficacité
         result = ansible.add_users(
             server_ip=_bare_ip(dc.ip),
             users=user_dicts,
@@ -622,13 +636,15 @@ def _step_add_users(
         )
 
         if not result.success:
-            _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
+            for applied in applied_list:
+                _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
             logger.error("[STEP 3] User creation failed on '%s': %s", domain.fqdn, result.error)
             deployment_result.success = False
             deployment_result.error = result.error
             return deployment_result
 
-        _update_template_status(db, applied, TemplateStatus.APPLIED)
+        for applied in applied_list:
+            _update_template_status(db, applied, TemplateStatus.APPLIED)
         logger.info("[STEP 3] Users successfully created on domain '%s'", domain.fqdn)
 
     return deployment_result
@@ -849,6 +865,105 @@ def _step_push_vulnerabilities(
     return deployment_result
 
 
+def _step_reverse_templates(
+    project: Project,
+    ansible: AnsibleService,
+    db: Session,
+    pending_reversed_templates: list[AppliedTemplate],
+    deployment_result: DeploymentResult,
+) -> DeploymentResult:
+
+    if not pending_reversed_templates:
+        logger.info("[STEP REVERSE] No templates to reverse, skipping.")
+        return deployment_result
+
+    logger.info("[STEP REVERSE] Reversing %d template(s)", len(pending_reversed_templates))
+
+    liste_domain = get_all_domain_in_project(project, db)
+    has_failure = False
+
+    for domain in liste_domain:
+        dc = get_root_dc(domain, db)
+        if not dc.ip:
+            logger.error("[STEP REVERSE] DC '%s' has no IP, skipping domain '%s'", dc.fqdn, domain.fqdn)
+            has_failure = True
+            continue
+
+        for applied in pending_reversed_templates:
+
+            # Pas de reverse_content défini
+            if not applied.template.reverse_content:
+                logger.error(
+                    "[STEP REVERSE] Template '%s' has no reverse_content, skipping.",
+                    applied.template.code,
+                )
+                _update_template_status(db, applied, TemplateStatus.ERROR, error="Missing reverse_content")
+                has_failure = True
+                continue
+
+            # Pas de params sauvegardés
+            if not applied.params:
+                logger.error(
+                    "[STEP REVERSE] Template '%s' has no params, skipping.",
+                    applied.template.code,
+                )
+                _update_template_status(db, applied, TemplateStatus.ERROR, error="Missing params")
+                has_failure = True
+                continue
+
+            param_vuln = json.loads(applied.params)
+            powershell_script = applied.template.reverse_content
+
+            logger.info(
+                "[STEP REVERSE] Reversing template '%s' on DC '%s' (domain '%s')",
+                applied.template.code,
+                dc.fqdn,
+                domain.fqdn,
+            )
+
+            result = execute_powershell_winrm(dc.ip, powershell_script, param_vuln, db)
+
+            if not result.success:
+                #_update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
+                logger.error(
+                    "[STEP REVERSE] Template '%s' failed on '%s': %s",
+                    applied.template.code,
+                    dc.fqdn,
+                    result.error,
+                )
+                has_failure = True
+                continue
+
+            if applied.template.reverse_type == "deletion" :
+                user = applied.user
+                if user : 
+                    db.delete(user)
+                    db.commit()
+                group = applied.group
+                if group : 
+                    db.delete(group)
+                    db.commit()
+
+            _update_template_status(db, applied, TemplateStatus.REVERTED_APPLIED)
+            logger.info(
+                "[STEP REVERSE] Template '%s' reversed successfully on '%s'",
+                applied.template.code,
+                dc.fqdn,
+            )
+
+
+    if has_failure:
+        deployment_result.success = False
+        deployment_result.error = "One or more templates failed to reverse"
+
+    return deployment_result
+
+def get_pending_reverted_template(project: Project, db: Session):
+    applied_template_reverted = db.query(AppliedTemplate).filter(AppliedTemplate.status == TemplateStatus.REVERTED_PENDING).all()
+    
+    
+    return applied_template_reverted
+
 def build_deployment_steps(
     project: Project,
     all_servers: list[Server],
@@ -870,7 +985,6 @@ def build_deployment_steps(
     servers_to_promote = get_dcs_to_promote(project, db)
     
     if servers_to_promote :
-        print("There is serveur to promote")
         steps.append(
             lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
         )
@@ -881,7 +995,6 @@ def build_deployment_steps(
         steps.append(
             lambda r: _step_add_users(project, ansible, db, users_not_pushed, r)
         )
-
 
     # Groupes qui n'ont pas encore été pushés
     # STEP : Créer les groupes (sans membres)
@@ -898,15 +1011,21 @@ def build_deployment_steps(
         steps.append(
             lambda r: _step_add_group_members(project, ansible, db, groups_not_pushed, r)
         )
+
+
+    # STEP : Récupère les applied_template qui sont en pending_reverted
+    find_pending_reverted_template = get_pending_reverted_template(project, db)
+    if find_pending_reverted_template :
+        steps.append(
+            lambda r: _step_reverse_templates(project, ansible, db, find_pending_reverted_template, r)
+        )
+
         
     steps += [
         lambda r: _step_push_vulnerabilities(project, db, r),
     ]
 
     return steps
-
-
-
 
 
 def deploy_project(
@@ -951,8 +1070,6 @@ def deploy_project(
                 step.__name__ if hasattr(step, "__name__") else str(step),
             )
             return deployment_result
-
-
 
     logger.info(
         "[DEPLOY] Deployment completed for project '%s' (success=%s)",
