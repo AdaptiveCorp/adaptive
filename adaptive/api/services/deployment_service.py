@@ -678,20 +678,33 @@ def _step_add_groups(
             for g in groups
         ]
 
-        applied = _create_applied_template(
-            db,
-            project_id=project.id,
-            template_code="add_groups",
-            domain_id=domain.id,
-            server_id=dc.id,
-            params={
-                "target_host": _bare_ip(dc.ip),
-                "groupnames": [g.name for g in groups],
-                "base_dn": base_dn,
-                "domain_fqdn": domain.fqdn,
-            },
+        # 1 AppliedTemplate par groupe, chacun référence son group_id
+        applied_list = [
+            _create_applied_template(
+                db,
+                project_id=project.id,
+                template_code="add_groups",
+                domain_id=domain.id,
+                server_id=dc.id,
+                group_id=g.id,                    # ← référence directe au groupe
+                params={
+                    "target_host": _bare_ip(dc.ip),
+                    "groups_list": [g.name],      # ← liste à 1 élément, cohérent avec reverse_content
+                    "base_dn": base_dn,
+                    "domain_fqdn": domain.fqdn,
+                },
+            )
+            for g in groups
+        ]
+
+        logger.info(
+            "[STEP ADD_GROUPS] Adding %d group(s) to domain '%s' via DC '%s'",
+            len(groups),
+            domain.fqdn,
+            dc.fqdn,
         )
 
+        # L'appel Ansible reste groupé pour l'efficacité
         result = ansible.add_groups(
             server_ip=_bare_ip(dc.ip),
             groups=group_dicts,
@@ -700,12 +713,15 @@ def _step_add_groups(
         )
 
         if not result.success:
-            _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
+            for applied in applied_list:
+                _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
+            logger.error("[STEP ADD_GROUPS] Group creation failed on '%s': %s", domain.fqdn, result.error)
             deployment_result.success = False
             deployment_result.error = result.error
             return deployment_result
 
-        _update_template_status(db, applied, TemplateStatus.APPLIED)
+        for applied in applied_list:
+            _update_template_status(db, applied, TemplateStatus.APPLIED)
         logger.info("[STEP ADD_GROUPS] Groups created on domain '%s'", domain.fqdn)
 
     return deployment_result
@@ -974,20 +990,20 @@ def build_deployment_steps(
     steps: list[Callable[[DeploymentResult], DeploymentResult]] = []
 
     # Serveurs qui n'ont pas encore été clonés
-    servers_to_clone = [s for s in all_servers if s.status != ServerStatus.APPLIED]
+    # servers_to_clone = [s for s in all_servers if s.status != ServerStatus.APPLIED]
 
-    if servers_to_clone:
-        steps.append(
-            lambda r, s=servers_to_clone: _step_clone_vms(project, s, hypervisor, db, r)
-        )
+    # if servers_to_clone:
+    #     steps.append(
+    #         lambda r, s=servers_to_clone: _step_clone_vms(project, s, hypervisor, db, r)
+    #     )
 
-    # Serveurs qui n'ont pas été promu
-    servers_to_promote = get_dcs_to_promote(project, db)
+    # # Serveurs qui n'ont pas été promu
+    # servers_to_promote = get_dcs_to_promote(project, db)
     
-    if servers_to_promote :
-        steps.append(
-            lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
-        )
+    # if servers_to_promote :
+    #     steps.append(
+    #         lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
+    #     )
 
     # Utilisateur qui n'ont pas encore été pushé
     users_not_pushed = get_users_not_push_by_domain(project, db)

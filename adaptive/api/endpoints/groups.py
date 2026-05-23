@@ -4,9 +4,13 @@ from sqlalchemy.orm import Session
 from adaptive.api.environment.database import get_db
 from adaptive.api.models.group import Group
 from adaptive.api.exceptions import (
-    GroupTargetRequiredError
+    GroupTargetRequiredError,
+    AppliedTemplateNotFoundError,
+    TemplateNotFoundError
 )
 from adaptive.api.models.user import User
+from adaptive.api.models.template import Template
+from adaptive.api.models.applied_template import AppliedTemplate, TemplateStatus
 from adaptive.api.schemas.group import GroupCreate, GroupResponse
 from adaptive.api.exceptions import GroupNotFoundError
 router = APIRouter(
@@ -116,6 +120,20 @@ def delete_group(
     if not group:
         raise GroupNotFoundError(group_id=group_id)
 
-    db.delete(group)
+    template_name = "add_groups"
+    template = db.query(Template).filter(Template.code == template_name).first()
+
+    if not template :
+        raise TemplateNotFoundError(template_name=template_name)
+    
+    applied_template = db.query(AppliedTemplate).filter(
+        AppliedTemplate.group_id == group.id,
+        AppliedTemplate.template_id == template.id
+    ).first()
+    if not applied_template : 
+        raise AppliedTemplateNotFoundError(applied_id=-1)
+    
+    applied_template.status = TemplateStatus.REVERTED_PENDING
     db.commit()
+
     return {"success": True}
