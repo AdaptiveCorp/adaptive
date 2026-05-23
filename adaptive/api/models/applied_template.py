@@ -24,6 +24,8 @@ class TemplateStatus(enum.StrEnum):
     APPLIED = "applied"
     MODIFIED = "modified"
     ERROR = "error"
+    REVERTED_PENDING = "reverted_pending"
+    REVERTED_APPLIED = "reverted_applied"
 
 
 class AppliedTemplate(Base):

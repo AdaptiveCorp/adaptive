@@ -115,6 +115,28 @@ class AnsibleService:
 
         return result
 
+    def delete_user(
+        self,
+        server_ip: str,
+        username: str,
+    ) -> PlaybookResult:
+        logger.info("%s Deleting user '%s' on %s", PREFIX, username, server_ip)
+
+        extravars: dict[str, Any] = {
+            "target_host": server_ip,
+            "username": username,
+        }
+
+        content = self._get_template_content("delete_user_by_sam")
+        result = self._run_playbook(content, server_ip, extravars)
+
+        if result.success:
+            logger.info("%s User '%s' deleted successfully on %s", PREFIX, username, server_ip)
+        else:
+            logger.error("%s Failed to delete user '%s' on %s: %s", PREFIX, username, server_ip, result.error)
+
+        return result
+
     def add_groups(
         self,
         server_ip: str,

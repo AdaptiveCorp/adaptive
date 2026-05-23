@@ -236,3 +236,13 @@ class GroupTargetRequiredError(ValidationError):
 
     def __init__(self):
         super().__init__("domain_id or server_id is required")
+
+
+class UserNotFoundError(NotFoundError):
+    """User does not exist."""
+
+    def __init__(self, user_id: int):
+        super().__init__(
+            f"User id={user_id} not found",
+            detail={"user_id": user_id},
+        )

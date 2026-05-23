@@ -31,7 +31,7 @@ class Template(Base):
     category: Mapped[str | None] = mapped_column(String(50))
 
     content: Mapped[str] = mapped_column(Text, nullable=False)
-
+    reverse_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     required_params: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False

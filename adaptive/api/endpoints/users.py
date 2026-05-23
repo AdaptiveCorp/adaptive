@@ -7,7 +7,9 @@ from adaptive.api.exceptions import (
     ServerNotFoundError,
     UserTargetConflictError,
     UserTargetRequiredError,
+    UserNotFoundError,
 )
+from adaptive.api.models.applied_template import AppliedTemplate
 from adaptive.api.models.domain import Domain
 from adaptive.api.models.server import Server
 from adaptive.api.models.user import User
