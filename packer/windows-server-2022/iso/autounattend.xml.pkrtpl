@@ -98,7 +98,7 @@
           <InstallFrom>
             <MetaData wcm:action="add">
               <Key>/IMAGE/INDEX</Key>
-              <Value>2</Value>
+              <Value>${os_image_index}</Value>
             </MetaData>
           </InstallFrom>
           <InstallTo>
@@ -121,8 +121,8 @@
                versionScope="nonSxS"
                xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-      <ComputerName>WIN-TEMPLATE</ComputerName>
-      <TimeZone>Romance Standard Time</TimeZone>
+      <ComputerName>${computer_name}</ComputerName>
+      <TimeZone>${timezone}</TimeZone>
     </component>
 
     <component name="Microsoft-Windows-Security-SPP-UX"
@@ -179,7 +179,6 @@
           <PlainText>true</PlainText>
         </Password>
         <Enabled>true</Enabled>
-        <LogonCount>5</LogonCount>
         <Username>Administrator</Username>
       </AutoLogon>
       <FirstLogonCommands>
@@ -200,12 +199,12 @@
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>4</Order>
-          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "$a = Get-NetAdapter | Where-Object {$_.Status -eq 'Up' -or $_.Status -eq 'Disconnected'} | Select-Object -First 1; if ($a) { New-NetIPAddress -InterfaceIndex $a.InterfaceIndex -IPAddress '10.0.0.50' -PrefixLength 24 -DefaultGateway '10.0.0.1' -ErrorAction SilentlyContinue }"</CommandLine>
+          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "$a = Get-NetAdapter | Where-Object {$_.Status -eq 'Up' -or $_.Status -eq 'Disconnected'} | Select-Object -First 1; if ($a) { New-NetIPAddress -InterfaceIndex $a.InterfaceIndex -IPAddress '${vm_ip}' -PrefixLength ${vm_network_prefix} -DefaultGateway '${vm_gateway}' -ErrorAction SilentlyContinue }"</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>5</Order>
-          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Set-DnsClientServerAddress -InterfaceIndex (Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | Select-Object -First 1).InterfaceIndex -ServerAddresses '10.0.0.1' -ErrorAction SilentlyContinue"</CommandLine>
+          <CommandLine>powershell.exe -ExecutionPolicy Bypass -Command "Set-DnsClientServerAddress -InterfaceIndex (Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | Select-Object -First 1).InterfaceIndex -ServerAddresses '${vm_dns}' -ErrorAction SilentlyContinue"</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">

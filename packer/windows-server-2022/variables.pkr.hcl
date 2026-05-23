@@ -48,7 +48,7 @@ variable "template_description" {
 }
 variable "vm_cpu_cores" {
   type    = number
-  default = 2
+  default = 8 
 }
 variable "vm_cpu_sockets" {
   type    = number
@@ -56,7 +56,7 @@ variable "vm_cpu_sockets" {
 }
 variable "vm_memory" {
   type    = number
-  default = 4096
+  default = 8048
 }
 variable "vm_disk_size" {
   type    = string
@@ -70,8 +70,64 @@ variable "winrm_username" {
   type    = string
   default = "Administrator"
 }
+
 variable "winrm_password" {
-  type      = string
-  sensitive = true
-  default   = "P@cker2022!"
+  type        = string
+  default     = "Root123!"
+  sensitive   = true
+  description = "Mot de passe du compte Administrator Windows (WinRM + AutoLogon)"
+}
+
+variable "vm_ip" {
+  type        = string
+  default     = "10.0.0.50"
+  description = "Adresse IP statique de la VM template"
+}
+
+variable "vm_network_prefix" {
+  type        = number
+  default     = 24
+  description = "Longueur du préfixe réseau (ex: 24 pour /24)"
+}
+
+variable "vm_gateway" {
+  type        = string
+  default     = "10.0.0.1"
+  description = "Passerelle par défaut de la VM"
+}
+
+variable "vm_dns" {
+  type        = string
+  default     = "10.0.0.1"
+  description = "Serveur DNS de la VM"
+}
+
+variable "computer_name" {
+  type        = string
+  default     = "WIN-TEMPLATE"
+  description = "Hostname de la machine Windows"
+}
+
+variable "timezone" {
+  type        = string
+  default     = "Romance Standard Time"
+  description = "Fuseau horaire Windows (format Microsoft)"
+}
+
+variable "os_image_index" {
+  type        = number
+  default     = 2
+  description = "Index de l'édition OS dans le WIM (Standard=2, Datacenter=4)"
+}
+
+variable "template_uuid" {
+  type        = string
+  default     = "10188f7c-e6f8-4e8c-9d83-530ea015e51e"
+  description = "UUID de la VM template utilisé dans le script au démarrage"
+}
+
+variable "adaptive_endpoint" {
+  type        = string
+  default     = "https://127.0.0.1/"  
+  description = "URL de l'endpoint d'Adaptive BYOL pour la collecte des données de provisioning"
 }

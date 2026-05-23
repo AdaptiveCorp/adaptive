@@ -50,7 +50,14 @@ source "proxmox-iso" "windows-server-2022" {
     cd_label = "Unattend"
     cd_content = {
       "autounattend.xml" = templatefile("${path.root}/iso/autounattend.xml.pkrtpl", {
-        winrm_password = var.winrm_password
+        winrm_password   = var.winrm_password
+        vm_ip            = var.vm_ip
+        vm_network_prefix = var.vm_network_prefix
+        vm_gateway       = var.vm_gateway
+        vm_dns           = var.vm_dns
+        computer_name    = var.computer_name
+        timezone         = var.timezone
+        os_image_index   = var.os_image_index
       })
     }
     iso_storage_pool = var.iso_storage_pool
@@ -82,9 +89,6 @@ source "proxmox-iso" "windows-server-2022" {
     bridge   = var.network_bridge
     firewall = false
   }
-
-  cloud_init              = true
-  cloud_init_storage_pool = var.proxmox_storage
 
   qemu_agent = true
 
@@ -126,7 +130,10 @@ build {
   }
 
   provisioner "file" {
-    source      = "${path.root}/files/ping-url.ps1"
+    content     = templatefile("${path.root}/files/ping-url.ps1.pkrtpl", {
+      adaptive_endpoint = var.adaptive_endpoint
+      template_uuid = var.template_uuid
+    })
     destination = "C:\\Scripts\\ping-url.ps1"
   }
 
@@ -144,6 +151,14 @@ build {
     elevated_user     = var.winrm_username
     elevated_password = var.winrm_password
     script            = "${path.root}/scripts/register-ping-url-task.ps1"
+  }
+
+  provisioner "file" {
+    content     = templatefile("${path.root}/files/sysprep-unattend.xml.pkrtpl", {
+      winrm_password = var.winrm_password
+      timezone = var.timezone
+    })
+    destination = "C:\\Windows\\System32\\Sysprep\\unattend.xml"
   }
 
   provisioner "powershell" {

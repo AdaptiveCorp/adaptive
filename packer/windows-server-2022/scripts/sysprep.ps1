@@ -1,2 +1,4 @@
-$unattend = 'C:\Program Files\Cloudbase Solutions\Cloudbase-Init\conf\Unattend.xml'
-& C:\Windows\System32\Sysprep\Sysprep.exe /generalize /oobe /shutdown "/unattend:$unattend"
+$unattend = "C:\Windows\System32\Sysprep\unattend.xml"
+Start-Process -FilePath "C:\Windows\System32\Sysprep\sysprep.exe" `
+    -ArgumentList "/generalize /oobe /shutdown /quiet /unattend:$unattend" `
+    -Wait
