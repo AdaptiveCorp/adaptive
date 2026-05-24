@@ -67,6 +67,16 @@ export interface AppliedVulnerability {
   created_at: string
 }
 
+export interface Group {
+  id: number
+  name: string
+  description: string | null
+  domain_id: number | null
+  server_id: number | null
+  user_ids: number[]
+  member_group_ids: number[]
+}
+
 export interface VmTemplate {
   id: number
   name: string

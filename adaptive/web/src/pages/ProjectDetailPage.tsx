@@ -3,7 +3,7 @@ import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   ArrowLeft, Rocket, LayoutDashboard, TreePine, Network,
-  Server, Users, ShieldAlert, CheckCircle, XCircle,
+  Server, Users, ShieldAlert, CheckCircle, XCircle, UsersRound,
 } from 'lucide-react'
 import { projectsApi }        from '../api/projects'
 import { TabBar }             from '../components/tabs/TabBar'
@@ -13,6 +13,7 @@ import { DomainsTab }         from '../components/tabs/DomainsTab'
 import { ServersTab }         from '../components/tabs/ServersTab'
 import { UsersTab }           from '../components/tabs/UsersTab'
 import { VulnerabilitiesTab } from '../components/tabs/VulnerabilitiesTab'
+import { GroupsTab }          from '../components/tabs/GroupsTab'
 import { Spinner } from '../components/Spinner'
 import { Modal }   from '../components/Modal'
 import type { DeployResult } from '../types'
@@ -23,6 +24,7 @@ const TABS = [
   { id: 'domains',         label: 'Domaines',       icon: <Network         className="w-3.5 h-3.5" /> },
   { id: 'servers',         label: 'Serveurs',       icon: <Server          className="w-3.5 h-3.5" /> },
   { id: 'users',           label: 'Utilisateurs',   icon: <Users           className="w-3.5 h-3.5" /> },
+  { id: 'groups',          label: 'Groupes',        icon: <UsersRound      className="w-3.5 h-3.5" /> },
   { id: 'vulnerabilities', label: 'Vulnérabilités', icon: <ShieldAlert     className="w-3.5 h-3.5" /> },
 ]
 
@@ -135,6 +137,7 @@ export function ProjectDetailPage() {
         {tab === 'domains'         && <DomainsTab projectId={projectId} forests={forests} domains={domains} servers={servers} />}
         {tab === 'servers'         && <ServersTab projectId={projectId} domains={domains} servers={servers} />}
         {tab === 'users'           && <UsersTab projectId={projectId} domains={domains} />}
+        {tab === 'groups'          && <GroupsTab projectId={projectId} domains={domains} />}
         {tab === 'vulnerabilities' && <VulnerabilitiesTab projectId={projectId} />}
       </div>
 
