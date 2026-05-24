@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import enum
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -12,6 +14,13 @@ if TYPE_CHECKING:
     from adaptive.api.models.server import Server
 
 
+class VmTemplateStatus(enum.StrEnum):
+    UNINSTALL = "uninstall"
+    PENDING = "pending"
+    APPLIED = "applied"
+    ERROR = "error"
+
+
 class VmTemplate(Base):
     """Represents a VM template available for cloning."""
 
@@ -21,6 +30,11 @@ class VmTemplate(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     vm_id: Mapped[int] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
+    vm_uuid: Mapped[uuid.UUID] = mapped_column(String(36), unique=True, nullable=False)
+    status: Mapped[VmTemplateStatus] = mapped_column(
+        String(20), nullable=False, default=VmTemplateStatus.PENDING
+    )
+
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     servers: Mapped[list[Server]] = relationship("Server", back_populates="vm_template")

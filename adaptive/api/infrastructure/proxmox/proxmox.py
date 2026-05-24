@@ -12,6 +12,7 @@ from adaptive.api.exceptions import (
     ServerMissingTemplateError,
 )
 from adaptive.api.infrastructure.base import CloneResult, HypervisorProvider, ServerInfo
+from adaptive.api.models.vm_template import VmTemplateStatus
 
 logger = logging.getLogger(__name__)
 
@@ -208,3 +209,16 @@ class ProxmoxProvider(HypervisorProvider):
 
             logger.debug("%s Task %s in progress... (%.0fs elapsed)", PREFIX, task_upid, elapsed)
             time.sleep(poll_interval)
+
+    def check_template_status(self, vm_id) -> VmTemplateStatus:
+        status = VmTemplateStatus.PENDING
+
+        vm_info: dict[str, Any] = self.api.nodes(self._node).qemu(vm_id).status.current.get()
+
+        if not vm_info:
+            status = VmTemplateStatus.ERROR
+
+        if vm_info.get("template") == 1:
+            status = VmTemplateStatus.APPLIED
+
+        return status
