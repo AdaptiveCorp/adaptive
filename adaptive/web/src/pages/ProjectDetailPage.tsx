@@ -3,7 +3,7 @@ import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   ArrowLeft, Rocket, LayoutDashboard, TreePine, Network,
-  Server, Users, ShieldAlert, CheckCircle, XCircle,
+  Server, Users, ShieldAlert, CheckCircle, XCircle, UsersRound,
 } from 'lucide-react'
 import { projectsApi }        from '../api/projects'
 import { TabBar }             from '../components/tabs/TabBar'
@@ -13,6 +13,7 @@ import { DomainsTab }         from '../components/tabs/DomainsTab'
 import { ServersTab }         from '../components/tabs/ServersTab'
 import { UsersTab }           from '../components/tabs/UsersTab'
 import { VulnerabilitiesTab } from '../components/tabs/VulnerabilitiesTab'
+import { GroupsTab }          from '../components/tabs/GroupsTab'
 import { Spinner } from '../components/Spinner'
 import { Modal }   from '../components/Modal'
 import type { DeployResult } from '../types'
@@ -23,6 +24,7 @@ const TABS = [
   { id: 'domains',         label: 'Domaines',       icon: <Network         className="w-3.5 h-3.5" /> },
   { id: 'servers',         label: 'Serveurs',       icon: <Server          className="w-3.5 h-3.5" /> },
   { id: 'users',           label: 'Utilisateurs',   icon: <Users           className="w-3.5 h-3.5" /> },
+  { id: 'groups',          label: 'Groupes',        icon: <UsersRound      className="w-3.5 h-3.5" /> },
   { id: 'vulnerabilities', label: 'Vulnérabilités', icon: <ShieldAlert     className="w-3.5 h-3.5" /> },
 ]
 
@@ -79,15 +81,13 @@ export function ProjectDetailPage() {
             alignItems: 'center',
             gap: 5,
             fontSize: 12,
-            color: '#475569',
+            color: 'var(--text-dim)',
             textDecoration: 'none',
             marginBottom: 14,
             transition: 'color 0.15s',
             fontFamily: "'IBM Plex Mono', monospace",
             letterSpacing: '0.02em',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#64748B' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#475569' }}
         >
           <ArrowLeft style={{ width: 13, height: 13 }} />
           Projets
@@ -98,14 +98,14 @@ export function ProjectDetailPage() {
             <h1 style={{
               fontFamily: "'IBM Plex Mono', monospace",
               fontWeight: 600,
-              fontSize: 20,
-              color: '#E2E8F0',
-              letterSpacing: '-0.02em',
+              fontSize: 24,
+              color: 'var(--text-bright)',
+              letterSpacing: '-0.03em',
               marginBottom: 3,
             }}>
               {project.name}
             </h1>
-            <p style={{ fontSize: 12, color: '#475569', fontFamily: "'IBM Plex Mono', monospace" }}>
+            <p style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: "'IBM Plex Mono', monospace" }}>
               ID: {project.id} · {new Date(project.created_at).toLocaleDateString('fr-FR', {
                 day: '2-digit', month: 'long', year: 'numeric'
               })}
@@ -137,6 +137,7 @@ export function ProjectDetailPage() {
         {tab === 'domains'         && <DomainsTab projectId={projectId} forests={forests} domains={domains} servers={servers} />}
         {tab === 'servers'         && <ServersTab projectId={projectId} domains={domains} servers={servers} />}
         {tab === 'users'           && <UsersTab projectId={projectId} domains={domains} />}
+        {tab === 'groups'          && <GroupsTab projectId={projectId} domains={domains} />}
         {tab === 'vulnerabilities' && <VulnerabilitiesTab projectId={projectId} />}
       </div>
 
@@ -160,7 +161,7 @@ export function ProjectDetailPage() {
             </div>
 
             {deployResult.message && (
-              <p style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.6 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
                 {deployResult.message}
               </p>
             )}
@@ -169,8 +170,8 @@ export function ProjectDetailPage() {
               <pre style={{
                 fontSize: 11,
                 color: '#FB7185',
-                background: 'rgba(6, 16, 28, 0.8)',
-                border: '1px solid rgba(22, 40, 64, 0.8)',
+                background: 'var(--bg-tbl-head)',
+                border: '1px solid var(--border-card)',
                 borderRadius: 6,
                 padding: '10px 12px',
                 overflow: 'auto',

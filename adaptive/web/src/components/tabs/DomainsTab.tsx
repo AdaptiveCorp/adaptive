@@ -18,7 +18,7 @@ export function DomainsTab({ projectId, forests, domains, servers }: Props) {
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: 10,
           fontWeight: 600,
-          color: '#475569',
+          color: 'var(--text-muted)',
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
         }}>
@@ -48,7 +48,7 @@ export function DomainsTab({ projectId, forests, domains, servers }: Props) {
                 <span>
                   Aucun domaine —{' '}
                   <button
-                    style={{ color: '#38BDF8', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Fira Code', monospace", fontSize: 13 }}
+                    style={{ color: 'var(--brand-300)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Fira Code', monospace", fontSize: 13 }}
                     onClick={() => setOpen(true)}
                   >
                     en ajouter un
@@ -62,8 +62,8 @@ export function DomainsTab({ projectId, forests, domains, servers }: Props) {
           return (
             <div key={d.id} className="tbl-row" style={{ gridTemplateColumns: '1fr 180px 80px' }}>
               <div className="flex items-center gap-2.5 min-w-0">
-                <Network style={{ width: 13, height: 13, color: '#818CF8', flexShrink: 0 }} />
-                <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: '#CBD5E1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <Network style={{ width: 13, height: 13, color: 'var(--brand-400)', flexShrink: 0 }} />
+                <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: 'var(--text-bright)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {d.fqdn}
                 </span>
               </div>
@@ -73,7 +73,7 @@ export function DomainsTab({ projectId, forests, domains, servers }: Props) {
               <span style={{
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: 13,
-                color: '#64748B',
+                color: 'var(--text-dim)',
                 textAlign: 'center',
                 display: 'block',
               }}>

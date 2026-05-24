@@ -16,7 +16,7 @@ export function ForestsTab({ projectId, forests, domains }: Props) {
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: 10,
           fontWeight: 600,
-          color: '#475569',
+          color: 'var(--text-muted)',
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
         }}>
@@ -36,7 +36,7 @@ export function ForestsTab({ projectId, forests, domains }: Props) {
           <div className="tbl-empty">
             Aucune forêt —{' '}
             <button
-              style={{ color: '#38BDF8', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Fira Code', monospace", fontSize: 13 }}
+              style={{ color: 'var(--brand-300)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Fira Code', monospace", fontSize: 13 }}
               onClick={() => setOpen(true)}
             >
               en ajouter une
@@ -45,15 +45,15 @@ export function ForestsTab({ projectId, forests, domains }: Props) {
         ) : forests.map((f) => (
           <div key={f.id} className="tbl-row" style={{ gridTemplateColumns: '1fr 100px' }}>
             <div className="flex items-center gap-2.5">
-              <TreePine style={{ width: 13, height: 13, color: '#38BDF8', flexShrink: 0 }} />
-              <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: '#CBD5E1' }}>
+              <TreePine style={{ width: 13, height: 13, color: 'var(--brand-300)', flexShrink: 0 }} />
+              <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: 'var(--text-bright)' }}>
                 {f.fqdn}
               </span>
             </div>
             <span style={{
               fontFamily: "'IBM Plex Mono', monospace",
               fontSize: 13,
-              color: '#64748B',
+              color: 'var(--text-dim)',
               textAlign: 'center',
               display: 'block',
             }}>

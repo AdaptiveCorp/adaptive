@@ -17,11 +17,11 @@ export default {
           500: '#1D3250',
         },
         brand: {
-          300: '#7DD3FC',
-          400: '#38BDF8',
-          500: '#0EA5E9',
-          600: '#0284C7',
-          700: '#0369A1',
+          300: 'rgb(var(--brand-300-rgb) / <alpha-value>)',
+          400: 'rgb(var(--brand-400-rgb) / <alpha-value>)',
+          500: 'rgb(var(--brand-500-rgb) / <alpha-value>)',
+          600: 'rgb(var(--brand-600-rgb) / <alpha-value>)',
+          700: 'rgb(var(--brand-700-rgb) / <alpha-value>)',
         },
         danger: {
           400: '#FB7185',

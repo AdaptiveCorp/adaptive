@@ -7,3 +7,4 @@ __pycache__/
 adaptive/web/dist/
 adaptive/web/node_modules/
 adaptive/web/.env
+adaptive/migrations/versions/

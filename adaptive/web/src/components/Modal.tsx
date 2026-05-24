@@ -27,11 +27,11 @@ export function Modal({ title, onClose, children }: ModalProps) {
       <div style={{
         width: '100%',
         maxWidth: 448,
-        background: 'rgba(10, 23, 40, 0.96)',
+        background: 'var(--bg-card)',
         border: '1px solid rgba(14, 165, 233, 0.15)',
         borderRadius: 12,
         overflow: 'hidden',
-        boxShadow: '0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(14, 165, 233, 0.08), 0 0 60px rgba(14, 165, 233, 0.04)',
+        boxShadow: '0 8px 40px rgba(0,0,0,0.55), 0 0 60px rgba(14, 165, 233, 0.04)',
         animation: 'fade-in-up 0.2s ease forwards',
       }}>
         {/* Title bar */}
@@ -40,43 +40,22 @@ export function Modal({ title, onClose, children }: ModalProps) {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '14px 20px',
-          borderBottom: '1px solid rgba(22, 40, 64, 0.8)',
-          background: 'rgba(6, 16, 28, 0.6)',
+          borderBottom: '1px solid var(--border-base)',
+          background: 'var(--bg-tbl-head)',
         }}>
           <h2 style={{
             fontFamily: "'IBM Plex Mono', monospace",
             fontWeight: 600,
             fontSize: 13,
-            color: '#CBD5E1',
+            color: 'var(--text-body)',
             letterSpacing: '0.01em',
           }}>
             {title}
           </h2>
           <button
             onClick={onClose}
-            style={{
-              width: 26,
-              height: 26,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 6,
-              border: 'none',
-              background: 'transparent',
-              color: '#334155',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => {
-              const el = e.currentTarget
-              el.style.color = '#94A3B8'
-              el.style.background = 'rgba(22, 40, 64, 0.8)'
-            }}
-            onMouseLeave={e => {
-              const el = e.currentTarget
-              el.style.color = '#334155'
-              el.style.background = 'transparent'
-            }}
+            className="row-del"
+            style={{ width: 26, height: 26 }}
           >
             <X style={{ width: 14, height: 14 }} />
           </button>

@@ -17,7 +17,7 @@ export function ServersTab({ projectId, domains, servers }: Props) {
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: 10,
           fontWeight: 600,
-          color: '#475569',
+          color: 'var(--text-muted)',
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
         }}>
@@ -47,7 +47,7 @@ export function ServersTab({ projectId, domains, servers }: Props) {
                 <span>
                   Aucun serveur —{' '}
                   <button
-                    style={{ color: '#38BDF8', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Fira Code', monospace", fontSize: 13 }}
+                    style={{ color: 'var(--brand-300)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Fira Code', monospace", fontSize: 13 }}
                     onClick={() => setOpen(true)}
                   >
                     en ajouter un
@@ -61,12 +61,12 @@ export function ServersTab({ projectId, domains, servers }: Props) {
           return (
             <div key={s.id} className="tbl-row" style={{ gridTemplateColumns: '1fr 110px 170px 80px' }}>
               <div className="flex items-center gap-2.5 min-w-0">
-                <Server style={{ width: 13, height: 13, color: '#34D399', flexShrink: 0 }} />
-                <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: '#CBD5E1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <Server style={{ width: 13, height: 13, color: 'var(--brand-300)', flexShrink: 0 }} />
+                <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: 'var(--text-bright)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {s.fqdn}
                 </span>
               </div>
-              <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 12, color: '#64748B', alignSelf: 'center' }}>
+              <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 12, color: 'var(--text-dim)', alignSelf: 'center' }}>
                 {s.ip ?? '—'}
               </span>
               <div className="self-center min-w-0">

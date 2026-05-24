@@ -58,7 +58,7 @@ export function VulnerabilitiesSection({ projectId }: Props) {
             fontFamily: "'IBM Plex Mono', monospace",
             fontSize: 10,
             fontWeight: 600,
-            color: '#475569',
+            color: 'var(--text-muted)',
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
           }}>
@@ -67,7 +67,7 @@ export function VulnerabilitiesSection({ projectId }: Props) {
           <span style={{
             fontFamily: "'IBM Plex Mono', monospace",
             fontSize: 11,
-            color: '#475569',
+            color: 'var(--text-dim)',
           }}>
             {applied?.length ?? 0} / {catalog?.length ?? '…'}
           </span>
@@ -78,7 +78,7 @@ export function VulnerabilitiesSection({ projectId }: Props) {
             <Spinner className="w-5 h-5 text-brand-400" />
           </div>
         ) : !applied?.length ? (
-          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#475569', textAlign: 'center', padding: '20px 0' }}>
+          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: 'var(--text-dim)', textAlign: 'center', padding: '20px 0' }}>
             Aucune vulnérabilité appliquée à ce projet.
           </p>
         ) : (
@@ -90,8 +90,8 @@ export function VulnerabilitiesSection({ projectId }: Props) {
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: 12,
-                  background: 'rgba(15, 32, 52, 0.6)',
-                  border: '1px solid rgba(22, 40, 64, 0.7)',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-card)',
                   borderRadius: 8,
                   padding: '12px 14px',
                   transition: 'border-color 0.15s',
@@ -101,15 +101,15 @@ export function VulnerabilitiesSection({ projectId }: Props) {
                 <ShieldAlert style={{ width: 15, height: 15, color: '#FB7185', marginTop: 2, flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#CBD5E1' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-bright)' }}>
                       {av.template.name}
                     </span>
                     <span style={{
                       fontFamily: "'Fira Code', monospace",
                       fontSize: 11,
-                      color: '#64748B',
-                      background: 'rgba(6, 16, 28, 0.8)',
-                      border: '1px solid rgba(22, 40, 64, 0.7)',
+                      color: 'var(--text-dim)',
+                      background: 'var(--bg-input)',
+                      border: '1px solid var(--border-input)',
                       borderRadius: 4,
                       padding: '1px 6px',
                     }}>
@@ -121,11 +121,11 @@ export function VulnerabilitiesSection({ projectId }: Props) {
                     {av.forest_id && <Badge label={`Forest #${av.forest_id}`} variant="green" />}
                   </div>
                   {av.params && (
-                    <pre style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: '#64748B', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <pre style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: 'var(--text-dim)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {av.params}
                     </pre>
                   )}
-                  <p style={{ fontSize: 11, color: '#475569', marginTop: 3, fontFamily: "'IBM Plex Mono', monospace" }}>
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, fontFamily: "'IBM Plex Mono', monospace" }}>
                     {new Date(av.created_at).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
@@ -133,12 +133,12 @@ export function VulnerabilitiesSection({ projectId }: Props) {
                   onClick={() => setRemoveTarget(av)}
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
-                    color: '#475569', transition: 'all 0.15s', padding: 4, borderRadius: 4,
+                    color: 'var(--text-dim)', transition: 'all 0.15s', padding: 4, borderRadius: 4,
                     opacity: 0,
                   }}
                   className="group-hover:opacity-100"
                   onMouseEnter={e => { e.currentTarget.style.color = '#FB7185'; e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)'; e.currentTarget.style.opacity = '1' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.background = 'none' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-dim)'; e.currentTarget.style.background = 'none' }}
                 >
                   <Trash2 style={{ width: 14, height: 14 }} />
                 </button>
@@ -152,12 +152,12 @@ export function VulnerabilitiesSection({ projectId }: Props) {
       {catalog && catalog.length > 0 && (
         <div className="card space-y-3">
           <div className="flex items-center gap-2">
-            <Tag style={{ width: 13, height: 13, color: '#475569' }} />
+            <Tag style={{ width: 13, height: 13, color: 'var(--text-muted)' }} />
             <span style={{
               fontFamily: "'IBM Plex Mono', monospace",
               fontSize: 10,
               fontWeight: 600,
-              color: '#475569',
+              color: 'var(--text-muted)',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
             }}>
@@ -173,18 +173,18 @@ export function VulnerabilitiesSection({ projectId }: Props) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  background: 'rgba(15, 32, 52, 0.6)',
-                  border: '1px solid rgba(22, 40, 64, 0.7)',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-input)',
                   borderRadius: 6,
                   padding: '6px 10px',
                   cursor: 'default',
                 }}
               >
                 <Badge label={v.category ?? 'misc'} variant={categoryVariant(v.category)} />
-                <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 12, color: '#94A3B8' }}>
+                <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 12, color: 'var(--text-bright)' }}>
                   {v.code}
                 </span>
-                <span style={{ fontSize: 12, color: '#64748B' }}>— {v.name}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— {v.name}</span>
               </div>
             ))}
           </div>
@@ -194,9 +194,9 @@ export function VulnerabilitiesSection({ projectId }: Props) {
       {/* Remove confirm */}
       {removeTarget && (
         <Modal title="Supprimer la vulnérabilité" onClose={() => setRemoveTarget(null)}>
-          <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.6 }}>
             Supprimer{' '}
-            <span style={{ fontFamily: "'Fira Code', monospace", color: '#E2E8F0', fontWeight: 500 }}>
+            <span style={{ fontFamily: "'Fira Code', monospace", color: 'var(--text-bright)', fontWeight: 500 }}>
               {removeTarget.template.name}
             </span>{' '}
             de ce projet ?
