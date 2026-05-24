@@ -115,6 +115,80 @@ class AnsibleService:
 
         return result
 
+    def delete_user(
+        self,
+        server_ip: str,
+        username: str,
+    ) -> PlaybookResult:
+        logger.info("%s Deleting user '%s' on %s", PREFIX, username, server_ip)
+
+        extravars: dict[str, Any] = {
+            "target_host": server_ip,
+            "username": username,
+        }
+
+        content = self._get_template_content("delete_user_by_sam")
+        result = self._run_playbook(content, server_ip, extravars)
+
+        if result.success:
+            logger.info("%s User '%s' deleted successfully on %s", PREFIX, username, server_ip)
+        else:
+            logger.error("%s Failed to delete user '%s' on %s: %s", PREFIX, username, server_ip, result.error)
+
+        return result
+
+    def add_groups(
+        self,
+        server_ip: str,
+        groups: list[dict[str, str]],
+        base_dn: str,
+        domain_fqdn: str,
+    ) -> PlaybookResult:
+        logger.info("%s Adding %d group(s) on %s", PREFIX, len(groups), server_ip)
+
+        extravars: dict[str, Any] = {
+            "target_host": server_ip,
+            "groups_list": groups,
+            "base_dn": base_dn,
+            "domain_fqdn": domain_fqdn,
+        }
+
+        content = self._get_template_content("add_groups")
+        result = self._run_playbook(content, server_ip, extravars)
+
+        if result.success:
+            logger.info("%s Successfully added %d group(s) on %s", PREFIX, len(groups), server_ip)
+        else:
+            logger.error("%s Failed to add groups on %s: %s", PREFIX, server_ip, result.error)
+
+        return result
+
+    def add_group_members(
+        self,
+        server_ip: str,
+        memberships: list[dict[str, Any]],  # [{"group_name": "Starks", "members": ["j.snow", "NorthLords"]}]
+    ) -> PlaybookResult:
+        logger.info(
+            "%s Adding members to %d group(s) on %s",
+            PREFIX, len(memberships), server_ip
+        )
+
+        extravars: dict[str, Any] = {
+            "target_host": server_ip,
+            "memberships": memberships,
+        }
+
+        content = self._get_template_content("add_group_members")
+        result = self._run_playbook(content, server_ip, extravars)
+
+        if result.success:
+            logger.info("%s Successfully updated group memberships on %s", PREFIX, server_ip)
+        else:
+            logger.error("%s Failed to update group memberships on %s: %s", PREFIX, server_ip, result.error)
+
+        return result
+    
+    
     def _run_playbook(
         self,
         playbook_content: str,
@@ -129,11 +203,19 @@ class AnsibleService:
                     target_host: {
                         "ansible_user": self._user,
                         "ansible_password": self._password,
+
                     }
                 }
             }
         }
-
+        merged_extravars = {
+            "ansible_connection": "winrm",
+            "ansible_winrm_transport": "basic",
+            "ansible_winrm_scheme": "http",
+            "ansible_winrm_server_cert_validation": "ignore",
+            "ansible_port": 5985,
+            **extravars,  # ← les extravars métier par dessus
+        }
         with tempfile.TemporaryDirectory() as tmpdir:
             project_dir = Path(tmpdir) / "project"
             project_dir.mkdir()
@@ -144,7 +226,7 @@ class AnsibleService:
                 private_data_dir=tmpdir,
                 playbook="playbook.yaml",
                 inventory=inventory,
-                extravars=extravars,
+                extravars=merged_extravars,
                 verbosity=2,
             )
 

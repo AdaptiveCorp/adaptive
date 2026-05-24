@@ -21,5 +21,5 @@ class ServerResponse(BaseModel):
     domain_id: int
     vm_template_id: int | None
     vm_template_name: str | None
-
+    status: str | None
     model_config = {"from_attributes": True}

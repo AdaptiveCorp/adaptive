@@ -7,18 +7,21 @@ from adaptive.api.exceptions import (
     ServerNotFoundError,
     UserTargetConflictError,
     UserTargetRequiredError,
+    UserNotFoundError,
 )
+from adaptive.api.models.applied_template import AppliedTemplate, TemplateStatus
 from adaptive.api.models.domain import Domain
 from adaptive.api.models.server import Server
 from adaptive.api.models.user import User
+from adaptive.api.models.template import Template
 from adaptive.api.schemas.user import UserCreate, UserResponse
 from adaptive.api.services.deployment_service import ansible_deploy_user
+from adaptive.api.exceptions import UserNotFoundError, AppliedTemplateNotFoundError, TemplateNotFoundError
 
 router = APIRouter(
     prefix="/users",
     tags=["users"],
 )
-
 
 @router.post("/", response_model=UserResponse)
 def add_user(
@@ -49,8 +52,7 @@ def add_user(
         server = db.get(Server, payload.server_id)
         if not server:
             raise ServerNotFoundError(payload.server_id)
-        # user = User(server_id=payload.server_id, username=username, password=payload.password)
-
+        
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -84,3 +86,33 @@ def list_users(
         query = query.filter(User.server_id == server_id)
 
     return query.all()
+
+
+@router.delete("/{user_id}", response_model=dict)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Supprimer un uilisateur.
+    """
+    user = db.get(User, user_id)
+
+    if not user:
+        raise UserNotFoundError(user_id=user_id)
+    
+    template_name = "add_users"
+    template = db.query(Template).filter(Template.code == template_name).first()
+
+    if not template :
+        raise TemplateNotFoundError(template_name=template_name)
+    
+    applied_template = db.query(AppliedTemplate).filter(AppliedTemplate.user_id == user.id, AppliedTemplate.template_id == template.id).first()
+
+    if not applied_template : 
+        raise AppliedTemplateNotFoundError(applied_id=-1)
+    
+    applied_template.status = TemplateStatus.REVERTED_PENDING
+    db.commit()
+
+    return {"success": True}

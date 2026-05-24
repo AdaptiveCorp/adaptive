@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from adaptive.api.models.server import Server
     from adaptive.api.models.template import Template
     from adaptive.api.models.user import User
+    from adaptive.api.models.group import Group
 
 
 class TemplateStatus(enum.StrEnum):
@@ -23,6 +24,8 @@ class TemplateStatus(enum.StrEnum):
     APPLIED = "applied"
     MODIFIED = "modified"
     ERROR = "error"
+    REVERTED_PENDING = "reverted_pending"
+    REVERTED_APPLIED = "reverted_applied"
 
 
 class AppliedTemplate(Base):
@@ -40,6 +43,9 @@ class AppliedTemplate(Base):
 
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     user: Mapped[User | None] = relationship("User", foreign_keys=[user_id])
+
+    group_id: Mapped[int | None] = mapped_column(ForeignKey("groups.id"), nullable=True)
+    group: Mapped[Group | None] = relationship("Group", foreign_keys=[group_id])
 
     domain_id: Mapped[int | None] = mapped_column(ForeignKey("domains.id"), nullable=True)
     domain: Mapped[Domain | None] = relationship("Domain")

@@ -3,7 +3,7 @@ import json
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
+from sqlalchemy import select, exists
 from adaptive.api.endpoints.utils import get_root_dc
 from adaptive.api.environment.database import get_db
 from adaptive.api.exceptions import (
@@ -11,6 +11,7 @@ from adaptive.api.exceptions import (
     DomainNotFoundError,
     VulnerabilityInvalidParamsError,
     VulnerabilityNotFoundError,
+    VulnerabilityAlreadyExist,
 )
 from adaptive.api.models.applied_template import AppliedTemplate, TemplateStatus
 from adaptive.api.models.domain import Domain
@@ -45,11 +46,6 @@ def list_applied_vulnerabilities(project_id: int, db: Session = Depends(get_db))
     """
     return (
         db.query(AppliedTemplate)
-        .join(Template)
-        .filter(
-            AppliedTemplate.project_id == project_id,
-            Template.type == TemplateType.VULNERABILITY,
-        )
         .all()
     )
 
@@ -82,6 +78,20 @@ def post_vulnerability(
 
     param_req_str = json.dumps(param_req)
 
+    #Vérifie si ya pas déjà un vuln template qui existe déjà
+    stmt = select(AppliedTemplate).join(Template).where(
+        AppliedTemplate.project_id == project_id,
+        AppliedTemplate.domain_id == domain.id,
+        Template.code == vuln_template.code,
+        AppliedTemplate.params ==param_req_str #Améliorer la logique de params
+    )
+    applied_template = db.execute(stmt).scalars().first()
+
+    if applied_template :
+        raise VulnerabilityAlreadyExist(applied_vuln_id=applied_template.id, 
+                                         applied_vuln_code=applied_template.template.code,
+                                         applied_vuln_params=applied_template.params)
+
     applied_template = AppliedTemplate(
         project_id=project_id,
         template_id=vuln_template.id,
@@ -94,7 +104,6 @@ def post_vulnerability(
     db.refresh(domain)
 
     # result = execute_powershell_winrm(primary_dc.ip, powershell_script, param_req, db)
-
     return applied_template
 
 
@@ -110,8 +119,10 @@ def deploy_vulnerability(vuln_id: int, db: Session = Depends(get_db)):
     if vuln_template.domain:
         dc = get_root_dc(vuln_template.domain, db)
         ip = dc.ip
+
     elif vuln_template.server:
         ip = vuln_template.server.ip
+
     else:
         raise VulnerabilityInvalidParamsError("No domain or server target")
 
