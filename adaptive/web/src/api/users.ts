@@ -19,4 +19,9 @@ export const usersApi = {
     const res = await client.post<User>('/users/', params)
     return res.data
   },
+
+  delete: async (id: number): Promise<{ success: boolean }> => {
+    const res = await client.delete<{ success: boolean }>(`/users/${id}`)
+    return res.data
+  },
 }

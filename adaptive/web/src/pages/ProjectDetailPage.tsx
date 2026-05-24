@@ -138,7 +138,7 @@ export function ProjectDetailPage() {
         {tab === 'servers'         && <ServersTab projectId={projectId} domains={domains} servers={servers} />}
         {tab === 'users'           && <UsersTab projectId={projectId} domains={domains} />}
         {tab === 'groups'          && <GroupsTab projectId={projectId} domains={domains} />}
-        {tab === 'vulnerabilities' && <VulnerabilitiesTab projectId={projectId} />}
+        {tab === 'vulnerabilities' && <VulnerabilitiesTab projectId={projectId} domains={domains} users={users} />}
       </div>
 
       {/* Deploy result */}

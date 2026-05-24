@@ -53,6 +53,7 @@ export interface Vulnerability {
   name: string
   description: string | null
   category: string | null
+  required_params: string | null
 }
 
 export interface AppliedVulnerability {
@@ -74,7 +75,6 @@ export interface Group {
   domain_id: number | null
   server_id: number | null
   user_ids: number[]
-  member_group_ids: number[]
 }
 
 export interface VmTemplate {
