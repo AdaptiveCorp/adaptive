@@ -4,7 +4,16 @@ Application web pour générer des infrastructures Active Directory vulnérables
 
 ## Prérequis
 
+```bash
+sudo apt update
+sudo apt install python3 npm
+```
+
 - [uv](https://docs.astral.sh/uv/) — gestionnaire de packages et d'environnement Python
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
 ## Installation
 
