@@ -130,7 +130,7 @@ templates:
     category: infrastructure
     required_params:
       - target_host
-      - groups_list
+      - groupnames
       - base_dn
     content: |
       ---
@@ -147,12 +147,12 @@ templates:
               path: "{{ item.ou_path | default('CN=Users,' + base_dn) }}"
               description: "{{ item.description | default('') }}"
               state: present
-            loop: "{{ groups_list }}"
+            loop: "{{ groupnames }}"
 
     reverse_type: deletion
     reverse_content: |
       Import-Module ActiveDirectory
-      $groupnames = "{{ groups_list | join(',') }}" -split ","
+      $groupnames = "{{ groupnames | join(',') }}" -split ","
       foreach ($g in $groupnames) {
           $g = $g.Trim()
           $Group = Get-ADGroup -Filter { Name -eq $g }

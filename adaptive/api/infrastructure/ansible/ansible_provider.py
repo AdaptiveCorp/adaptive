@@ -148,7 +148,7 @@ class AnsibleService:
 
         extravars: dict[str, Any] = {
             "target_host": server_ip,
-            "groups_list": groups,
+            "groupnames": groups,
             "base_dn": base_dn,
             "domain_fqdn": domain_fqdn,
         }
