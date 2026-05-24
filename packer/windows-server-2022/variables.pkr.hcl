@@ -80,7 +80,7 @@ variable "winrm_password" {
 
 variable "vm_ip" {
   type        = string
-  default     = "10.0.0.50"
+  default     = "192.168.30.15"
   description = "Adresse IP statique de la VM template"
 }
 
@@ -128,6 +128,6 @@ variable "template_uuid" {
 
 variable "adaptive_endpoint" {
   type        = string
-  default     = "https://127.0.0.1/"  
+  default     = "http://127.0.0.1:8000"  
   description = "URL de l'endpoint d'Adaptive BYOL pour la collecte des données de provisioning"
 }

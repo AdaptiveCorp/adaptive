@@ -166,16 +166,20 @@ class AnsibleService:
     def add_group_members(
         self,
         server_ip: str,
-        memberships: list[dict[str, Any]],  # [{"group_name": "Starks", "members": ["j.snow", "NorthLords"]}]
+        memberships: list[dict[str, Any]],
     ) -> PlaybookResult:
         logger.info(
             "%s Adding members to %d group(s) on %s",
             PREFIX, len(memberships), server_ip
         )
 
+        # memberships contient toujours 1 seul élément désormais
+        membership = memberships[0]
+
         extravars: dict[str, Any] = {
             "target_host": server_ip,
-            "memberships": memberships,
+            "group_name": membership["group_name"],
+            "members": membership["members"],
         }
 
         content = self._get_template_content("add_group_members")
@@ -197,6 +201,7 @@ class AnsibleService:
     ) -> PlaybookResult:
         logger.info("%s Running playbook on %s", PREFIX, target_host)
 
+        print("PASSWORD : ", self._password)
         inventory = {
             "all": {
                 "hosts": {
@@ -214,7 +219,7 @@ class AnsibleService:
             "ansible_winrm_scheme": "http",
             "ansible_winrm_server_cert_validation": "ignore",
             "ansible_port": 5985,
-            **extravars,  # ← les extravars métier par dessus
+            **extravars, 
         }
         with tempfile.TemporaryDirectory() as tmpdir:
             project_dir = Path(tmpdir) / "project"

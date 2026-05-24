@@ -197,43 +197,49 @@ def get_groups_grouped_by_domain(project: Project) -> dict[Domain, list[Group]]:
                 grouped[domain] = list(domain.groups)
     return grouped
 
-
 def get_groups_not_push_by_domain(project: Project, db: Session) -> dict[Domain, list[Group]]:
-    """Retourne, par domaine, les groupes qui n'ont pas encore été poussés dans l'AD
-       via le template 'add_groups' (sur le même principe que les users)."""
-
     groups_by_domain = get_groups_grouped_by_domain(project)
-    print("Groups by domain : ", len(groups_by_domain))
+    result: dict[Domain, list[Group]] = {}
+
     for domain, groups_list in groups_by_domain.items():
         stmt = (
             select(AppliedTemplate)
             .join(Template)
             .where(
                 AppliedTemplate.project_id == project.id,
-                (AppliedTemplate.status == TemplateStatus.APPLIED)
-                | (AppliedTemplate.status == TemplateStatus.ERROR),
+                AppliedTemplate.status.in_([
+                    TemplateStatus.APPLIED,
+                    TemplateStatus.REVERTED_PENDING,
+                    TemplateStatus.REVERTED_APPLIED,
+                ]),
                 AppliedTemplate.domain_id == domain.id,
                 Template.code == "add_groups",
             )
         )
         applied_templates = db.execute(stmt).scalars().all()
 
-        # extraire les noms de groupes déjà poussés
-        groupnames_applied: list[str] = []
+        groupnames_applied: set[str] = set()
         for applied in applied_templates:
             if not applied.params:
                 continue
-            params_json = json.loads(applied.params)
-            print(params_json)
-            # on décidera que params["groupnames"] contiendra la liste des noms poussés
-            groupnames_applied.extend(params_json.get("groupnames", []))
 
-        groups_not_applied = [
-            g for g in groups_list if g.name not in groupnames_applied
-        ]
-        groups_by_domain[domain] = groups_not_applied
+            params = applied.params
+            if isinstance(params, str):
+                try:
+                    params = json.loads(params)
+                except json.JSONDecodeError:
+                    continue
 
-    return groups_by_domain
+            if "groupnames" in params:
+                groupnames_applied.update(params["groupnames"])
+            elif "groupname" in params:
+                groupnames_applied.add(params["groupname"])
+            elif "groups" in params:
+                groupnames_applied.update(params["groups"])
+
+        result[domain] = [g for g in groups_list if g.name not in groupnames_applied]
+
+    return result
 
 def get_template_for_project(project: Project, db: Session) -> list[AppliedTemplate]:
     stmt = select(AppliedTemplate).where(AppliedTemplate.project_id == project.id)
@@ -678,7 +684,7 @@ def _step_add_groups(
             for g in groups
         ]
 
-        # 1 AppliedTemplate par groupe, chacun référence son group_id
+        # APRÈS (clé "groupnames" — lue correctement par le filtre)
         applied_list = [
             _create_applied_template(
                 db,
@@ -686,11 +692,11 @@ def _step_add_groups(
                 template_code="add_groups",
                 domain_id=domain.id,
                 server_id=dc.id,
-                group_id=g.id,                    # ← référence directe au groupe
+                group_id=g.id,
                 params={
                     "target_host": _bare_ip(dc.ip),
-                    "groups_list": [g.name],      # ← liste à 1 élément, cohérent avec reverse_content
-                    "base_dn": base_dn,
+                    "groupnames": [g.name],
+                    "basedn": base_dn,
                     "domain_fqdn": domain.fqdn,
                 },
             )
@@ -726,7 +732,6 @@ def _step_add_groups(
 
     return deployment_result
 
-
 def _step_add_group_members(
     project: Project,
     ansible: AnsibleService,
@@ -734,15 +739,15 @@ def _step_add_group_members(
     groups_by_domain: dict[Domain, list[Group]] | None,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
+
     if not groups_by_domain:
         logger.info("[STEP ADD_GROUP_MEMBERS] No memberships to set, skipping.")
         return deployment_result
 
     for domain, groups in groups_by_domain.items():
-        # Garder uniquement les groupes qui ont au moins un membre
         groups_with_members = [
             g for g in groups
-            if g.users or g.member_groups
+            if g.users
         ]
 
         if not groups_with_members:
@@ -757,46 +762,50 @@ def _step_add_group_members(
             logger.error("[STEP ADD_GROUP_MEMBERS] No reachable DC for '%s', skipping", domain.fqdn)
             continue
 
-        memberships: list[dict[str, Any]] = []
         for g in groups_with_members:
-            members = (
-                [u.username for u in g.users]
-                + [mg.name for mg in g.member_groups]
-            )
-            if members:
-                memberships.append({"group_name": g.name, "members": members})
+            user_members = [(u.username, u.id) for u in g.users]
 
-        applied = _create_applied_template(
-            db,
-            project_id=project.id,
-            template_code="add_group_members",
-            domain_id=domain.id,
-            server_id=dc.id,
-            params={
-                "target_host": _bare_ip(dc.ip),
-                "memberships": memberships,
-            },
-        )
+            for member_name, user_id in user_members:
+                applied = _create_applied_template(
+                    db,
+                    project_id=project.id,
+                    template_code="add_group_members",
+                    domain_id=domain.id,
+                    server_id=dc.id,
+                    group_id=g.id,
+                    user_id=user_id,
+                    params={
+                        "target_host": _bare_ip(dc.ip),
+                        "group_name": g.name,
+                        "members": [member_name],
+                    },
+                )
 
-        logger.info(
-            "[STEP ADD_GROUP_MEMBERS] Adding members to %d group(s) on domain '%s'",
-            len(memberships),
-            domain.fqdn,
-        )
+                logger.info(
+                    "[STEP ADD_GROUP_MEMBERS] Adding member '%s' to group '%s' on domain '%s'",
+                    member_name,
+                    g.name,
+                    domain.fqdn,
+                )
 
-        result = ansible.add_group_members(
-            server_ip=_bare_ip(dc.ip),
-            memberships=memberships,
-        )
+                result = ansible.add_group_members(
+                    server_ip=_bare_ip(dc.ip),
+                    memberships=[{"group_name": g.name, "members": [member_name]}],
+                )
 
-        if not result.success:
-            _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
-            deployment_result.success = False
-            deployment_result.error = result.error
-            return deployment_result
-
-        _update_template_status(db, applied, TemplateStatus.APPLIED)
-        logger.info("[STEP ADD_GROUP_MEMBERS] Memberships set on domain '%s'", domain.fqdn)
+                if not result.success:
+                    _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
+                    deployment_result.success = False
+                    deployment_result.error = result.error
+                    return deployment_result
+                
+                _update_template_status(db, applied, TemplateStatus.APPLIED)
+                logger.info(
+                    "[STEP ADD_GROUP_MEMBERS] Member '%s' added to group '%s' on domain '%s'",
+                    member_name,
+                    g.name,
+                    domain.fqdn,
+                )
 
     return deployment_result
 
@@ -990,20 +999,20 @@ def build_deployment_steps(
     steps: list[Callable[[DeploymentResult], DeploymentResult]] = []
 
     # Serveurs qui n'ont pas encore été clonés
-    # servers_to_clone = [s for s in all_servers if s.status != ServerStatus.APPLIED]
+    servers_to_clone = [s for s in all_servers if s.status != ServerStatus.APPLIED]
 
-    # if servers_to_clone:
-    #     steps.append(
-    #         lambda r, s=servers_to_clone: _step_clone_vms(project, s, hypervisor, db, r)
-    #     )
+    if servers_to_clone :
+        steps.append(
+            lambda r, s=servers_to_clone: _step_clone_vms(project, s, hypervisor, db, r)
+        )
 
-    # # Serveurs qui n'ont pas été promu
-    # servers_to_promote = get_dcs_to_promote(project, db)
+    # Serveurs qui n'ont pas été promu
+    servers_to_promote = get_dcs_to_promote(project, db)
     
-    # if servers_to_promote :
-    #     steps.append(
-    #         lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
-    #     )
+    if servers_to_promote :
+        steps.append(
+            lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
+        )
 
     # Utilisateur qui n'ont pas encore été pushé
     users_not_pushed = get_users_not_push_by_domain(project, db)
