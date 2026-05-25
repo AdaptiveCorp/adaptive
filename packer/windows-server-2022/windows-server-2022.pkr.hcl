@@ -24,13 +24,14 @@ source "proxmox-iso" "windows-server-2022" {
   bios = "seabios"
 
   boot_iso {
-    type     = "ide"
-    index    = 2
-    iso_url = var.iso_file
-    iso_checksum = var.iso_checksum
+    type             = "ide"
+    index            = 2
+    iso_file         = var.iso_already_downloaded ? var.iso_file : null
+    iso_url          = var.iso_already_downloaded ? null : var.iso_url
+    iso_checksum     = var.iso_already_downloaded ? null : var.iso_checksum
     iso_storage_pool = var.iso_storage_pool
-    iso_download_pve  = true
-    unmount  = true
+    iso_download_pve = !var.iso_already_downloaded
+    unmount          = true
   }
 
   additional_iso_files {
@@ -53,22 +54,22 @@ source "proxmox-iso" "windows-server-2022" {
     cd_label = "Unattend"
     cd_content = {
       "autounattend.xml" = templatefile("${path.root}/iso/autounattend.xml.pkrtpl", {
-        winrm_password   = var.winrm_password
-        vm_ip            = var.vm_ip
+        winrm_password    = var.winrm_password
+        vm_ip             = var.vm_ip
         vm_network_prefix = var.vm_network_prefix
-        vm_gateway       = var.vm_gateway
-        vm_dns           = var.vm_dns
-        computer_name    = var.computer_name
-        timezone         = var.timezone
-        os_image_index   = var.os_image_index
+        vm_gateway        = var.vm_gateway
+        vm_dns            = var.vm_dns
+        computer_name     = var.computer_name
+        timezone          = var.timezone
+        os_image_index    = var.os_image_index
       })
     }
     iso_storage_pool = var.iso_storage_pool
     unmount          = true
   }
 
-  boot      = "order=ide2;scsi0;net0"
-  boot_wait = "5s"
+  boot         = "order=ide2;scsi0;net0"
+  boot_wait    = "5s"
   boot_command = []
 
   cores   = var.vm_cpu_cores
@@ -90,6 +91,7 @@ source "proxmox-iso" "windows-server-2022" {
   network_adapters {
     model    = "virtio"
     bridge   = var.network_bridge
+    vlan_tag = var.network_vlan_id
     firewall = false
   }
 
@@ -133,9 +135,9 @@ build {
   }
 
   provisioner "file" {
-    content     = templatefile("${path.root}/files/ping-url.ps1.pkrtpl", {
+    content = templatefile("${path.root}/files/ping-url.ps1.pkrtpl", {
       adaptive_endpoint = var.adaptive_endpoint
-      template_uuid = var.template_uuid
+      template_uuid     = var.template_uuid
     })
     destination = "C:\\Scripts\\ping-url.ps1"
   }
@@ -157,9 +159,9 @@ build {
   }
 
   provisioner "file" {
-    content     = templatefile("${path.root}/files/sysprep-unattend.xml.pkrtpl", {
+    content = templatefile("${path.root}/files/sysprep-unattend.xml.pkrtpl", {
       winrm_password = var.winrm_password
-      timezone = var.timezone
+      timezone       = var.timezone
     })
     destination = "C:\\Windows\\System32\\Sysprep\\unattend.xml"
   }
