@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Play, Trash2, HardDrive } from 'lucide-react'
+import { Play, Trash2, HardDrive, RefreshCw } from 'lucide-react'
 import { vmTemplatesApi } from '../api/vm-templates'
 import { Modal } from '../components/Modal'
 import { Spinner } from '../components/Spinner'
@@ -235,6 +235,29 @@ export function VmTemplatesPage() {
   )
 }
 
+const STATUS_STYLE: Record<string, { label: string; color: string; bg: string; icon: string }> = {
+  uninstall: { label: 'non installé', color: '#64748B', bg: 'rgba(100,116,139,0.12)', icon: '○' },
+  pending:   { label: 'en cours',     color: '#FBBF24', bg: 'rgba(251,191,36,0.12)',  icon: '◌' },
+  applied:   { label: 'installé',     color: '#4ADE80', bg: 'rgba(74,222,128,0.12)',  icon: '●' },
+  error:     { label: 'erreur',       color: '#FB7185', bg: 'rgba(251,113,133,0.12)', icon: '✕' },
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const s = STATUS_STYLE[status] ?? STATUS_STYLE['uninstall']
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600,
+      color: s.color, background: s.bg,
+      borderRadius: 4, padding: '2px 7px',
+      letterSpacing: '0.06em', textTransform: 'uppercase',
+    }}>
+      <span style={{ fontSize: 8 }}>{s.icon}</span>
+      {s.label}
+    </span>
+  )
+}
+
 function TemplateRow({
   template, onDelete, onDeploy, isDeploying, deployError,
 }: {
@@ -244,17 +267,22 @@ function TemplateRow({
   isDeploying: boolean
   deployError: boolean
 }) {
+  const canDeploy = template.status === 'uninstall'
+
   return (
     <div className="project-row">
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontWeight: 600, fontSize: 15,
-          color: 'var(--text-bright)', letterSpacing: '-0.02em',
-          marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
-          {template.name}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <p style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontWeight: 600, fontSize: 15,
+            color: 'var(--text-bright)', letterSpacing: '-0.02em',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0,
+          }}>
+            {template.name}
+          </p>
+          <StatusBadge status={template.status} />
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: 'var(--text-muted)' }}>
             VM #{template.vm_id}
@@ -273,18 +301,27 @@ function TemplateRow({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDeploy() }}
-          disabled={isDeploying}
-          title="Déployer ce template"
-          className="btn-ghost"
-          style={{ padding: '5px 10px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
-        >
-          {isDeploying
-            ? <Spinner className="w-3.5 h-3.5" />
-            : <Play style={{ width: 13, height: 13 }} />}
-          Deploy
-        </button>
+        {canDeploy && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDeploy() }}
+            disabled={isDeploying}
+            title="Lancer le build Packer"
+            className="btn-ghost"
+            style={{ padding: '5px 10px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            {isDeploying
+              ? <><Spinner className="w-3.5 h-3.5" /> Build…</>
+              : <><Play style={{ width: 13, height: 13 }} /> Build</>}
+          </button>
+        )}
+        {template.status === 'pending' && (
+          <span style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            fontSize: 11, color: '#FBBF24', fontFamily: "'IBM Plex Mono', monospace",
+          }}>
+            <RefreshCw style={{ width: 11, height: 11 }} /> build en cours…
+          </span>
+        )}
 
         <button
           onClick={(e) => { e.stopPropagation(); onDelete() }}

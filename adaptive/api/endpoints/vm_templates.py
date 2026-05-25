@@ -22,7 +22,7 @@ router = APIRouter(prefix="/vm-templates", tags=["vm-templates"])
 
 @router.get("/", response_model=list[VmTemplateResponse])
 def list_vm_templates(db: Session = Depends(get_db)):
-    return db.query(VmTemplate).filter(VmTemplate.status == VmTemplateStatus.UNINSTALL)
+    return db.query(VmTemplate).all()
 
 
 @router.post("/{vm_template_id}", response_model=VmTemplateResponse)

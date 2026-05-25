@@ -12,11 +12,12 @@ class VmTemplateResponse(BaseModel):
     name: str
     vm_id: int
     description: str | None
+    status: str
 
     model_config = {"from_attributes": True}
+
 
 class VmTemplateUpdate(BaseModel):
     name: str | None = None
     vm_id: int | None = None
     description: str | None = None
-    

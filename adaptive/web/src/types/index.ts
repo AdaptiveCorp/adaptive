@@ -83,6 +83,7 @@ export interface VmTemplate {
   name: string
   vm_id: number
   description: string | null
+  status: 'uninstall' | 'pending' | 'applied' | 'error'
 }
 
 // ---- API response shapes ----
