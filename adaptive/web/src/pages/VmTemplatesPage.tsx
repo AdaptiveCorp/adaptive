@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, HardDrive, Box } from 'lucide-react'
+import { Plus, Trash2, HardDrive } from 'lucide-react'
 import { vmTemplatesApi } from '../api/vm-templates'
 import { Modal } from '../components/Modal'
 import { Spinner } from '../components/Spinner'
@@ -42,30 +42,22 @@ export function VmTemplatesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1">
-            <HardDrive className="w-4 h-4 text-brand-500" />
-            <h1 style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontWeight: 600,
-              fontSize: 18,
-              color: '#E2E8F0',
-              letterSpacing: '-0.02em',
-            }}>
-              Templates VM
-            </h1>
+      <div>
+        <p className="page-eyebrow">// proxmox · packer-images</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="page-title">Templates VM</h1>
+            <p className="page-subtitle">
+              Images Packer Proxmox utilisées pour cloner les serveurs
+            </p>
           </div>
-          <p style={{ fontSize: 13, color: '#64748B', letterSpacing: '0.01em' }}>
-            Images Packer Proxmox utilisées pour cloner les serveurs
-          </p>
+          <button className="btn-primary" style={{ marginTop: 4 }} onClick={() => setShowCreate(true)}>
+            <Plus className="w-3.5 h-3.5" /> Nouveau template
+          </button>
         </div>
-        <button className="btn-primary" onClick={() => setShowCreate(true)}>
-          <Plus className="w-3.5 h-3.5" /> Nouveau template
-        </button>
       </div>
 
-      <div style={{ height: 1, background: 'rgba(22, 40, 64, 0.7)' }} />
+      <div style={{ height: 1, background: 'var(--border-base)' }} />
 
       {/* List */}
       {isLoading ? (
@@ -74,8 +66,8 @@ export function VmTemplatesPage() {
         </div>
       ) : !templates?.length ? (
         <div style={{
-          background: 'rgba(10, 23, 40, 0.6)',
-          border: '1px dashed rgba(22, 40, 64, 0.9)',
+          background: 'var(--bg-card)',
+          border: '1px dashed var(--border-input)',
           borderRadius: 12,
           padding: '64px 24px',
           textAlign: 'center',
@@ -88,27 +80,27 @@ export function VmTemplatesPage() {
             width: 52,
             height: 52,
             borderRadius: 12,
-            background: 'rgba(14, 165, 233, 0.08)',
-            border: '1px solid rgba(14, 165, 233, 0.12)',
+            background: 'rgba(var(--brand-500-rgb), 0.08)',
+            border: '1px solid rgba(var(--brand-500-rgb), 0.14)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <Box className="w-6 h-6 text-dark-500" />
+            <HardDrive style={{ width: 22, height: 22, color: 'var(--brand-400)', opacity: 0.5 }} />
           </div>
           <div>
             <p style={{
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 600,
-              color: '#475569',
-              letterSpacing: '0.05em',
+              color: 'var(--text-dim)',
+              letterSpacing: '0.08em',
               textTransform: 'uppercase',
               marginBottom: 6,
             }}>
               Aucun template VM
             </p>
-            <p style={{ fontSize: 13, color: '#475569' }}>
+            <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>
               Ajoutez un template Packer pour pouvoir cloner des serveurs.
             </p>
           </div>
@@ -161,7 +153,12 @@ export function VmTemplatesPage() {
               />
             </div>
             <div>
-              <label>Description <span style={{ color: '#475569', textTransform: 'none', fontSize: 10 }}>(optionnel)</span></label>
+              <label>
+                Description{' '}
+                <span style={{ color: 'var(--text-dim)', textTransform: 'none', fontSize: 10 }}>
+                  (optionnel)
+                </span>
+              </label>
               <input
                 className="input"
                 placeholder="ex: Windows Server 2022 Standard"
@@ -194,9 +191,9 @@ export function VmTemplatesPage() {
       {/* Delete confirm */}
       {delTarget && (
         <Modal title="Supprimer le template" onClose={() => setDelTarget(null)}>
-          <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.6 }}>
             Supprimer{' '}
-            <span style={{ fontFamily: "'Fira Code', monospace", color: '#E2E8F0', fontWeight: 500 }}>
+            <span style={{ fontFamily: "'Fira Code', monospace", color: 'var(--text-bright)', fontWeight: 500 }}>
               {delTarget.name}
             </span>{' '}
             ? Impossible si des serveurs l'utilisent.
@@ -225,51 +222,15 @@ export function VmTemplatesPage() {
 
 function TemplateRow({ template, onDelete }: { template: VmTemplate; onDelete: () => void }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 14,
-      background: 'rgba(10, 23, 40, 0.85)',
-      border: '1px solid rgba(22, 40, 64, 0.85)',
-      borderLeft: '3px solid rgba(14, 165, 233, 0.6)',
-      borderRadius: '0 10px 10px 0',
-      padding: '14px 18px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-      transition: 'all 0.2s ease',
-    }}
-      onMouseEnter={e => {
-        const el = e.currentTarget
-        el.style.borderLeftColor = '#38BDF8'
-        el.style.background = 'rgba(15, 32, 52, 0.9)'
-      }}
-      onMouseLeave={e => {
-        const el = e.currentTarget
-        el.style.borderLeftColor = 'rgba(14, 165, 233, 0.6)'
-        el.style.background = 'rgba(10, 23, 40, 0.85)'
-      }}
-    >
-      <div style={{
-        width: 36,
-        height: 36,
-        borderRadius: 8,
-        background: 'rgba(14, 165, 233, 0.1)',
-        border: '1px solid rgba(14, 165, 233, 0.18)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        <HardDrive style={{ width: 16, height: 16, color: '#38BDF8' }} />
-      </div>
-
+    <div className="project-row">
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
           fontFamily: "'IBM Plex Mono', monospace",
           fontWeight: 600,
-          fontSize: 14,
-          color: '#E2E8F0',
-          letterSpacing: '-0.01em',
-          marginBottom: 2,
+          fontSize: 15,
+          color: 'var(--text-bright)',
+          letterSpacing: '-0.02em',
+          marginBottom: 3,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -277,11 +238,11 @@ function TemplateRow({ template, onDelete }: { template: VmTemplate; onDelete: (
           {template.name}
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: '#64748B' }}>
+          <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: 'var(--text-muted)' }}>
             VM #{template.vm_id}
           </span>
           {template.description && (
-            <span style={{ fontSize: 11, color: '#475569' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
               — {template.description}
             </span>
           )}
@@ -291,27 +252,7 @@ function TemplateRow({ template, onDelete }: { template: VmTemplate; onDelete: (
       <button
         onClick={(e) => { e.stopPropagation(); onDelete() }}
         title="Supprimer"
-        style={{
-          width: 30,
-          height: 30,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: 6,
-          border: 'none',
-          background: 'transparent',
-          color: '#475569',
-          cursor: 'pointer',
-          transition: 'all 0.15s',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.color = '#FB7185'
-          e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.color = '#475569'
-          e.currentTarget.style.background = 'transparent'
-        }}
+        className="row-del"
       >
         <Trash2 style={{ width: 13, height: 13 }} />
       </button>

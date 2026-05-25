@@ -13,51 +13,11 @@ interface Props {
 }
 
 const STATS = (forests: Forest[], domains: Domain[], servers: SrvType[], users: User[], vulns: number) => [
-  {
-    label: 'Forêts',
-    value: forests.length,
-    icon: TreePine,
-    color: '#38BDF8',
-    bg: 'rgba(14, 165, 233, 0.1)',
-    glow: 'rgba(14, 165, 233, 0.18)',
-    border: 'rgba(14, 165, 233, 0.2)',
-  },
-  {
-    label: 'Domaines',
-    value: domains.length,
-    icon: Network,
-    color: '#818CF8',
-    bg: 'rgba(129, 140, 248, 0.1)',
-    glow: 'rgba(129, 140, 248, 0.18)',
-    border: 'rgba(129, 140, 248, 0.2)',
-  },
-  {
-    label: 'Serveurs',
-    value: servers.length,
-    icon: Server,
-    color: '#34D399',
-    bg: 'rgba(52, 211, 153, 0.1)',
-    glow: 'rgba(52, 211, 153, 0.18)',
-    border: 'rgba(52, 211, 153, 0.2)',
-  },
-  {
-    label: 'Utilisateurs',
-    value: users.length,
-    icon: Users,
-    color: '#FBBF24',
-    bg: 'rgba(251, 191, 36, 0.1)',
-    glow: 'rgba(251, 191, 36, 0.18)',
-    border: 'rgba(251, 191, 36, 0.2)',
-  },
-  {
-    label: 'Vulnérabilités',
-    value: vulns,
-    icon: ShieldAlert,
-    color: '#FB7185',
-    bg: 'rgba(251, 113, 133, 0.1)',
-    glow: 'rgba(251, 113, 133, 0.18)',
-    border: 'rgba(251, 113, 133, 0.2)',
-  },
+  { label: 'Forêts',        value: forests.length,  icon: TreePine,   color: 'var(--brand-300)' },
+  { label: 'Domaines',      value: domains.length,  icon: Network,    color: 'var(--brand-400)' },
+  { label: 'Serveurs',      value: servers.length,  icon: Server,     color: 'var(--brand-300)' },
+  { label: 'Utilisateurs',  value: users.length,    icon: Users,      color: '#FBBF24' },
+  { label: 'Vulnérabilités',value: vulns,           icon: ShieldAlert,color: '#FB7185' },
 ]
 
 export function DashboardTab({ projectId, forests, domains, servers, users, vulnerabilitiesCount }: Props) {
@@ -67,7 +27,11 @@ export function DashboardTab({ projectId, forests, domains, servers, users, vuln
   return (
     <div className="space-y-5">
       {/* Stats grid */}
-      <div style={{ display: 'flex', gap: 12 }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, 1fr)',
+        gap: 10,
+      }}>
         {stats.map((s, i) => {
           const Icon = s.icon
           return (
@@ -75,52 +39,34 @@ export function DashboardTab({ projectId, forests, domains, servers, users, vuln
               key={s.label}
               className="animate-enter"
               style={{
-                flex: 1,
-                background: 'rgba(10, 23, 40, 0.9)',
-                border: '1px solid rgba(22, 40, 64, 0.85)',
-                borderRadius: 10,
-                padding: '16px 18px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-card)',
+                borderTop: `3px solid ${s.color}`,
+                borderRadius: '0 0 10px 10px',
+                padding: '14px 16px 16px',
                 animationDelay: `${i * 50}ms`,
               }}
             >
-              {/* Top: label + icon */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <span style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: 600,
-                  color: '#475569',
-                  letterSpacing: '0.1em',
+                  color: 'var(--text-dim)',
+                  letterSpacing: '0.12em',
                   textTransform: 'uppercase',
                 }}>
                   {s.label}
                 </span>
-                <div style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 7,
-                  background: s.bg,
-                  border: `1px solid ${s.border}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: s.color,
-                  boxShadow: `0 0 10px ${s.glow}`,
-                  flexShrink: 0,
-                }}>
-                  <Icon style={{ width: 14, height: 14 }} />
-                </div>
+                <Icon style={{ width: 12, height: 12, color: s.color, opacity: 0.55, flexShrink: 0 }} />
               </div>
-
-              {/* Value */}
               <span style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: 34,
+                fontSize: 40,
                 fontWeight: 600,
-                color: '#E2E8F0',
+                color: s.color,
                 lineHeight: 1,
-                letterSpacing: '-0.03em',
+                letterSpacing: '-0.04em',
                 display: 'block',
               }}>
                 {String(s.value).padStart(2, '0')}
@@ -132,19 +78,18 @@ export function DashboardTab({ projectId, forests, domains, servers, users, vuln
 
       {/* Graph */}
       <div style={{
-        background: 'rgba(10, 23, 40, 0.9)',
-        border: '1px solid rgba(22, 40, 64, 0.85)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-card)',
         borderRadius: 10,
         padding: '20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
       }}>
         <p style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: 10,
+          fontSize: 9,
           fontWeight: 600,
-          color: '#475569',
+          color: 'var(--text-dim)',
           textTransform: 'uppercase',
-          letterSpacing: '0.12em',
+          letterSpacing: '0.14em',
           marginBottom: 16,
         }}>
           Hiérarchie AD

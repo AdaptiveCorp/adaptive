@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, Trash2, ArrowRight, FolderOpen, Terminal } from 'lucide-react'
+import { Plus, Trash2, ArrowRight, FolderOpen } from 'lucide-react'
 import { projectsApi } from '../api/projects'
 import { Modal } from '../components/Modal'
 import { Spinner } from '../components/Spinner'
@@ -38,31 +38,22 @@ export function ProjectsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1">
-            <Terminal className="w-4 h-4 text-brand-500" />
-            <h1 style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontWeight: 600,
-              fontSize: 18,
-              color: '#E2E8F0',
-              letterSpacing: '-0.02em',
-            }}>
-              Projets
-            </h1>
+      <div>
+        <p className="page-eyebrow">// red.team · lab-factory</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="page-title">Projets</h1>
+            <p className="page-subtitle">
+              Labs Active Directory — infrastructure de formation offensive
+            </p>
           </div>
-          <p style={{ fontSize: 13, color: '#64748B', letterSpacing: '0.01em' }}>
-            Labs Active Directory — infrastructure de formation offensive
-          </p>
+          <button className="btn-primary" style={{ marginTop: 4 }} onClick={() => setShowCreate(true)}>
+            <Plus className="w-3.5 h-3.5" /> Nouveau projet
+          </button>
         </div>
-        <button className="btn-primary" onClick={() => setShowCreate(true)}>
-          <Plus className="w-3.5 h-3.5" /> Nouveau projet
-        </button>
       </div>
 
-      {/* Divider */}
-      <div style={{ height: 1, background: 'rgba(22, 40, 64, 0.7)' }} />
+      <div style={{ height: 1, background: 'var(--border-base)' }} />
 
       {/* Project list */}
       {isLoading ? (
@@ -122,9 +113,9 @@ export function ProjectsPage() {
       {/* Delete modal */}
       {delTarget && (
         <Modal title="Supprimer le projet" onClose={() => setDelTarget(null)}>
-          <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.6 }}>
             Supprimer{' '}
-            <span style={{ fontFamily: "'Fira Code', monospace", color: '#E2E8F0', fontWeight: 500 }}>
+            <span style={{ fontFamily: "'Fira Code', monospace", color: 'var(--text-bright)', fontWeight: 500 }}>
               {delTarget.name}
             </span>{' '}
             ? Cette action est irréversible.
@@ -149,8 +140,8 @@ export function ProjectsPage() {
 function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
   return (
     <div style={{
-      background: 'rgba(10, 23, 40, 0.6)',
-      border: '1px dashed rgba(22, 40, 64, 0.9)',
+      background: 'var(--bg-card)',
+      border: '1px dashed var(--border-input)',
       borderRadius: 12,
       padding: '64px 24px',
       textAlign: 'center',
@@ -163,27 +154,27 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
         width: 52,
         height: 52,
         borderRadius: 12,
-        background: 'rgba(14, 165, 233, 0.08)',
-        border: '1px solid rgba(14, 165, 233, 0.12)',
+        background: 'rgba(var(--brand-500-rgb), 0.08)',
+        border: '1px solid rgba(var(--brand-500-rgb), 0.14)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-        <FolderOpen className="w-6 h-6 text-dark-500" />
+        <FolderOpen style={{ width: 24, height: 24, color: 'var(--brand-400)', opacity: 0.5 }} />
       </div>
       <div>
         <p style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: 600,
-          color: '#475569',
-          letterSpacing: '0.05em',
+          color: 'var(--text-dim)',
+          letterSpacing: '0.08em',
           textTransform: 'uppercase',
           marginBottom: 6,
         }}>
           Aucun projet défini
         </p>
-        <p style={{ fontSize: 13, color: '#475569' }}>
+        <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>
           Créez votre premier lab Active Directory pour commencer.
         </p>
       </div>
@@ -199,131 +190,47 @@ function ProjectRow({ project, onDelete }: { project: Project; onDelete: () => v
     day: '2-digit', month: 'short', year: 'numeric',
   })
 
-  const initial = project.name.charAt(0).toUpperCase()
-
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 14,
-      background: 'rgba(10, 23, 40, 0.85)',
-      border: '1px solid rgba(22, 40, 64, 0.85)',
-      borderLeft: '3px solid rgba(14, 165, 233, 0.6)',
-      borderRadius: '0 10px 10px 0',
-      padding: '14px 18px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-      transition: 'all 0.2s ease',
-    }}
-      onMouseEnter={e => {
-        const el = e.currentTarget
-        el.style.borderLeftColor = '#38BDF8'
-        el.style.background = 'rgba(15, 32, 52, 0.9)'
-        el.style.boxShadow = '0 2px 12px rgba(0,0,0,0.35), 0 0 20px rgba(14, 165, 233, 0.06)'
-      }}
-      onMouseLeave={e => {
-        const el = e.currentTarget
-        el.style.borderLeftColor = 'rgba(14, 165, 233, 0.6)'
-        el.style.background = 'rgba(10, 23, 40, 0.85)'
-        el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'
-      }}
-    >
-      {/* Avatar */}
-      <div style={{
-        width: 36,
-        height: 36,
-        borderRadius: 8,
-        background: 'rgba(14, 165, 233, 0.1)',
-        border: '1px solid rgba(14, 165, 233, 0.18)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontWeight: 600,
-        fontSize: 15,
-        color: '#38BDF8',
-      }}>
-        {initial}
-      </div>
-
-      {/* Name + date */}
+    <div className="project-row">
+      {/* Name + meta */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
           fontFamily: "'IBM Plex Mono', monospace",
           fontWeight: 600,
-          fontSize: 14,
-          color: '#E2E8F0',
-          letterSpacing: '-0.01em',
-          marginBottom: 2,
+          fontSize: 15,
+          color: 'var(--text-bright)',
+          letterSpacing: '-0.02em',
+          marginBottom: 3,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
         }}>
           {project.name}
         </p>
-        <p style={{ fontSize: 11, color: '#64748B', letterSpacing: '0.02em' }}>
+        <p style={{
+          fontSize: 11,
+          color: 'var(--text-dim)',
+          fontFamily: "'IBM Plex Mono', monospace",
+          letterSpacing: '0.02em',
+        }}>
+          <span style={{ color: 'var(--text-muted)' }}>
+            #{String(project.id).padStart(3, '0')}
+          </span>
+          {' · '}
           {date}
         </p>
       </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete() }}
           title="Supprimer"
-          style={{
-            width: 30,
-            height: 30,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 6,
-            border: 'none',
-            background: 'transparent',
-            color: '#475569',
-            cursor: 'pointer',
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => {
-            const el = e.currentTarget
-            el.style.color = '#FB7185'
-            el.style.background = 'rgba(244, 63, 94, 0.1)'
-          }}
-          onMouseLeave={e => {
-            const el = e.currentTarget
-            el.style.color = '#475569'
-            el.style.background = 'transparent'
-          }}
+          className="row-del"
         >
           <Trash2 style={{ width: 13, height: 13 }} />
         </button>
-
-        <Link
-          to={`/projects/${project.id}`}
-          style={{
-            width: 30,
-            height: 30,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 6,
-            background: 'rgba(14, 165, 233, 0.1)',
-            border: '1px solid rgba(14, 165, 233, 0.18)',
-            color: '#38BDF8',
-            transition: 'all 0.15s',
-            textDecoration: 'none',
-          }}
-          onMouseEnter={e => {
-            const el = e.currentTarget
-            el.style.background = 'rgba(14, 165, 233, 0.18)'
-            el.style.boxShadow = '0 0 12px rgba(14, 165, 233, 0.2)'
-          }}
-          onMouseLeave={e => {
-            const el = e.currentTarget
-            el.style.background = 'rgba(14, 165, 233, 0.1)'
-            el.style.boxShadow = 'none'
-          }}
-        >
+        <Link to={`/projects/${project.id}`} className="row-nav">
           <ArrowRight style={{ width: 13, height: 13 }} />
         </Link>
       </div>

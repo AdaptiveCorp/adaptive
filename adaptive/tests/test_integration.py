@@ -9,7 +9,7 @@ def test_full_crud_flow_with_groups_and_vulns(client):
         "/vm-templates/",
         json={
             "name": "Windows Server 2022",
-            "vm_id": 107,
+            "vm_id": 114,
             "description": "Base Windows template",
         },
     )
@@ -55,8 +55,8 @@ def test_full_crud_flow_with_groups_and_vulns(client):
         json={
             "fqdn": "DC01.GOT.LAN",
             "is_dc": True,
-            "ip": "10.0.0.3",
-            "gtw": "10.0.0.1",
+            "ip": "192.168.30.10",
+            "gtw": "192.168.30.254",
             "vm_template_id": vm_template_id,
         },
     )
@@ -112,7 +112,6 @@ def test_full_crud_flow_with_groups_and_vulns(client):
             "name": "Starks",
             "description": "House Stark members",
             "user_ids": user_ids,
-            "member_group_ids": [],
             "domain_id": domain_id,
         },
     )
@@ -122,38 +121,37 @@ def test_full_crud_flow_with_groups_and_vulns(client):
     assert group_starks["name"] == "Starks"
     assert set(group_starks["user_ids"]) == set(user_ids)
 
-    # ── Create nested group "NorthLords" containing "Starks" ──
+    # ── Create Group "NorthLords" with Bran, Tyrion ──
+    north_user_ids = [created_users[3]["id"], created_users[4]["id"]]
     resp = client.post(
         "/groups/",
         json={
             "name": "NorthLords",
             "description": "Northern lords group",
-            "user_ids": [],
-            "member_group_ids": [group_starks_id],
+            "user_ids": north_user_ids,
             "domain_id": domain_id,
         },
     )
     assert resp.status_code == 200, resp.text
     group_northlords    = resp.json()
     group_northlords_id = group_northlords["id"]
-    assert group_northlords["member_group_ids"] == [group_starks_id]
+    assert set(group_northlords["user_ids"]) == set(north_user_ids)
 
     # ── List & detail groups ──
     resp = client.get("/groups/")
     assert resp.status_code == 200
     groups_list = resp.json()
-    assert any(g["id"] == group_starks_id    for g in groups_list)
-    assert any(g["id"] == group_northlords_id for g in groups_list)
+    assert any(g["id"] == group_starks_id     for g in groups_list)
+    assert any(g["id"] == group_northlords_id  for g in groups_list)
 
     resp = client.get(f"/groups/{group_starks_id}")
     assert resp.status_code == 200
     assert resp.json()["name"] == "Starks"
     assert set(resp.json()["user_ids"]) == set(user_ids)
-    assert resp.json()["member_group_ids"] == []
 
     resp = client.get(f"/groups/{group_northlords_id}")
     assert resp.status_code == 200
-    assert resp.json()["member_group_ids"] == [group_starks_id]
+    assert set(resp.json()["user_ids"]) == set(north_user_ids)
 
     # ─────────────────────────────────────────────────────────────────
     # ── VULNERABILITIES ──────────────────────────────────────────────
@@ -184,12 +182,12 @@ def test_full_crud_flow_with_groups_and_vulns(client):
 
     applied_ids = []
 
-    # 2) AS-REP Roasting  →  user Jon Snow (user only)
+    # 2) AS-REP Roasting  →  user Jon Snow
     applied_ids.append(apply_vuln("asrep_roasting", {
         "username": j_snow["username"],
     }))
 
-    # 3) Kerberoasting  →  user Arya Stark (user only)
+    # 3) Kerberoasting  →  user Arya Stark
     applied_ids.append(apply_vuln("kerberoasting", {
         "username": a_stark["username"],
         "spn_name": "HTTP/dc01.got.lan",
@@ -220,7 +218,6 @@ def test_full_crud_flow_with_groups_and_vulns(client):
     }))
 
     # ── Vérifier que toutes les vulns sont listées pour ce projet ──
-    #    GET /vulnerabilities/projects/{project_id}
     resp = client.get(f"/vulnerabilities/projects/{project_id}")
     assert resp.status_code == 200
     applied_list = resp.json()
@@ -240,7 +237,6 @@ def test_full_crud_flow_with_groups_and_vulns(client):
     assert resp.status_code == 409, f"Expected 409 on duplicate vuln, got {resp.status_code}"
 
     # ── Delete une vuln appliquée et vérifier qu'elle disparaît ──
-    #    DELETE /vulnerabilities/{vuln_id}
     vuln_to_delete = applied_ids[0]
     resp = client.delete(f"/vulnerabilities/{vuln_to_delete}")
     assert resp.status_code == 200

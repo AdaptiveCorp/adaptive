@@ -7,7 +7,7 @@ export function TabBar({ tabs, active, onChange }: Props) {
   return (
     <div style={{
       display: 'flex',
-      borderBottom: '1px solid rgba(22, 40, 64, 0.8)',
+      borderBottom: '1px solid var(--border-base)',
       overflowX: 'auto',
       scrollbarWidth: 'none',
       gap: 2,
@@ -27,10 +27,10 @@ export function TabBar({ tabs, active, onChange }: Props) {
               fontWeight: on ? 600 : 500,
               whiteSpace: 'nowrap',
               border: 'none',
-              borderBottom: `2px solid ${on ? '#0EA5E9' : 'transparent'}`,
+              borderBottom: `2px solid ${on ? 'var(--brand-400)' : 'transparent'}`,
               marginBottom: -1,
-              color: on ? '#38BDF8' : '#64748B',
-              background: on ? 'rgba(14, 165, 233, 0.06)' : 'transparent',
+              color: on ? 'var(--brand-300)' : 'var(--text-nav)',
+              background: on ? 'rgba(var(--brand-500-rgb), 0.06)' : 'transparent',
               transition: 'all 0.15s ease',
               cursor: 'pointer',
               outline: 'none',
@@ -38,20 +38,18 @@ export function TabBar({ tabs, active, onChange }: Props) {
             }}
             onMouseEnter={e => {
               if (!on) {
-                const el = e.currentTarget
-                el.style.color = '#64748B'
-                el.style.background = 'rgba(15, 32, 52, 0.4)'
+                e.currentTarget.style.color = 'var(--text-body)'
+                e.currentTarget.style.background = 'var(--bg-row-hover)'
               }
             }}
             onMouseLeave={e => {
               if (!on) {
-                const el = e.currentTarget
-                el.style.color = '#64748B'
-                el.style.background = 'transparent'
+                e.currentTarget.style.color = 'var(--text-nav)'
+                e.currentTarget.style.background = 'transparent'
               }
             }}
           >
-            <span style={{ color: on ? '#38BDF8' : '#475569' }}>{tab.icon}</span>
+            <span style={{ color: on ? 'var(--brand-400)' : 'var(--text-dim)' }}>{tab.icon}</span>
             {tab.label}
           </button>
         )

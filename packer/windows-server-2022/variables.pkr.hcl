@@ -111,7 +111,7 @@ variable "winrm_password" {
 
 variable "vm_ip" {
   type        = string
-  default     = "10.0.0.50"
+  default     = "192.168.30.15"
   description = "Adresse IP statique de la VM template"
 }
 

@@ -130,7 +130,7 @@ templates:
     category: infrastructure
     required_params:
       - target_host
-      - groups_list
+      - groupnames
       - base_dn
     content: |
       ---
@@ -147,12 +147,12 @@ templates:
               path: "{{ item.ou_path | default('CN=Users,' + base_dn) }}"
               description: "{{ item.description | default('') }}"
               state: present
-            loop: "{{ groups_list }}"
+            loop: "{{ groupnames }}"
 
     reverse_type: deletion
     reverse_content: |
       Import-Module ActiveDirectory
-      $groupnames = "{{ groups_list | join(',') }}" -split ","
+      $groupnames = "{{ groupnames | join(',') }}" -split ","
       foreach ($g in $groupnames) {
           $g = $g.Trim()
           $Group = Get-ADGroup -Filter { Name -eq $g }
@@ -167,38 +167,56 @@ templates:
   - code: add_group_members
     name: Ajout de membres dans des groupes AD
     type: config
-    description: Ajoute des utilisateurs ou des groupes membres à des groupes AD existants
+    description: Ajoute un utilisateur à un groupe AD existant
     category: infrastructure
     required_params:
       - target_host
-      - memberships
+      - group_name
+      - members
     content: |
       ---
-      - name: Add members to Active Directory Groups
+      - name: Add member to Active Directory Group
         hosts: "{{ target_host }}"
         gather_facts: no
 
         tasks:
-          - name: Add members to group via PowerShell
+          - name: Add member to group via PowerShell
             win_shell: |
               Import-Module ActiveDirectory
-              $groupName = "{{ item.group_name }}"
-              $members   = "{{ item.members | join(',') }}" -split ","
+              $groupName = "{{ group_name }}"
+              $members   = "{{ members | join(',') }}" -split ","
 
               foreach ($m in $members) {
                   $m = $m.Trim()
                   if (-not [string]::IsNullOrEmpty($m)) {
                       try {
-                          Add-ADGroupMember -Identity $groupName -Members $m -ErrorAction Stop
-                          Write-Output "Added $m to $groupName"
+                          $obj = Get-ADUser -Identity $m -ErrorAction Stop
+                          Add-ADGroupMember -Identity $groupName -Members $obj -ErrorAction Stop
+                          Write-Output "Added user $m to $groupName"
                       } catch {
                           Write-Warning "Failed to add $m to $groupName : $($_.Exception.Message)"
                       }
                   }
               }
-            loop: "{{ memberships }}"
-    reverse_type : null
-    reverse_content: null
+
+    reverse_type: config
+    reverse_content: |
+      Import-Module ActiveDirectory
+      $groupName = "{{group_name}}"
+      $members   = "{{members}}" -split ","
+
+      foreach ($m in $members) {
+          $m = $m.Trim()
+          if (-not [string]::IsNullOrEmpty($m)) {
+              try {
+                  $obj = Get-ADUser -Identity $m -ErrorAction Stop
+                  Remove-ADGroupMember -Identity $groupName -Members $obj -Confirm:$false -ErrorAction Stop
+                  Write-Output "Removed user $m from $groupName"
+              } catch {
+                  Write-Warning "Failed to remove $m from $groupName : $($_.Exception.Message)"
+              }
+          }
+      }
 
   # --- VULNERABILITY templates ---
   - code: asrep_roasting

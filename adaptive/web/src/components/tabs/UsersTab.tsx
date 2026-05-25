@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Users, Plus } from 'lucide-react'
+import { Users, Plus, Trash2 } from 'lucide-react'
 import { usersApi } from '../../api/users'
 import { Modal } from '../Modal'
 import { Spinner } from '../Spinner'
-import type { Domain } from '../../types'
+import type { Domain, User } from '../../types'
 
 interface Props {
   projectId: number
@@ -14,6 +14,7 @@ interface Props {
 export function UsersTab({ projectId, domains }: Props) {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
+  const [delTarget, setDelTarget] = useState<User | null>(null)
   const [form, setForm] = useState({
     firstname: '',
     lastname: '',
@@ -46,6 +47,17 @@ export function UsersTab({ projectId, domains }: Props) {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => usersApi.delete(id),
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<User[]>(['users', projectId], old =>
+        (old ?? []).filter(u => u.id !== id)
+      )
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] })
+      setDelTarget(null)
+    },
+  })
+
   const allUsers = users ?? []
 
   return (
@@ -55,7 +67,7 @@ export function UsersTab({ projectId, domains }: Props) {
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: 10,
           fontWeight: 600,
-          color: '#475569',
+          color: 'var(--text-muted)',
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
         }}>
@@ -78,14 +90,14 @@ export function UsersTab({ projectId, domains }: Props) {
         </div>
       ) : allUsers.length === 0 ? (
         <div style={{
-          background: 'rgba(10, 23, 40, 0.6)',
-          border: '1px dashed rgba(22, 40, 64, 0.8)',
+          background: 'var(--bg-card)',
+          border: '1px dashed var(--border-input)',
           borderRadius: 10,
           padding: '48px 24px',
           textAlign: 'center',
         }}>
-          <Users style={{ width: 32, height: 32, color: '#475569', margin: '0 auto 12px' }} />
-          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#475569' }}>
+          <Users style={{ width: 32, height: 32, color: 'var(--text-dim)', margin: '0 auto 12px' }} />
+          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: 'var(--text-dim)' }}>
             {domains.length === 0
               ? "Créez un domaine avant d'ajouter des utilisateurs."
               : 'Aucun utilisateur — ajoutez-en pour configurer votre lab.'}
@@ -101,8 +113,8 @@ export function UsersTab({ projectId, domains }: Props) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
-                background: 'rgba(10, 23, 40, 0.85)',
-                border: '1px solid rgba(22, 40, 64, 0.8)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-card)',
                 borderRadius: 8,
                 padding: '12px 14px',
               }}>
@@ -123,22 +135,31 @@ export function UsersTab({ projectId, domains }: Props) {
                 }}>
                   {initials}
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: '#CBD5E1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: 'var(--text-bright)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
                     {user.username}
                   </p>
                   {domain && (
-                    <p style={{ fontSize: 11, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Fira Code', monospace" }}>
+                    <p style={{ fontSize: 11, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Fira Code', monospace" }}>
                       {domain.fqdn}
                     </p>
                   )}
                 </div>
+                <button
+                  onClick={e => { e.stopPropagation(); setDelTarget(user) }}
+                  title="Supprimer"
+                  className="row-del"
+                  style={{ flexShrink: 0 }}
+                >
+                  <Trash2 style={{ width: 13, height: 13 }} />
+                </button>
               </div>
             )
           })}
         </div>
       )}
 
+      {/* Create modal */}
       {open && (
         <Modal title="Nouvel utilisateur AD" onClose={() => setOpen(false)}>
           <form
@@ -184,11 +205,42 @@ export function UsersTab({ projectId, domains }: Props) {
               </button>
             </div>
             {addMutation.isError && (
-              <p style={{ fontSize: 12, color: '#FB7185', fontFamily: "'IBM Plex Mono', monospace" }}>
+              <p style={{ fontSize: 12, color: '#FB7185', fontFamily: "'IBM Plex Mono', monospace", marginTop: 8 }}>
                 Erreur lors de la création.
               </p>
             )}
           </form>
+        </Modal>
+      )}
+
+      {/* Delete confirm */}
+      {delTarget && (
+        <Modal title="Supprimer l'utilisateur" onClose={() => setDelTarget(null)}>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.6 }}>
+            Supprimer{' '}
+            <span style={{ fontFamily: "'Fira Code', monospace", color: 'var(--text-bright)', fontWeight: 500 }}>
+              {delTarget.username}
+            </span>{' '}?
+          </p>
+          <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 20, lineHeight: 1.5 }}>
+            La suppression sera effective au prochain déploiement.
+          </p>
+          <div className="flex gap-2 justify-end">
+            <button className="btn-ghost" onClick={() => setDelTarget(null)}>Annuler</button>
+            <button
+              className="btn-danger"
+              disabled={deleteMutation.isPending}
+              onClick={() => deleteMutation.mutate(delTarget.id)}
+            >
+              {deleteMutation.isPending && <Spinner className="w-3.5 h-3.5" />}
+              Supprimer
+            </button>
+          </div>
+          {deleteMutation.isError && (
+            <p style={{ fontSize: 12, color: '#FB7185', fontFamily: "'IBM Plex Mono', monospace", marginTop: 12 }}>
+              Impossible de supprimer cet utilisateur.
+            </p>
+          )}
         </Modal>
       )}
     </div>

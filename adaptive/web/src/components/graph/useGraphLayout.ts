@@ -16,10 +16,34 @@ export interface GraphEdge {
   to: string
 }
 
-const COL_X = [60, 280, 500, 720]
-const NODE_W = 160
-const NODE_H = 44
-const GAP = 12
+const NODE_W   = 178
+const NODE_H   = 58
+const GAP_Y    = 14
+const FOREST_GAP = 28
+const PADDING  = 28
+const COL_GAP  = 44
+
+const COL_X = [0, 1, 2, 3].map(i => PADDING + i * (NODE_W + COL_GAP))
+
+function colChildrenHeight(count: number): number {
+  if (count === 0) return 0
+  return count * NODE_H + (count - 1) * GAP_Y
+}
+
+function domainSubtreeHeight(domain: Domain, servers: Server[], users: User[]): number {
+  const sCount = servers.filter(s => s.domain_id === domain.id).length
+  const uRaw   = users.filter(u => u.domain_id === domain.id).length
+  const uCount = uRaw > 10 ? 1 : uRaw
+  return Math.max(colChildrenHeight(sCount), colChildrenHeight(uCount), NODE_H)
+}
+
+function forestSubtreeHeight(forest: Forest, domains: Domain[], servers: Server[], users: User[]): number {
+  const fDomains = domains.filter(d => d.forest_id === forest.id)
+  if (fDomains.length === 0) return NODE_H
+  const total = fDomains.reduce((sum, d, i) =>
+    sum + domainSubtreeHeight(d, servers, users) + (i > 0 ? GAP_Y : 0), 0)
+  return Math.max(total, NODE_H)
+}
 
 export function useGraphLayout(
   forests: Forest[],
@@ -29,91 +53,99 @@ export function useGraphLayout(
 ): { nodes: GraphNode[]; edges: GraphEdge[]; viewBox: string } {
   const nodes: GraphNode[] = []
   const edges: GraphEdge[] = []
-  const colY = [0, 0, 0, 0]
 
-  function addNode(
-    id: string,
-    label: string,
-    type: GraphNode['type'],
-    col: number,
-    meta?: GraphNode['meta']
-  ): GraphNode {
-    const n: GraphNode = {
-      id,
-      label,
-      type,
-      meta,
-      x: COL_X[col],
-      y: colY[col],
+  let currentY = PADDING
+
+  for (const forest of forests) {
+    const fHeight = forestSubtreeHeight(forest, domains, servers, users)
+
+    nodes.push({
+      id: `f${forest.id}`,
+      label: forest.fqdn,
+      type: 'forest',
+      x: COL_X[0],
+      y: currentY + fHeight / 2 - NODE_H / 2,
       width: NODE_W,
       height: NODE_H,
-    }
-    colY[col] += NODE_H + GAP
-    nodes.push(n)
-    return n
-  }
+    })
 
-  for (const forest of forests) {
-    addNode(`f${forest.id}`, forest.fqdn, 'forest', 0)
+    const fDomains = domains.filter(d => d.forest_id === forest.id)
+    let domainY = currentY
 
-    const fDomains = domains.filter((d) => d.forest_id === forest.id)
     for (const domain of fDomains) {
+      const dHeight = domainSubtreeHeight(domain, servers, users)
+
+      nodes.push({
+        id: `d${domain.id}`,
+        label: domain.fqdn,
+        type: 'domain',
+        x: COL_X[1],
+        y: domainY + dHeight / 2 - NODE_H / 2,
+        width: NODE_W,
+        height: NODE_H,
+      })
       edges.push({ from: `f${forest.id}`, to: `d${domain.id}` })
-      addNode(`d${domain.id}`, domain.fqdn, 'domain', 1)
 
-      const dServers = servers.filter((s) => s.domain_id === domain.id)
+      const dServers = servers.filter(s => s.domain_id === domain.id)
+      const dUsers   = users.filter(u => u.domain_id === domain.id)
+      const uCount   = dUsers.length > 10 ? 1 : dUsers.length
+
+      const serverBlockH = colChildrenHeight(dServers.length)
+      const userBlockH   = colChildrenHeight(uCount)
+
+      // Center each column within the domain's vertical range
+      let sy = domainY + (dHeight - serverBlockH) / 2
       for (const server of dServers) {
+        nodes.push({
+          id: `s${server.id}`,
+          label: server.fqdn,
+          type: 'server',
+          meta: { is_dc: server.is_dc },
+          x: COL_X[2],
+          y: sy,
+          width: NODE_W,
+          height: NODE_H,
+        })
         edges.push({ from: `d${domain.id}`, to: `s${server.id}` })
-        addNode(`s${server.id}`, server.fqdn, 'server', 2, { is_dc: server.is_dc })
+        sy += NODE_H + GAP_Y
       }
 
-      const dUsers = users.filter((u) => u.domain_id === domain.id)
-      if (dUsers.length > 0 && dUsers.length <= 10) {
-        for (const user of dUsers) {
-          edges.push({ from: `d${domain.id}`, to: `u${user.id}` })
-          addNode(`u${user.id}`, user.username ?? `#${user.id}`, 'user', 3)
-        }
-      } else if (dUsers.length > 10) {
+      let uy = domainY + (dHeight - userBlockH) / 2
+      if (dUsers.length > 10) {
+        nodes.push({
+          id: `ua${domain.id}`,
+          label: `${dUsers.length} utilisateurs`,
+          type: 'user',
+          x: COL_X[3],
+          y: uy,
+          width: NODE_W,
+          height: NODE_H,
+        })
         edges.push({ from: `d${domain.id}`, to: `ua${domain.id}` })
-        addNode(`ua${domain.id}`, `${dUsers.length} utilisateurs`, 'user', 3)
+      } else {
+        for (const user of dUsers) {
+          nodes.push({
+            id: `u${user.id}`,
+            label: user.username ?? `#${user.id}`,
+            type: 'user',
+            x: COL_X[3],
+            y: uy,
+            width: NODE_W,
+            height: NODE_H,
+          })
+          edges.push({ from: `d${domain.id}`, to: `u${user.id}` })
+          uy += NODE_H + GAP_Y
+        }
       }
+
+      domainY += dHeight + GAP_Y
     }
+
+    currentY += fHeight + FOREST_GAP
   }
 
-  // Center parents vertically on their children
-  function centerOn(parentId: string, childIds: string[]) {
-    const parent = nodes.find((n) => n.id === parentId)
-    const children = nodes.filter((n) => childIds.includes(n.id))
-    if (!parent || children.length === 0) return
-    const top = Math.min(...children.map((c) => c.y))
-    const bot = Math.max(...children.map((c) => c.y + c.height))
-    parent.y = (top + bot) / 2 - parent.height / 2
-  }
-
-  for (const domain of domains) {
-    const dUsers = users.filter((u) => u.domain_id === domain.id)
-    const userIds =
-      dUsers.length > 0 && dUsers.length <= 10
-        ? dUsers.map((u) => `u${u.id}`)
-        : dUsers.length > 10
-          ? [`ua${domain.id}`]
-          : []
-    centerOn(`d${domain.id}`, [
-      ...servers.filter((s) => s.domain_id === domain.id).map((s) => `s${s.id}`),
-      ...userIds,
-    ])
-  }
-
-  for (const forest of forests) {
-    const fDomains = domains.filter((d) => d.forest_id === forest.id)
-    centerOn(
-      `f${forest.id}`,
-      fDomains.map((d) => `d${d.id}`)
-    )
-  }
-
-  const maxW = nodes.length ? Math.max(...nodes.map((n) => n.x + n.width)) + 60 : 400
-  const maxH = nodes.length ? Math.max(...nodes.map((n) => n.y + n.height)) + 40 : 200
+  const maxW = nodes.length ? Math.max(...nodes.map(n => n.x + n.width)) + PADDING : 500
+  const maxH = nodes.length ? Math.max(...nodes.map(n => n.y + n.height)) + PADDING : 220
 
   return { nodes, edges, viewBox: `0 0 ${maxW} ${maxH}` }
 }
