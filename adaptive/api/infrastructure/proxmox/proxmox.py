@@ -104,12 +104,14 @@ class ProxmoxProvider(HypervisorProvider):
         self._wait_for_task(task_upid)
         logger.info("%s Clone completed for '%s' (vm_id=%d)", PREFIX, server.fqdn, new_vm_id)
 
-        # self._configure_cloudinit(new_vm_id, server)
+        self._configure_cloudinit(new_vm_id, server)
         self.start_vm(new_vm_id)
 
         return CloneResult(success=True, server_id=server.id, vm_id=new_vm_id)
 
     def _configure_cloudinit(self, vm_id: int, server: ServerInfo) -> None:
+        self.api.nodes(self._node).qemu(vm_id).config.set(ide2="data:cloudinit")
+
         if not server.ip:
             logger.warning("%s No IP for VM %d, skipping cloud-init config", PREFIX, vm_id)
             return
