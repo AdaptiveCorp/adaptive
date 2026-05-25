@@ -64,7 +64,7 @@ def seed_templates(yaml_path: str | None = None) -> None:
 
 def seed_vm_templates(yaml_path: str | None = None) -> None:
     db = SessionLocal()
-
+    print("test")
     vm_templates = load_templates_from_yaml(yaml_path)
 
     added_count = 0
@@ -77,7 +77,6 @@ def seed_vm_templates(yaml_path: str | None = None) -> None:
             existing.name = tpl_data["name"]
             existing.description = tpl_data["description"]
             existing.vm_id = tpl_data["vm_id"]
-            existing.vm_uuid = uuid.uuid4()
             existing.status = VmTemplateStatus.UNINSTALL
             updated_count += 1
         else:
@@ -85,14 +84,14 @@ def seed_vm_templates(yaml_path: str | None = None) -> None:
                 name=tpl_data["name"],
                 description=tpl_data["description"],
                 vm_id=tpl_data["vm_id"],
-                vm_uuid=tpl_data["vm_uuid"],
+                vm_uuid=str(uuid.uuid4()),
                 status=VmTemplateStatus.UNINSTALL,
             )
             db.add(tpl)
             added_count += 1
 
     db.commit()
-    logger.info("Templates : %d ajoutés, %d mis à jour", added_count, updated_count)
+    logger.info("VM Templates : %d ajoutés, %d mis à jour", added_count, updated_count)
     db.close()
 
 

@@ -57,6 +57,10 @@
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <UserData>
         <AcceptEula>true</AcceptEula>
+        <ProductKey>
+          <Key>VDYBN-27WPP-V4HQT-9VMD4-VMK7H</Key>
+          <WillShowUI>OnError</WillShowUI>
+        </ProductKey>
       </UserData>
       <DiskConfiguration>
         <WillShowUI>OnError</WillShowUI>

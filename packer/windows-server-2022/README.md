@@ -2,6 +2,22 @@ Script de déploiement d'un template windows avec packer.
 
 # Build
 
+Ajouter les ISO suivant :
+
+- windows server
+- virtio drivers
+- CloudBase Init, pour ce faire :
+
+```
+wget https://cloudbase.it/downloads/CloudbaseInitSetup_Stable_x64.msi
+```
+
+Puis transformer le fichier en image iso :
+
+```
+mkisofs -J -r -o CloudbaseInitSetup_Stable_x64.iso CloudbaseInitSetup_Stable_x64.msi
+```
+
 Créer un fichier `variables.auto.pkrvars.hcl`.
 Copier les valeur de `variables.pkrvars.hcl` dans le fichier créer et les modifier avec votre contexte (IP proxmox, ...).
 

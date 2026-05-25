@@ -26,7 +26,10 @@ source "proxmox-iso" "windows-server-2022" {
   boot_iso {
     type     = "ide"
     index    = 2
-    iso_file = var.iso_file
+    iso_url = var.iso_file
+    iso_checksum = var.iso_checksum
+    iso_storage_pool = var.iso_storage_pool
+    iso_download_pve  = true
     unmount  = true
   }
 
@@ -40,7 +43,7 @@ source "proxmox-iso" "windows-server-2022" {
   additional_iso_files {
     type     = "ide"
     index    = 1
-    iso_file = "local:iso/CloudbaseInitSetup_1_1_8_x64.iso"
+    iso_file = "local:iso/CloudbaseInitSetup_Stable_x64.iso"
     unmount  = true
   }
 
@@ -93,7 +96,7 @@ source "proxmox-iso" "windows-server-2022" {
   qemu_agent = true
 
   communicator   = "winrm"
-  winrm_host     = "10.0.0.50"
+  winrm_host     = var.vm_ip
   winrm_username = var.winrm_username
   winrm_password = var.winrm_password
   winrm_use_ssl  = false

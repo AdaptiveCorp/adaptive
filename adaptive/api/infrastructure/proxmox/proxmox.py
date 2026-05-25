@@ -155,6 +155,32 @@ class ProxmoxProvider(HypervisorProvider):
         logger.debug("%s VM %d status: '%s' (expected: '%s')", PREFIX, vm_id, status, expected)
         return status == expected
 
+    def check_template_status(self, vm_id) -> VmTemplateStatus:
+        status = VmTemplateStatus.PENDING
+
+        vm_info: dict[str, Any] = self.api.nodes(self._node).qemu(vm_id).status.current.get()
+
+        if not vm_info:
+            status = VmTemplateStatus.ERROR
+
+        if vm_info.get("template") == 1:
+            status = VmTemplateStatus.APPLIED
+
+        return status
+
+    def delete_vm(self, vm_id: int) -> bool:
+        vm = self.api.nodes(self._node).qemu(vm_id)
+
+        task_id: str = vm.delete(purge=1, destroy_unreferenced_disks=1)
+
+        while True:
+            task_status: dict = self.api.nodes(self._node).tasks(task_id).status.get()
+            if task_status["status"] == "stopped":
+                break
+            time.sleep(2)
+
+        return True
+
     def _wait_for_status(
         self,
         vm_id: int,
@@ -209,16 +235,3 @@ class ProxmoxProvider(HypervisorProvider):
 
             logger.debug("%s Task %s in progress... (%.0fs elapsed)", PREFIX, task_upid, elapsed)
             time.sleep(poll_interval)
-
-    def check_template_status(self, vm_id) -> VmTemplateStatus:
-        status = VmTemplateStatus.PENDING
-
-        vm_info: dict[str, Any] = self.api.nodes(self._node).qemu(vm_id).status.current.get()
-
-        if not vm_info:
-            status = VmTemplateStatus.ERROR
-
-        if vm_info.get("template") == 1:
-            status = VmTemplateStatus.APPLIED
-
-        return status

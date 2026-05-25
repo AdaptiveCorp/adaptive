@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import enum
-import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -27,12 +26,12 @@ class VmTemplate(Base):
     __tablename__ = "vm_templates"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    vm_id: Mapped[int] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    vm_uuid: Mapped[uuid.UUID] = mapped_column(String(36), unique=True, nullable=False)
+    vm_id: Mapped[int] = mapped_column(nullable=False)
+    vm_uuid: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
     status: Mapped[VmTemplateStatus] = mapped_column(
-        String(20), nullable=False, default=VmTemplateStatus.PENDING
+        String(20), nullable=False, default=VmTemplateStatus.UNINSTALL
     )
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

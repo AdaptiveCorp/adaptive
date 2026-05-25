@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: c991d72c5fc4
+Revision ID: dac391460001
 Revises: 
-Create Date: 2026-05-23 14:18:09.515479
+Create Date: 2026-05-25 13:48:32.306867
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'c991d72c5fc4'
+revision: str = 'dac391460001'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -46,11 +46,13 @@ def upgrade() -> None:
     op.create_table('vm_templates',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
-    sa.Column('vm_id', sa.Integer(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('vm_id', sa.Integer(), nullable=False),
+    sa.Column('vm_uuid', sa.String(length=36), nullable=False),
+    sa.Column('status', sa.String(length=20), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.UniqueConstraint('vm_uuid')
     )
     op.create_table('forests',
     sa.Column('id', sa.Integer(), nullable=False),

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,6 +25,8 @@ class Settings(BaseSettings):
     ansible_user: str = "Administrator"
     ansible_password: str = ""
     dsrm_password: str = ""
+
+    packer_template_path: Path = (Path(__file__).parent.parent.parent.parent / "packer").resolve()
 
 
 settings = Settings()

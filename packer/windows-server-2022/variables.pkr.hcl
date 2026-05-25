@@ -27,9 +27,9 @@ variable "iso_storage_pool" {
 variable "iso_file" {
   type = string
 }
-# variable "iso_checksum" {
-#   type = string
-# }
+variable "iso_checksum" {
+  type = string
+}
 variable "virtio_iso_file" {
   type    = string
   default = "local:iso/virtio-win.iso"

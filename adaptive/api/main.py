@@ -1,20 +1,21 @@
 import logging
 from contextlib import asynccontextmanager
 
+from anyio import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from adaptive.api.database.seed_templates import seed_templates
+from adaptive.api.database.seed_templates import seed_templates, seed_vm_templates
 from adaptive.api.endpoints import (
     domains,
     forests,
+    groups,
     internals,
     projects,
     servers,
     users,
     vm_templates,
     vulnerabilities,
-    groups,
 )
 from adaptive.api.environment.logging import setup_logging
 from adaptive.api.exceptions import (
@@ -35,6 +36,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("Seeding templates from YAML...")
     seed_templates()
+    seed_vm_templates(str(Path(__file__).parent / "database/vm-templates.yaml"))
     logger.info("Templates seeded")
     yield
 
