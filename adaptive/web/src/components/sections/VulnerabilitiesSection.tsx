@@ -341,12 +341,12 @@ export function VulnerabilitiesSection({ projectId, domains, users }: Props) {
 
   const { data: applied, isLoading } = useQuery({
     queryKey: ['applied-vulns', projectId],
-    queryFn: () => vulnerabilitiesApi.listApplied(projectId),
+    queryFn:  () => vulnerabilitiesApi.listApplied(projectId),
   })
 
   const { data: catalog = [] } = useQuery({
     queryKey: ['vulnerabilities'],
-    queryFn: () => vulnerabilitiesApi.list(),
+    queryFn:  () => vulnerabilitiesApi.list(),
   })
 
   const removeMutation = useMutation({
@@ -486,11 +486,8 @@ export function VulnerabilitiesSection({ projectId, domains, users }: Props) {
           </p>
           <div className="flex gap-2 justify-end">
             <button className="btn-ghost" onClick={() => setRemoveTarget(null)}>Annuler</button>
-            <button
-              className="btn-danger"
-              disabled={removeMutation.isPending}
-              onClick={() => removeMutation.mutate(removeTarget.id)}
-            >
+            <button className="btn-danger" disabled={removeMutation.isPending}
+              onClick={() => removeMutation.mutate(removeTarget.id)}>
               {removeMutation.isPending && <Spinner className="w-4 h-4" />}
               Retirer
             </button>

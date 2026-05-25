@@ -2,18 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from adaptive.api.environment.database import get_db
-from adaptive.api.models.group import Group
 from adaptive.api.exceptions import (
+    GroupNotFoundError,
     GroupTargetRequiredError,
-    AppliedTemplateNotFoundError,
     TemplateNotFoundError,
-    UserNotFoundError
+    UserNotFoundError,
 )
-from adaptive.api.models.user import User
-from adaptive.api.models.template import Template
 from adaptive.api.models.applied_template import AppliedTemplate, TemplateStatus
-from adaptive.api.schemas.group import GroupCreate, GroupResponse, GroupMembershipUpdate
-from adaptive.api.exceptions import GroupNotFoundError
+from adaptive.api.models.group import Group
+from adaptive.api.models.template import Template
+from adaptive.api.models.user import User
+from adaptive.api.schemas.group import GroupCreate, GroupMembershipUpdate, GroupResponse
 
 router = APIRouter(
     prefix="/groups",
@@ -117,14 +116,17 @@ def delete_group(
     if not template:
         raise TemplateNotFoundError(template_name=template_name)
 
-    applied_template = db.query(AppliedTemplate).filter(
-        AppliedTemplate.group_id == group.id,
-        AppliedTemplate.template_id == template.id
-    ).first()
-    if not applied_template:
-        raise AppliedTemplateNotFoundError(applied_id=-1)
+    applied_template = (
+        db.query(AppliedTemplate)
+        .filter(AppliedTemplate.group_id == group.id, AppliedTemplate.template_id == template.id)
+        .first()
+    )
 
-    applied_template.status = TemplateStatus.REVERTED_PENDING
+    if applied_template:
+        applied_template.status = TemplateStatus.REVERTED_PENDING
+    else:
+        db.delete(group)
+
     db.commit()
 
     return {"success": True}
@@ -187,16 +189,21 @@ def delete_user_membership(
     if not template:
         raise TemplateNotFoundError(template_name=template_name)
 
-    applied_template = db.query(AppliedTemplate).filter(
-        AppliedTemplate.group_id == group.id,
-        AppliedTemplate.user_id == user.id,
-        AppliedTemplate.template_id == template.id
-    ).first()
+    applied_template = (
+        db.query(AppliedTemplate)
+        .filter(
+            AppliedTemplate.group_id == group.id,
+            AppliedTemplate.user_id == user.id,
+            AppliedTemplate.template_id == template.id,
+        )
+        .first()
+    )
 
-    if not applied_template:
-        raise AppliedTemplateNotFoundError(applied_id=-1)
+    if applied_template:
+        applied_template.status = TemplateStatus.REVERTED_PENDING
+    else:
+        group.users.remove(user)
 
-    applied_template.status = TemplateStatus.REVERTED_PENDING
     db.commit()
 
     return {"success": True}

@@ -32,19 +32,20 @@ export interface Server {
   fqdn: string
   is_dc: boolean
   ip: string | null
-  gtw: string | null
-  dns: string | null
+  gtw?: string | null
+  dns?: string | null
   vm_id: number | null
   domain_id: number
-  vm_template_id: number | null
-  vm_template_name: string | null
+  vm_template_id?: number | null
+  vm_template_name?: string | null
+  status?: string | null
 }
 
 export interface User {
   id: number
   username: string
   domain_id: number | null
-  server_id: number | null
+  server_id?: number | null
 }
 
 export interface Vulnerability {
@@ -82,6 +83,7 @@ export interface VmTemplate {
   name: string
   vm_id: number
   description: string | null
+  status: 'uninstall' | 'pending' | 'applied' | 'error'
 }
 
 // ---- API response shapes ----

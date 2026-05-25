@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Users, Plus, Trash2 } from 'lucide-react'
 import { usersApi } from '../../api/users'
+import { groupsApi } from '../../api/groups'
 import { Modal } from '../Modal'
 import { Spinner } from '../Spinner'
-import type { Domain, User } from '../../types'
+import type { Domain, Group, User } from '../../types'
 
 interface Props {
   projectId: number
@@ -15,6 +16,8 @@ export function UsersTab({ projectId, domains }: Props) {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [delTarget, setDelTarget] = useState<User | null>(null)
+  const [editUser, setEditUser] = useState<User | null>(null)
+  const [editGroupIds, setEditGroupIds] = useState<number[]>([])
   const [form, setForm] = useState({
     firstname: '',
     lastname: '',
@@ -29,6 +32,11 @@ export function UsersTab({ projectId, domains }: Props) {
       return results.flat()
     },
     enabled: domains.length > 0,
+  })
+
+  const { data: allGroups = [] } = useQuery<Group[]>({
+    queryKey: ['groups'],
+    queryFn: () => groupsApi.list(),
   })
 
   const addMutation = useMutation({
@@ -58,6 +66,32 @@ export function UsersTab({ projectId, domains }: Props) {
     },
   })
 
+  const editGroupsMut = useMutation({
+    mutationFn: async ({ user, selectedIds }: { user: User; selectedIds: number[] }) => {
+      const initialIds = allGroups.filter(g => g.user_ids.includes(user.id)).map(g => g.id)
+      const toAdd    = selectedIds.filter(id => !initialIds.includes(id))
+      const toRemove = initialIds.filter(id => !selectedIds.includes(id))
+      await Promise.all([
+        ...toAdd.map(gid => groupsApi.addMembers(gid, [user.id])),
+        ...toRemove.map(gid => groupsApi.removeMember(gid, user.id)),
+      ])
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] })
+      setEditUser(null)
+    },
+  })
+
+  function openUserEdit(u: User) {
+    const currentGroupIds = allGroups.filter(g => g.user_ids.includes(u.id)).map(g => g.id)
+    setEditGroupIds(currentGroupIds)
+    setEditUser(u)
+  }
+
+  function toggleGroup(id: number) {
+    setEditGroupIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
   const allUsers = users ?? []
 
   return (
@@ -65,11 +99,8 @@ export function UsersTab({ projectId, domains }: Props) {
       <div className="flex items-center justify-between">
         <span style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: 10,
-          fontWeight: 600,
-          color: 'var(--text-muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
+          fontSize: 10, fontWeight: 600,
+          color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em',
         }}>
           Utilisateurs AD
         </span>
@@ -90,11 +121,8 @@ export function UsersTab({ projectId, domains }: Props) {
         </div>
       ) : allUsers.length === 0 ? (
         <div style={{
-          background: 'var(--bg-card)',
-          border: '1px dashed var(--border-input)',
-          borderRadius: 10,
-          padding: '48px 24px',
-          textAlign: 'center',
+          background: 'var(--bg-card)', border: '1px dashed var(--border-input)',
+          borderRadius: 10, padding: '48px 24px', textAlign: 'center',
         }}>
           <Users style={{ width: 32, height: 32, color: 'var(--text-dim)', margin: '0 auto 12px' }} />
           <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: 'var(--text-dim)' }}>
@@ -106,44 +134,49 @@ export function UsersTab({ projectId, domains }: Props) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {allUsers.map((user) => {
-            const domain = domains.find((d) => d.id === user.domain_id)
+            const domain  = domains.find((d) => d.id === user.domain_id)
             const initials = user.username?.slice(0, 2).toUpperCase() ?? '??'
+            const groupCount = allGroups.filter(g => g.user_ids.includes(user.id)).length
             return (
-              <div key={user.id} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-card)',
-                borderRadius: 8,
-                padding: '12px 14px',
-              }}>
+              <div
+                key={user.id}
+                onClick={() => openUserEdit(user)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  background: 'var(--bg-card)', border: '1px solid var(--border-card)',
+                  borderRadius: 8, padding: '12px 14px',
+                  cursor: 'pointer', transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--brand-400)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-card)' }}
+              >
                 <div style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 8,
-                  background: 'rgba(251, 191, 36, 0.1)',
-                  border: '1px solid rgba(251, 191, 36, 0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontWeight: 600,
-                  fontSize: 13,
-                  color: '#FBBF24',
+                  width: 36, height: 36, borderRadius: 8,
+                  background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600, fontSize: 13, color: '#FBBF24',
                 }}>
                   {initials}
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: 'var(--text-bright)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
+                  <p style={{
+                    fontFamily: "'Fira Code', monospace", fontSize: 13, color: 'var(--text-bright)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2,
+                  }}>
                     {user.username}
                   </p>
-                  {domain && (
-                    <p style={{ fontSize: 11, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Fira Code', monospace" }}>
-                      {domain.fqdn}
-                    </p>
-                  )}
+                  <p style={{
+                    fontSize: 11, color: 'var(--text-dim)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    fontFamily: "'Fira Code', monospace",
+                  }}>
+                    {domain?.fqdn ?? ''}
+                    {groupCount > 0 && (
+                      <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>
+                        · {groupCount} groupe{groupCount > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </p>
                 </div>
                 <button
                   onClick={e => { e.stopPropagation(); setDelTarget(user) }}
@@ -196,8 +229,7 @@ export function UsersTab({ projectId, domains }: Props) {
             <div className="flex gap-2 justify-end pt-1">
               <button type="button" className="btn-ghost" onClick={() => setOpen(false)}>Annuler</button>
               <button
-                type="submit"
-                className="btn-primary"
+                type="submit" className="btn-primary"
                 disabled={!form.firstname.trim() || !form.lastname.trim() || !form.password || !form.domain_id || addMutation.isPending}
               >
                 {addMutation.isPending && <Spinner className="w-4 h-4" />}
@@ -212,6 +244,70 @@ export function UsersTab({ projectId, domains }: Props) {
           </form>
         </Modal>
       )}
+
+      {/* Edit user groups modal */}
+      {editUser && (() => {
+        const domainGroups = allGroups.filter(g => g.domain_id === editUser.domain_id)
+        return (
+          <Modal
+            title={`Groupes — ${editUser.username}`}
+            onClose={() => setEditUser(null)}
+          >
+            {domainGroups.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--text-dim)', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'center', padding: '20px 0' }}>
+                Aucun groupe dans ce domaine.
+              </p>
+            ) : (
+              <div style={{
+                background: 'var(--bg-input)', border: '1px solid var(--border-input)',
+                borderRadius: 7, maxHeight: 260, overflowY: 'auto', padding: '6px 0', marginBottom: 16,
+              }}>
+                {domainGroups.map(g => (
+                  <label key={g.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '7px 14px', cursor: 'pointer',
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={editGroupIds.includes(g.id)}
+                      onChange={() => toggleGroup(g.id)}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                      <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: 'var(--text-bright)' }}>
+                        {g.name}
+                      </span>
+                      {g.description && (
+                        <span style={{ fontSize: 11, color: 'var(--text-dim)', marginLeft: 8 }}>
+                          {g.description}
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-muted)', fontFamily: "'IBM Plex Mono', monospace", flexShrink: 0 }}>
+                      {g.user_ids.length} membre{g.user_ids.length !== 1 ? 's' : ''}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2 justify-end">
+              <button className="btn-ghost" onClick={() => setEditUser(null)}>Annuler</button>
+              <button
+                className="btn-primary"
+                disabled={editGroupsMut.isPending || domainGroups.length === 0}
+                onClick={() => editGroupsMut.mutate({ user: editUser, selectedIds: editGroupIds })}
+              >
+                {editGroupsMut.isPending && <Spinner className="w-3.5 h-3.5" />}
+                Enregistrer
+              </button>
+            </div>
+            {editGroupsMut.isError && (
+              <p style={{ fontSize: 12, color: '#FB7185', fontFamily: "'IBM Plex Mono', monospace", marginTop: 12 }}>
+                Erreur lors de la mise à jour des groupes.
+              </p>
+            )}
+          </Modal>
+        )
+      })()}
 
       {/* Delete confirm */}
       {delTarget && (
