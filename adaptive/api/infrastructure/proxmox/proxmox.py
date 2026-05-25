@@ -12,6 +12,7 @@ from adaptive.api.exceptions import (
     ServerMissingTemplateError,
 )
 from adaptive.api.infrastructure.base import CloneResult, HypervisorProvider, ServerInfo
+from adaptive.api.models.vm_template import VmTemplateStatus
 
 logger = logging.getLogger(__name__)
 
@@ -103,12 +104,14 @@ class ProxmoxProvider(HypervisorProvider):
         self._wait_for_task(task_upid)
         logger.info("%s Clone completed for '%s' (vm_id=%d)", PREFIX, server.fqdn, new_vm_id)
 
-        # self._configure_cloudinit(new_vm_id, server)
+        self._configure_cloudinit(new_vm_id, server)
         self.start_vm(new_vm_id)
 
         return CloneResult(success=True, server_id=server.id, vm_id=new_vm_id)
 
     def _configure_cloudinit(self, vm_id: int, server: ServerInfo) -> None:
+        self.api.nodes(self._node).qemu(vm_id).config.set(ide2="data:cloudinit")
+
         if not server.ip:
             logger.warning("%s No IP for VM %d, skipping cloud-init config", PREFIX, vm_id)
             return
@@ -153,6 +156,32 @@ class ProxmoxProvider(HypervisorProvider):
         status = vm_info.get("status")
         logger.debug("%s VM %d status: '%s' (expected: '%s')", PREFIX, vm_id, status, expected)
         return status == expected
+
+    def check_template_status(self, vm_id) -> VmTemplateStatus:
+        status = VmTemplateStatus.PENDING
+
+        vm_info: dict[str, Any] = self.api.nodes(self._node).qemu(vm_id).status.current.get()
+
+        if not vm_info:
+            status = VmTemplateStatus.ERROR
+
+        if vm_info.get("template") == 1:
+            status = VmTemplateStatus.APPLIED
+
+        return status
+
+    def delete_vm(self, vm_id: int) -> bool:
+        vm = self.api.nodes(self._node).qemu(vm_id)
+
+        task_id: str = vm.delete(purge=1, destroy_unreferenced_disks=1)
+
+        while True:
+            task_status: dict = self.api.nodes(self._node).tasks(task_id).status.get()
+            if task_status["status"] == "stopped":
+                break
+            time.sleep(2)
+
+        return True
 
     def _wait_for_status(
         self,

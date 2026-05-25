@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
+from adaptive.api.models.vm_template import VmTemplateStatus
+
 
 @dataclass
 class ServerInfo:
@@ -47,3 +49,9 @@ class HypervisorProvider(ABC):
 
     @abstractmethod
     def stop_vm(self, vm_id: int) -> bool: ...
+
+    @abstractmethod
+    def check_template_status(self, vm_id: int) -> VmTemplateStatus: ...
+
+    @abstractmethod
+    def delete_vm(self, vm_id: int) -> bool: ...

@@ -1,0 +1,19 @@
+templates:
+  - name: windows-server-2022
+    vm_id: 9022
+    description: Windows Server Standard 2022 GUI
+  - name: windows-server-2022
+    vm_id: 9122
+    description: Windows Server Standard 2022
+  - name: windows-server-2022
+    vm_id: 9019
+    description: Windows Server Standard 2019 GUI
+  - name: windows-server-2019
+    vm_id: 9119
+    description: Windows Server Standard 2019 GUI
+  - name: windows-server-2022
+    vm_id: 9025
+    description: Windows Server Standard 2025 GUI
+  - name: windows-server-2025
+    vm_id: 9125
+    description: Windows Server Standard 2025 GUI

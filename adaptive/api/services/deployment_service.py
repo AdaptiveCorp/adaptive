@@ -3,9 +3,10 @@ import json
 import logging
 import textwrap
 import time
+from collections.abc import Callable
 
 import winrm
-from sqlalchemy import select, exists
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from adaptive.api.endpoints.utils import get_root_dc
@@ -16,15 +17,11 @@ from adaptive.api.infrastructure.base import DeploymentResult, HypervisorProvide
 from adaptive.api.models.applied_template import AppliedTemplate, TemplateStatus
 from adaptive.api.models.domain import Domain
 from adaptive.api.models.forest import Forest
+from adaptive.api.models.group import Group
 from adaptive.api.models.project import Project
 from adaptive.api.models.server import Server, ServerStatus
 from adaptive.api.models.template import Template
 from adaptive.api.models.user import User
-from adaptive.api.models.group import Group
-from adaptive.api.exceptions import (
-    AppliedTemplateNotFoundError
-)
-from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +36,6 @@ def _wait_for_adws(
     poll_interval: int = 15,
     initial_wait: int = 30,
 ) -> bool:
-    
     """Poll a DC via WinRM until connection is successful, then enable ADWS."""
     if initial_wait:
         logger.info("[WAIT] Waiting %ds before checking WinRM on %s...", initial_wait, server_ip)
@@ -57,7 +53,9 @@ def _wait_for_adws(
         try:
             result = session.run_ps("echo ok")
             if result.status_code == 0:
-                logger.info("[WAIT] WinRM is reachable on %s (after %ds)", server_ip, elapsed + initial_wait)
+                logger.info(
+                    "[WAIT] WinRM is reachable on %s (after %ds)", server_ip, elapsed + initial_wait
+                )
 
                 # Activer et démarrer ADWS
                 logger.info("[WAIT] Enabling and starting ADWS on %s...", server_ip)
@@ -75,7 +73,12 @@ def _wait_for_adws(
                 return True
 
         except Exception as exc:
-            logger.info("[WAIT] Cannot reach %s yet (%s), retrying in %ds...", server_ip, type(exc).__name__, poll_interval)
+            logger.info(
+                "[WAIT] Cannot reach %s yet (%s), retrying in %ds...",
+                server_ip,
+                type(exc).__name__,
+                poll_interval,
+            )
 
         time.sleep(poll_interval)
         elapsed += poll_interval
@@ -86,9 +89,9 @@ def _wait_for_adws(
 
 def _wait_for_ad_ready(
     server_ip: str,
-    timeout: int = 600,        # promotion AD peut être longue, 10 min n'est pas déraisonnable
+    timeout: int = 600,  # promotion AD peut être longue, 10 min n'est pas déraisonnable
     poll_interval: int = 30,
-    initial_wait: int = 60,    # tu peux garder 30, mais 60 est plus safe
+    initial_wait: int = 60,  # tu peux garder 30, mais 60 est plus safe
 ) -> bool:
     """Attendre que le DC soit réellement fonctionnel (AD DS + ADWS)."""
 
@@ -129,7 +132,9 @@ def _wait_for_ad_ready(
             output = result.std_out.decode(errors="replace").strip()
 
             if result.status_code == 0 and "AD_READY" in output:
-                logger.info("[WAIT] AD domain is ready on %s (after %ds)", server_ip, elapsed + initial_wait)
+                logger.info(
+                    "[WAIT] AD domain is ready on %s (after %ds)", server_ip, elapsed + initial_wait
+                )
                 return True
 
             logger.info(
@@ -150,8 +155,11 @@ def _wait_for_ad_ready(
         time.sleep(poll_interval)
         elapsed += poll_interval
 
-    logger.error("[WAIT] Timeout (%ds) waiting for AD readiness on %s", timeout + initial_wait, server_ip)
+    logger.error(
+        "[WAIT] Timeout (%ds) waiting for AD readiness on %s", timeout + initial_wait, server_ip
+    )
     return False
+
 
 # need to wait for ADWS to be ready because it used in ansible.ad.users
 def ansible_deploy_user(user: User, db: Session) -> PlaybookResult:
@@ -186,6 +194,7 @@ def ansible_deploy_user(user: User, db: Session) -> PlaybookResult:
         domain_fqdn=domain.fqdn,
     )
 
+
 def get_groups_grouped_by_domain(project: Project) -> dict[Domain, list[Group]]:
     grouped: dict[Domain, list[Group]] = {}
     for forest in project.forests:
@@ -193,9 +202,9 @@ def get_groups_grouped_by_domain(project: Project) -> dict[Domain, list[Group]]:
             print(domain)
             print(domain.users)
             if domain.groups:
-                print("there is this")
                 grouped[domain] = list(domain.groups)
     return grouped
+
 
 def get_groups_not_push_by_domain(project: Project, db: Session) -> dict[Domain, list[Group]]:
     groups_by_domain = get_groups_grouped_by_domain(project)
@@ -207,11 +216,13 @@ def get_groups_not_push_by_domain(project: Project, db: Session) -> dict[Domain,
             .join(Template)
             .where(
                 AppliedTemplate.project_id == project.id,
-                AppliedTemplate.status.in_([
-                    TemplateStatus.APPLIED,
-                    TemplateStatus.REVERTED_PENDING,
-                    TemplateStatus.REVERTED_APPLIED,
-                ]),
+                AppliedTemplate.status.in_(
+                    [
+                        TemplateStatus.APPLIED,
+                        TemplateStatus.REVERTED_PENDING,
+                        TemplateStatus.REVERTED_APPLIED,
+                    ]
+                ),
                 AppliedTemplate.domain_id == domain.id,
                 Template.code == "add_groups",
             )
@@ -241,6 +252,7 @@ def get_groups_not_push_by_domain(project: Project, db: Session) -> dict[Domain,
 
     return result
 
+
 def get_template_for_project(project: Project, db: Session) -> list[AppliedTemplate]:
     stmt = select(AppliedTemplate).where(AppliedTemplate.project_id == project.id)
     return list(db.scalars(stmt).all())
@@ -258,7 +270,6 @@ def _create_applied_template(
     group_id: int | None = None,
     params: dict | None = None,
 ) -> AppliedTemplate:
-    
     """Create a pending AppliedTemplate record for tracking."""
     template = db.query(Template).filter(Template.code == template_code).first()
     if not template:
@@ -313,6 +324,7 @@ def get_dcs_grouped_by_domain(project: Project) -> dict[Domain, list[Server]]:
                 grouped[domain] = dcs
     return grouped
 
+
 def is_server_promoted(server: Server, db: Session) -> bool:
     return db.query(
         db.query(AppliedTemplate)
@@ -325,18 +337,19 @@ def is_server_promoted(server: Server, db: Session) -> bool:
         .exists()
     ).scalar()
 
-def get_dcs_to_promote(project: Project, db: Session) -> dict[Domain, list[Server]] :
+
+def get_dcs_to_promote(project: Project, db: Session) -> dict[Domain, list[Server]]:
     grouped: dict[Domain, list[Server]] = {}
 
     for forest in project.forests:
         for domain in forest.domains:
-            
             dcs = [s for s in domain.servers if s.is_dc and not is_server_promoted(s, db)]
 
             if dcs:
                 grouped[domain] = dcs
 
     return grouped
+
 
 def get_all_domain_in_project(project: Project, db: Session) -> list[Domain]:
 
@@ -360,30 +373,39 @@ def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:
                 grouped[domain] = list(domain.users)
     return grouped
 
-def get_users_not_push_by_domain(project: Project, db : Session) -> dict[Domain, list[User]] :
-    
-    #Récupère tout les templates de type user push
+
+def get_users_not_push_by_domain(project: Project, db: Session) -> dict[Domain, list[User]]:
+
+    # Récupère tout les templates de type user push
     users = get_users_grouped_by_domain(project)
 
-    for domain, users_list in users.items() :
-        stmt = select(AppliedTemplate).join(Template).where(
-            AppliedTemplate.project_id == project.id,
-            (AppliedTemplate.status == TemplateStatus.APPLIED) | (AppliedTemplate.status == TemplateStatus.ERROR) | (AppliedTemplate.status == TemplateStatus.REVERTED_APPLIED) | (AppliedTemplate.status == TemplateStatus.REVERTED_PENDING),
-            AppliedTemplate.domain_id == domain.id,
-            Template.code == "add_users",
+    for domain, users_list in users.items():
+        stmt = (
+            select(AppliedTemplate)
+            .join(Template)
+            .where(
+                AppliedTemplate.project_id == project.id,
+                (AppliedTemplate.status == TemplateStatus.APPLIED)
+                | (AppliedTemplate.status == TemplateStatus.ERROR)
+                | (AppliedTemplate.status == TemplateStatus.REVERTED_APPLIED)
+                | (AppliedTemplate.status == TemplateStatus.REVERTED_PENDING),
+                AppliedTemplate.domain_id == domain.id,
+                Template.code == "add_users",
+            )
         )
 
         liste_applied_template = db.execute(stmt).scalars().all()
         username_applied = []
 
-        for applied_template in liste_applied_template :
+        for applied_template in liste_applied_template:
             params = applied_template.params
             params_json = json.loads(params)
             users_in_applied_template = params_json["users_list"]
             username_applied.extend(users_in_applied_template)
 
-
-        usernames_not_applied = [user for user in users_list if user.username not in username_applied]
+        usernames_not_applied = [
+            user for user in users_list if user.username not in username_applied
+        ]
         users[domain] = usernames_not_applied
 
     return users
@@ -442,7 +464,7 @@ def _step_clone_vms(
     db: Session,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
-    
+
     logger.info("[STEP 1] Cloning %d VMs for project '%s'", len(all_servers), project.name)
 
     server_infos: list[ServerInfo] = [
@@ -489,6 +511,7 @@ def _step_promote_dcs(
 ) -> DeploymentResult:
     """STEP 2: promouvoir les DC, puis attendre que AD soit réellement prêt."""
 
+    logger.info("TEST")
     if not dcs_by_domain:
         logger.info("[STEP 2] No DCs to promote, skipping.")
         return deployment_result
@@ -615,10 +638,10 @@ def _step_add_users(
                 template_code="add_users",
                 domain_id=domain.id,
                 server_id=dc.id,
-                user_id=u.id,                        # ← référence directe à l'user
+                user_id=u.id,  # ← référence directe à l'user
                 params={
                     "target_host": _bare_ip(dc.ip),
-                    "users_list": [u.username],       # ← liste à 1 élément
+                    "users_list": [u.username],  # ← liste à 1 élément
                     "base_dn": base_dn,
                     "domain_fqdn": domain.fqdn,
                 },
@@ -680,8 +703,7 @@ def _step_add_groups(
         base_dn = f"DC={fqdn.split('.')[-2].lower()},DC={fqdn.split('.')[-1].lower()}"
 
         group_dicts: list[dict[str, Any]] = [
-            {"name": g.name, "description": g.description or ""}
-            for g in groups
+            {"name": g.name, "description": g.description or ""} for g in groups
         ]
 
         # APRÈS (clé "groupnames" — lue correctement par le filtre)
@@ -721,7 +743,9 @@ def _step_add_groups(
         if not result.success:
             for applied in applied_list:
                 _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
-            logger.error("[STEP ADD_GROUPS] Group creation failed on '%s': %s", domain.fqdn, result.error)
+            logger.error(
+                "[STEP ADD_GROUPS] Group creation failed on '%s': %s", domain.fqdn, result.error
+            )
             deployment_result.success = False
             deployment_result.error = result.error
             return deployment_result
@@ -731,6 +755,7 @@ def _step_add_groups(
         logger.info("[STEP ADD_GROUPS] Groups created on domain '%s'", domain.fqdn)
 
     return deployment_result
+
 
 def _step_add_group_members(
     project: Project,
@@ -745,15 +770,12 @@ def _step_add_group_members(
         return deployment_result
 
     for domain, groups in groups_by_domain.items():
-        groups_with_members = [
-            g for g in groups
-            if g.users
-        ]
+        groups_with_members = [g for g in groups if g.users]
 
         if not groups_with_members:
             logger.info(
                 "[STEP ADD_GROUP_MEMBERS] No group with members in domain '%s', skipping",
-                domain.fqdn
+                domain.fqdn,
             )
             continue
 
@@ -798,7 +820,7 @@ def _step_add_group_members(
                     deployment_result.success = False
                     deployment_result.error = result.error
                     return deployment_result
-                
+
                 _update_template_status(db, applied, TemplateStatus.APPLIED)
                 logger.info(
                     "[STEP ADD_GROUP_MEMBERS] Member '%s' added to group '%s' on domain '%s'",
@@ -809,12 +831,13 @@ def _step_add_group_members(
 
     return deployment_result
 
+
 def _step_push_vulnerabilities(
     project: Project,
     db: Session,
     deployment_result: DeploymentResult,
 ) -> DeploymentResult:
-    
+
     liste_templates = get_template_for_project(project, db)
     liste_domain = get_all_domain_in_project(project, db)
 
@@ -910,19 +933,22 @@ def _step_reverse_templates(
     for domain in liste_domain:
         dc = get_root_dc(domain, db)
         if not dc.ip:
-            logger.error("[STEP REVERSE] DC '%s' has no IP, skipping domain '%s'", dc.fqdn, domain.fqdn)
+            logger.error(
+                "[STEP REVERSE] DC '%s' has no IP, skipping domain '%s'", dc.fqdn, domain.fqdn
+            )
             has_failure = True
             continue
 
         for applied in pending_reversed_templates:
-
             # Pas de reverse_content défini
             if not applied.template.reverse_content:
                 logger.error(
                     "[STEP REVERSE] Template '%s' has no reverse_content, skipping.",
                     applied.template.code,
                 )
-                _update_template_status(db, applied, TemplateStatus.ERROR, error="Missing reverse_content")
+                _update_template_status(
+                    db, applied, TemplateStatus.ERROR, error="Missing reverse_content"
+                )
                 has_failure = True
                 continue
 
@@ -949,7 +975,7 @@ def _step_reverse_templates(
             result = execute_powershell_winrm(dc.ip, powershell_script, param_vuln, db)
 
             if not result.success:
-                #_update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
+                # _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
                 logger.error(
                     "[STEP REVERSE] Template '%s' failed on '%s': %s",
                     applied.template.code,
@@ -959,13 +985,13 @@ def _step_reverse_templates(
                 has_failure = True
                 continue
 
-            if applied.template.reverse_type == "deletion" :
+            if applied.template.reverse_type == "deletion":
                 user = applied.user
-                if user : 
+                if user:
                     db.delete(user)
                     db.commit()
                 group = applied.group
-                if group : 
+                if group:
                     db.delete(group)
                     db.commit()
 
@@ -976,18 +1002,22 @@ def _step_reverse_templates(
                 dc.fqdn,
             )
 
-
     if has_failure:
         deployment_result.success = False
         deployment_result.error = "One or more templates failed to reverse"
 
     return deployment_result
 
+
 def get_pending_reverted_template(project: Project, db: Session):
-    applied_template_reverted = db.query(AppliedTemplate).filter(AppliedTemplate.status == TemplateStatus.REVERTED_PENDING).all()
-    
-    
+    applied_template_reverted = (
+        db.query(AppliedTemplate)
+        .filter(AppliedTemplate.status == TemplateStatus.REVERTED_PENDING)
+        .all()
+    )
+
     return applied_template_reverted
+
 
 def build_deployment_steps(
     project: Project,
@@ -1001,15 +1031,13 @@ def build_deployment_steps(
     # Serveurs qui n'ont pas encore été clonés
     servers_to_clone = [s for s in all_servers if s.status != ServerStatus.APPLIED]
 
-    if servers_to_clone :
-        steps.append(
-            lambda r, s=servers_to_clone: _step_clone_vms(project, s, hypervisor, db, r)
-        )
+    if servers_to_clone:
+        steps.append(lambda r, s=servers_to_clone: _step_clone_vms(project, s, hypervisor, db, r))
 
     # Serveurs qui n'ont pas été promu
     servers_to_promote = get_dcs_to_promote(project, db)
-    
-    if servers_to_promote :
+
+    if servers_to_promote:
         steps.append(
             lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
         )
@@ -1017,35 +1045,29 @@ def build_deployment_steps(
     # Utilisateur qui n'ont pas encore été pushé
     users_not_pushed = get_users_not_push_by_domain(project, db)
     if any(users_list for users_list in users_not_pushed.values()):
-        steps.append(
-            lambda r: _step_add_users(project, ansible, db, users_not_pushed, r)
-        )
+        steps.append(lambda r: _step_add_users(project, ansible, db, users_not_pushed, r))
 
     # Groupes qui n'ont pas encore été pushés
     # STEP : Créer les groupes (sans membres)
     groups_not_pushed = get_groups_not_push_by_domain(project, db)
     if any(gl for gl in groups_not_pushed.values()):
-        steps.append(
-            lambda r: _step_add_groups(project, ansible, db, groups_not_pushed, r)
-        )
+        steps.append(lambda r: _step_add_groups(project, ansible, db, groups_not_pushed, r))
 
     # STEP : Ajouter les membres dans les groupes
     # On réutilise groups_not_pushed : tous les groupes, qu'ils aient des membres ou non.
     # La step filtrera elle-même les groupes sans membres.
     if any(gl for gl in groups_not_pushed.values()):
-        steps.append(
-            lambda r: _step_add_group_members(project, ansible, db, groups_not_pushed, r)
-        )
-
+        steps.append(lambda r: _step_add_group_members(project, ansible, db, groups_not_pushed, r))
 
     # STEP : Récupère les applied_template qui sont en pending_reverted
     find_pending_reverted_template = get_pending_reverted_template(project, db)
-    if find_pending_reverted_template :
+    if find_pending_reverted_template:
         steps.append(
-            lambda r: _step_reverse_templates(project, ansible, db, find_pending_reverted_template, r)
+            lambda r: _step_reverse_templates(
+                project, ansible, db, find_pending_reverted_template, r
+            )
         )
 
-        
     steps += [
         lambda r: _step_push_vulnerabilities(project, db, r),
     ]
@@ -1059,7 +1081,7 @@ def deploy_project(
     hypervisor: HypervisorProvider | None = None,
     ansible: AnsibleService | None = None,
 ) -> DeploymentResult:
-    
+
     logger.info("[DEPLOY] Starting deployment for project '%s'", project.name)
 
     hypervisor = hypervisor or ProxmoxProvider()
