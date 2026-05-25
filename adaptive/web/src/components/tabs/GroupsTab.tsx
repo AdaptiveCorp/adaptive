@@ -18,6 +18,8 @@ export function GroupsTab({ projectId, domains }: Props) {
 
   const [showCreate, setShowCreate] = useState(false)
   const [delTarget, setDelTarget]   = useState<Group | null>(null)
+  const [editGroup, setEditGroup]   = useState<Group | null>(null)
+  const [editMemberIds, setEditMemberIds] = useState<number[]>([])
 
   const [form, setForm] = useState({
     name: '',
@@ -36,11 +38,14 @@ export function GroupsTab({ projectId, domains }: Props) {
 
   const { data: domainUsers } = useQuery({
     queryKey: ['users', projectId, form.domain_id],
-    queryFn: async () => {
-      const res = await usersApi.list({ domain_id: form.domain_id })
-      return res
-    },
+    queryFn: () => usersApi.list({ domain_id: form.domain_id }),
     enabled: !!form.domain_id,
+  })
+
+  const { data: editGroupUsers = [] } = useQuery<User[]>({
+    queryKey: ['users', projectId, editGroup?.domain_id],
+    queryFn: () => usersApi.list({ domain_id: editGroup!.domain_id! }),
+    enabled: !!editGroup?.domain_id,
   })
 
   const createMut = useMutation({
@@ -69,6 +74,21 @@ export function GroupsTab({ projectId, domains }: Props) {
     },
   })
 
+  const editMembersMut = useMutation({
+    mutationFn: async ({ group, selectedIds }: { group: Group; selectedIds: number[] }) => {
+      const toAdd    = selectedIds.filter(id => !group.user_ids.includes(id))
+      const toRemove = group.user_ids.filter(id => !selectedIds.includes(id))
+      await Promise.all([
+        ...(toAdd.length ? [groupsApi.addMembers(group.id, toAdd)] : []),
+        ...toRemove.map(uid => groupsApi.removeMember(group.id, uid)),
+      ])
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] })
+      setEditGroup(null)
+    },
+  })
+
   function resetForm() {
     setForm({ name: '', description: '', domain_id: domains[0]?.id ?? 0 })
     setSelectedUserIds([])
@@ -78,6 +98,17 @@ export function GroupsTab({ projectId, domains }: Props) {
     setSelectedUserIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     )
+  }
+
+  function toggleMember(id: number) {
+    setEditMemberIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
+  function openGroupEdit(g: Group) {
+    setEditMemberIds([...g.user_ids])
+    setEditGroup(g)
   }
 
   const domainLabel = (id: number) =>
@@ -90,8 +121,7 @@ export function GroupsTab({ projectId, domains }: Props) {
         <span style={{
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: 10, fontWeight: 600,
-          color: 'var(--text-muted)',
-          textTransform: 'uppercase', letterSpacing: '0.1em',
+          color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em',
         }}>
           Groupes AD
         </span>
@@ -126,7 +156,12 @@ export function GroupsTab({ projectId, domains }: Props) {
       ) : (
         <div className="space-y-2">
           {groups.map((g, i) => (
-            <div key={g.id} className="animate-enter project-row" style={{ animationDelay: `${i * 40}ms` }}>
+            <div
+              key={g.id}
+              className="animate-enter project-row"
+              style={{ animationDelay: `${i * 40}ms`, cursor: 'pointer' }}
+              onClick={() => openGroupEdit(g)}
+            >
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
                   fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600,
@@ -177,7 +212,6 @@ export function GroupsTab({ projectId, domains }: Props) {
                 onChange={e => setForm({ ...form, name: e.target.value })}
               />
             </div>
-
             <div>
               <label>Description <span style={{ color: 'var(--text-dim)', textTransform: 'none', fontSize: 10 }}>(optionnel)</span></label>
               <input
@@ -186,7 +220,6 @@ export function GroupsTab({ projectId, domains }: Props) {
                 onChange={e => setForm({ ...form, description: e.target.value })}
               />
             </div>
-
             <div>
               <label>Domaine</label>
               <select
@@ -202,7 +235,6 @@ export function GroupsTab({ projectId, domains }: Props) {
                 ))}
               </select>
             </div>
-
             {domainUsers && domainUsers.length > 0 && (
               <div>
                 <label>Membres <span style={{ color: 'var(--text-dim)', textTransform: 'none', fontSize: 10 }}>(optionnel)</span></label>
@@ -228,7 +260,6 @@ export function GroupsTab({ projectId, domains }: Props) {
                 </div>
               </div>
             )}
-
             <div className="flex gap-2 justify-end">
               <button type="button" className="btn-ghost" onClick={() => setShowCreate(false)}>Annuler</button>
               <button
@@ -245,6 +276,57 @@ export function GroupsTab({ projectId, domains }: Props) {
               </p>
             )}
           </form>
+        </Modal>
+      )}
+
+      {/* Edit members modal */}
+      {editGroup && (
+        <Modal
+          title={`Membres — ${editGroup.name}`}
+          onClose={() => setEditGroup(null)}
+        >
+          {editGroupUsers.length === 0 ? (
+            <p style={{ fontSize: 13, color: 'var(--text-dim)', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'center', padding: '20px 0' }}>
+              Aucun utilisateur dans ce domaine.
+            </p>
+          ) : (
+            <div style={{
+              background: 'var(--bg-input)', border: '1px solid var(--border-input)',
+              borderRadius: 7, maxHeight: 260, overflowY: 'auto', padding: '6px 0', marginBottom: 16,
+            }}>
+              {editGroupUsers.map(u => (
+                <label key={u.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '7px 14px', cursor: 'pointer',
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={editMemberIds.includes(u.id)}
+                    onChange={() => toggleMember(u.id)}
+                  />
+                  <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 13, color: 'var(--text-bright)' }}>
+                    {u.username}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2 justify-end">
+            <button className="btn-ghost" onClick={() => setEditGroup(null)}>Annuler</button>
+            <button
+              className="btn-primary"
+              disabled={editMembersMut.isPending || editGroupUsers.length === 0}
+              onClick={() => editMembersMut.mutate({ group: editGroup, selectedIds: editMemberIds })}
+            >
+              {editMembersMut.isPending && <Spinner className="w-3.5 h-3.5" />}
+              Enregistrer
+            </button>
+          </div>
+          {editMembersMut.isError && (
+            <p style={{ fontSize: 12, color: '#FB7185', fontFamily: "'IBM Plex Mono', monospace", marginTop: 12 }}>
+              Erreur lors de la mise à jour des membres.
+            </p>
+          )}
         </Modal>
       )}
 

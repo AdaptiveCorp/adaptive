@@ -16,6 +16,11 @@ export const vmTemplatesApi = {
     return res.data
   },
 
+  deploy: async (id: number): Promise<unknown> => {
+    const res = await client.post(`/vm-templates/${id}`)
+    return res.data
+  },
+
   delete: async (id: number): Promise<void> => {
     await client.delete(`/vm-templates/${id}`)
   },

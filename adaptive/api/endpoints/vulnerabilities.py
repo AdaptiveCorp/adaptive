@@ -2,16 +2,17 @@ import ast
 import json
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy import select, exists
+
 from adaptive.api.endpoints.utils import get_root_dc
 from adaptive.api.environment.database import get_db
 from adaptive.api.exceptions import (
     AppliedVulnerabilityNotFoundError,
     DomainNotFoundError,
+    VulnerabilityAlreadyExist,
     VulnerabilityInvalidParamsError,
     VulnerabilityNotFoundError,
-    VulnerabilityAlreadyExist,
 )
 from adaptive.api.models.applied_template import AppliedTemplate, TemplateStatus
 from adaptive.api.models.domain import Domain
@@ -44,10 +45,7 @@ def list_applied_vulnerabilities(project_id: int, db: Session = Depends(get_db))
     """
     Lister toutes les vulnérabilités appliquées à un projet.
     """
-    return (
-        db.query(AppliedTemplate)
-        .all()
-    )
+    return db.query(AppliedTemplate).filter(AppliedTemplate.project_id == project_id).all()
 
 
 @router.post("/projects/{project_id}", response_model=AppliedVulnerabilityCreateResponse)
@@ -66,31 +64,37 @@ def post_vulnerability(
 
     get_root_dc(domain, db)
 
-    param_vuln = ast.literal_eval(vuln_template.required_params)
+    param_vuln = ast.literal_eval(vuln_template.required_params or "[]")
     param_req = payload.params
 
-    if len(param_req) <= 0:
+    if param_vuln and not param_req:
         raise VulnerabilityInvalidParamsError(vuln_template.required_params)
 
-    for keys in param_req:
-        if keys not in param_vuln:
+    for key in param_req:
+        if key not in param_vuln:
             raise VulnerabilityInvalidParamsError(vuln_template.required_params)
 
     param_req_str = json.dumps(param_req)
 
-    #Vérifie si ya pas déjà un vuln template qui existe déjà
-    stmt = select(AppliedTemplate).join(Template).where(
-        AppliedTemplate.project_id == project_id,
-        AppliedTemplate.domain_id == domain.id,
-        Template.code == vuln_template.code,
-        AppliedTemplate.params ==param_req_str #Améliorer la logique de params
+    # Vérifie si ya pas déjà un vuln template qui existe déjà
+    stmt = (
+        select(AppliedTemplate)
+        .join(Template)
+        .where(
+            AppliedTemplate.project_id == project_id,
+            AppliedTemplate.domain_id == domain.id,
+            Template.code == vuln_template.code,
+            AppliedTemplate.params == param_req_str,  # Améliorer la logique de params
+        )
     )
     applied_template = db.execute(stmt).scalars().first()
 
-    if applied_template :
-        raise VulnerabilityAlreadyExist(applied_vuln_id=applied_template.id, 
-                                         applied_vuln_code=applied_template.template.code,
-                                         applied_vuln_params=applied_template.params)
+    if applied_template:
+        raise VulnerabilityAlreadyExist(
+            applied_vuln_id=applied_template.id,
+            applied_vuln_code=applied_template.template.code,
+            applied_vuln_params=applied_template.params,
+        )
 
     applied_template = AppliedTemplate(
         project_id=project_id,

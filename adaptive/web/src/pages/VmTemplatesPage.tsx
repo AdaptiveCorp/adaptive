@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, HardDrive } from 'lucide-react'
+import { Play, Trash2, HardDrive } from 'lucide-react'
 import { vmTemplatesApi } from '../api/vm-templates'
 import { Modal } from '../components/Modal'
 import { Spinner } from '../components/Spinner'
@@ -10,6 +10,8 @@ export function VmTemplatesPage() {
   const queryClient = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [delTarget, setDelTarget] = useState<VmTemplate | null>(null)
+  const [deployingId, setDeployingId]   = useState<number | null>(null)
+  const [deployErrorId, setDeployErrorId] = useState<number | null>(null)
   const [form, setForm] = useState({ name: '', vm_id: '', description: '' })
 
   const { data: templates, isLoading } = useQuery({
@@ -39,6 +41,13 @@ export function VmTemplatesPage() {
     },
   })
 
+  const deployMut = useMutation({
+    mutationFn: (id: number) => vmTemplatesApi.deploy(id),
+    onMutate:  (id) => { setDeployingId(id); setDeployErrorId(null) },
+    onError:   (_, id) => setDeployErrorId(id),
+    onSettled: () => setDeployingId(null),
+  })
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -51,9 +60,9 @@ export function VmTemplatesPage() {
               Images Packer Proxmox utilisées pour cloner les serveurs
             </p>
           </div>
-          <button className="btn-primary" style={{ marginTop: 4 }} onClick={() => setShowCreate(true)}>
+          {/* <button className="btn-primary" style={{ marginTop: 4 }} onClick={() => setShowCreate(true)}>
             <Plus className="w-3.5 h-3.5" /> Nouveau template
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -104,9 +113,9 @@ export function VmTemplatesPage() {
               Ajoutez un template Packer pour pouvoir cloner des serveurs.
             </p>
           </div>
-          <button className="btn-primary" onClick={() => setShowCreate(true)} style={{ marginTop: 4 }}>
+          {/* <button className="btn-primary" onClick={() => setShowCreate(true)} style={{ marginTop: 4 }}>
             <Plus className="w-3.5 h-3.5" /> Ajouter un template
-          </button>
+          </button> */}
         </div>
       ) : (
         <div className="space-y-2">
@@ -116,7 +125,13 @@ export function VmTemplatesPage() {
               className="animate-enter"
               style={{ animationDelay: `${i * 40}ms` }}
             >
-              <TemplateRow template={t} onDelete={() => setDelTarget(t)} />
+              <TemplateRow
+              template={t}
+              onDelete={() => setDelTarget(t)}
+              onDeploy={() => deployMut.mutate(t.id)}
+              isDeploying={deployingId === t.id}
+              deployError={deployErrorId === t.id}
+            />
             </div>
           ))}
         </div>
@@ -220,20 +235,23 @@ export function VmTemplatesPage() {
   )
 }
 
-function TemplateRow({ template, onDelete }: { template: VmTemplate; onDelete: () => void }) {
+function TemplateRow({
+  template, onDelete, onDeploy, isDeploying, deployError,
+}: {
+  template: VmTemplate
+  onDelete: () => void
+  onDeploy: () => void
+  isDeploying: boolean
+  deployError: boolean
+}) {
   return (
     <div className="project-row">
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontWeight: 600,
-          fontSize: 15,
-          color: 'var(--text-bright)',
-          letterSpacing: '-0.02em',
-          marginBottom: 3,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
+          fontWeight: 600, fontSize: 15,
+          color: 'var(--text-bright)', letterSpacing: '-0.02em',
+          marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {template.name}
         </p>
@@ -246,16 +264,36 @@ function TemplateRow({ template, onDelete }: { template: VmTemplate; onDelete: (
               — {template.description}
             </span>
           )}
+          {deployError && (
+            <span style={{ fontSize: 11, color: '#FB7185', fontFamily: "'IBM Plex Mono', monospace" }}>
+              Erreur de déploiement
+            </span>
+          )}
         </div>
       </div>
 
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete() }}
-        title="Supprimer"
-        className="row-del"
-      >
-        <Trash2 style={{ width: 13, height: 13 }} />
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDeploy() }}
+          disabled={isDeploying}
+          title="Déployer ce template"
+          className="btn-ghost"
+          style={{ padding: '5px 10px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          {isDeploying
+            ? <Spinner className="w-3.5 h-3.5" />
+            : <Play style={{ width: 13, height: 13 }} />}
+          Deploy
+        </button>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete() }}
+          title="Supprimer"
+          className="row-del"
+        >
+          <Trash2 style={{ width: 13, height: 13 }} />
+        </button>
+      </div>
     </div>
   )
 }
