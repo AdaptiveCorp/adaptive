@@ -1,6 +1,7 @@
-import { TreePine, Network, Server, Users, ShieldAlert } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { TreePine, Network, Server, Users, ShieldAlert, UsersRound } from 'lucide-react'
 import { ADGraph } from '../graph/ADGraph'
-import { useGraphLayout } from '../graph/useGraphLayout'
+import { groupsApi } from '../../api/groups'
 import type { Forest, Domain, Server as SrvType, User } from '../../types'
 
 interface Props {
@@ -12,24 +13,37 @@ interface Props {
   vulnerabilitiesCount: number
 }
 
-const STATS = (forests: Forest[], domains: Domain[], servers: SrvType[], users: User[], vulns: number) => [
-  { label: 'Forêts',        value: forests.length,  icon: TreePine,   color: 'var(--brand-300)' },
-  { label: 'Domaines',      value: domains.length,  icon: Network,    color: 'var(--brand-400)' },
-  { label: 'Serveurs',      value: servers.length,  icon: Server,     color: 'var(--brand-300)' },
-  { label: 'Utilisateurs',  value: users.length,    icon: Users,      color: '#FBBF24' },
-  { label: 'Vulnérabilités',value: vulns,           icon: ShieldAlert,color: '#FB7185' },
+const STATS = (
+  forests: Forest[], domains: Domain[], servers: SrvType[],
+  users: User[], vulns: number, groups: number,
+) => [
+  { label: 'Forêts',        value: forests.length,  icon: TreePine,    color: 'var(--brand-300)' },
+  { label: 'Domaines',      value: domains.length,  icon: Network,     color: 'var(--brand-400)' },
+  { label: 'Serveurs',      value: servers.length,  icon: Server,      color: 'var(--brand-300)' },
+  { label: 'Utilisateurs',  value: users.length,    icon: Users,       color: '#FBBF24' },
+  { label: 'Groupes',       value: groups,          icon: UsersRound,  color: '#FB923C' },
+  { label: 'Vulnérabilités',value: vulns,           icon: ShieldAlert, color: '#FB7185' },
 ]
 
 export function DashboardTab({ projectId, forests, domains, servers, users, vulnerabilitiesCount }: Props) {
-  const { nodes, edges, viewBox } = useGraphLayout(forests, domains, servers, users)
-  const stats = STATS(forests, domains, servers, users, vulnerabilitiesCount)
+  const domainIds = domains.map(d => d.id)
+
+  const { data: allGroups } = useQuery({
+    queryKey: ['groups'],
+    queryFn: () => groupsApi.list(),
+  })
+  const groups = (allGroups ?? []).filter(
+    g => g.domain_id !== null && domainIds.includes(g.domain_id!)
+  )
+
+  const stats = STATS(forests, domains, servers, users, vulnerabilitiesCount, groups.length)
 
   return (
     <div className="space-y-5">
       {/* Stats grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
+        gridTemplateColumns: 'repeat(6, 1fr)',
         gap: 10,
       }}>
         {stats.map((s, i) => {
@@ -50,11 +64,9 @@ export function DashboardTab({ projectId, forests, domains, servers, users, vuln
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <span style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: 9,
-                  fontWeight: 600,
+                  fontSize: 9, fontWeight: 600,
                   color: 'var(--text-dim)',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em', textTransform: 'uppercase',
                 }}>
                   {s.label}
                 </span>
@@ -62,12 +74,9 @@ export function DashboardTab({ projectId, forests, domains, servers, users, vuln
               </div>
               <span style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: 40,
-                fontWeight: 600,
-                color: s.color,
-                lineHeight: 1,
-                letterSpacing: '-0.04em',
-                display: 'block',
+                fontSize: 40, fontWeight: 600,
+                color: s.color, lineHeight: 1,
+                letterSpacing: '-0.04em', display: 'block',
               }}>
                 {String(s.value).padStart(2, '0')}
               </span>
@@ -85,16 +94,21 @@ export function DashboardTab({ projectId, forests, domains, servers, users, vuln
       }}>
         <p style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: 9,
-          fontWeight: 600,
+          fontSize: 9, fontWeight: 600,
           color: 'var(--text-dim)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.14em',
+          textTransform: 'uppercase', letterSpacing: '0.14em',
           marginBottom: 16,
         }}>
           Hiérarchie AD
         </p>
-        <ADGraph nodes={nodes} edges={edges} viewBox={viewBox} projectId={projectId} />
+        <ADGraph
+          projectId={projectId}
+          forests={forests}
+          domains={domains}
+          servers={servers}
+          users={users}
+          groups={groups}
+        />
       </div>
     </div>
   )

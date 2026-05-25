@@ -53,6 +53,7 @@ export interface Vulnerability {
   name: string
   description: string | null
   category: string | null
+  required_params: string | null
 }
 
 export interface AppliedVulnerability {
