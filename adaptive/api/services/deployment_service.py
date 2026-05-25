@@ -483,14 +483,15 @@ def _step_clone_vms(
     deployment_result.clone_results = clone_results
 
     for res in clone_results:
+        srv: Server | None = db.get(Server, res.server_id)  # ← déplacer ici
         if res.success and res.vm_id:
-            srv: Server | None = db.get(Server, res.server_id)
             if srv:
                 srv.vm_id = res.vm_id
                 srv.status = ServerStatus.APPLIED
                 logger.info("[STEP 1] Saved vm_id=%d for server '%s'", res.vm_id, srv.fqdn)
         else:
-            srv.status = ServerStatus.ERROR
+            if srv:
+                srv.status = ServerStatus.ERROR
             logger.warning("[STEP 1] Clone failed or missing vm_id for server_id=%s", res.server_id)
 
     db.commit()
