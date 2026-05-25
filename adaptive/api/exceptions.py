@@ -168,6 +168,25 @@ class VulnerabilityAlreadyExist(ConflictError) :
             detail={"code": applied_vuln_code,"params" : applied_vuln_params},
         )
 
+
+class TemplateNotFoundError(NotFoundError):
+    """Template does not exist."""
+
+    def __init__(self, template_name: str):
+        super().__init__(
+            f"Template template id={template_name} not found",
+            detail={"applied_id": template_name},
+        )
+
+class AppliedTemplateNotFoundError(NotFoundError):
+    """Applied vulnerability does not exist."""
+
+    def __init__(self, applied_id: int):
+        super().__init__(
+            f"Applied template id={applied_id} not found",
+            detail={"applied_id": applied_id},
+        )
+
 class AppliedVulnerabilityNotFoundError(NotFoundError):
     """Applied vulnerability does not exist."""
 
@@ -236,3 +255,23 @@ class GroupTargetRequiredError(ValidationError):
 
     def __init__(self):
         super().__init__("domain_id or server_id is required")
+
+
+
+class GroupNotFoundError(NotFoundError):
+    """User does not exist."""
+
+    def __init__(self, group_id: int):
+        super().__init__(
+            f"Group id={group_id} not found",
+            detail={"user_id": group_id},
+        )
+
+class UserNotFoundError(NotFoundError):
+    """User does not exist."""
+
+    def __init__(self, user_id: int):
+        super().__init__(
+            f"User id={user_id} not found",
+            detail={"user_id": user_id},
+        )

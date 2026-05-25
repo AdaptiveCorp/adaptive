@@ -75,7 +75,6 @@ export interface Group {
   domain_id: number | null
   server_id: number | null
   user_ids: number[]
-  member_group_ids: number[]
 }
 
 export interface VmTemplate {

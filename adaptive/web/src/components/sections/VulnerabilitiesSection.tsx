@@ -2,18 +2,16 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ShieldAlert, Trash2, Plus, ArrowLeft, ChevronRight } from 'lucide-react'
 import { vulnerabilitiesApi } from '../../api/vulnerabilities'
-import { projectsApi } from '../../api/projects'
-import { usersApi } from '../../api/users'
 import { Badge } from '../Badge'
 import { Spinner } from '../Spinner'
 import { Modal } from '../Modal'
-import type { AppliedVulnerability, Vulnerability, Domain, User } from '../../types'
+import type { AppliedVulnerability, Domain, User, Vulnerability } from '../../types'
 
 interface Props {
   projectId: number
+  domains: Domain[]
+  users: User[]
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const CATEGORY_VARIANT: Record<string, 'red' | 'yellow' | 'blue' | 'green' | 'gray'> = {
   kerberos:    'red',
@@ -49,56 +47,28 @@ function fqdnToDn(fqdn: string): string {
 
 const USERNAME_PARAMS = new Set(['username', 'source_username', 'target_username'])
 
-// ── Status badge ──────────────────────────────────────────────────────────────
-
-const STATUS_STYLE: Record<string, { color: string; bg: string; label: string }> = {
-  pending:          { color: '#FBBF24', bg: 'rgba(251,191,36,0.1)',  label: 'en attente' },
-  applied:          { color: '#4ADE80', bg: 'rgba(74,222,128,0.1)',  label: 'appliquée' },
-  error:            { color: '#FB7185', bg: 'rgba(244,63,94,0.1)',   label: 'erreur' },
-  reverted_pending: { color: '#94A3B8', bg: 'rgba(148,163,184,0.1)', label: 'revert en attente' },
-  reverted_applied: { color: '#64748B', bg: 'rgba(100,116,139,0.1)', label: 'revertée' },
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const s = STATUS_STYLE[status] ?? STATUS_STYLE['pending']
-  return (
-    <span style={{
-      fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600,
-      color: s.color, background: s.bg, borderRadius: 4, padding: '2px 7px',
-      letterSpacing: '0.06em', textTransform: 'uppercase',
-    }}>
-      {s.label}
-    </span>
-  )
-}
-
-// ── Apply modal ───────────────────────────────────────────────────────────────
+// ─── Apply modal ────────────────────────────────────────────────────────────
 
 interface ApplyModalProps {
   projectId: number
   domains: Domain[]
+  users: User[]
   catalog: Vulnerability[]
   onClose: () => void
   onSuccess: () => void
 }
 
-function ApplyModal({ projectId, domains, catalog, onClose, onSuccess }: ApplyModalProps) {
-  const [step, setStep]       = useState<'pick' | 'configure'>('pick')
-  const [search, setSearch]   = useState('')
+function ApplyModal({ projectId, domains, users, catalog, onClose, onSuccess }: ApplyModalProps) {
+  const [step, setStep] = useState<'pick' | 'configure'>('pick')
+  const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Vulnerability | null>(null)
   const [domainId, setDomainId] = useState<number>(domains[0]?.id ?? 0)
-  const [params, setParams]   = useState<Record<string, string>>({})
-
-  const { data: domainUsers = [] } = useQuery<User[]>({
-    queryKey: ['users', projectId, domainId],
-    queryFn:  () => usersApi.list({ domain_id: domainId }),
-    enabled:  !!domainId,
-  })
+  const [params, setParams] = useState<Record<string, string>>({})
 
   const applyMut = useMutation({
     mutationFn: () =>
       vulnerabilitiesApi.apply(projectId, {
-        vuln_id:   selected!.id,
+        vuln_id: selected!.id,
         domain_id: domainId,
         params,
       }),
@@ -107,7 +77,7 @@ function ApplyModal({ projectId, domains, catalog, onClose, onSuccess }: ApplyMo
 
   function pickVuln(v: Vulnerability) {
     const reqParams = parseRequiredParams(v.required_params)
-    const domain    = domains.find(d => d.id === domainId) ?? domains[0]
+    const domain = domains.find(d => d.id === domainId) ?? domains[0]
     const initial: Record<string, string> = {}
     reqParams.forEach(p => {
       initial[p] = p === 'domain_dn' && domain ? fqdnToDn(domain.fqdn) : ''
@@ -121,17 +91,20 @@ function ApplyModal({ projectId, domains, catalog, onClose, onSuccess }: ApplyMo
     setDomainId(id)
     const domain = domains.find(d => d.id === id)
     if (domain && selected) {
+      const reqParams = parseRequiredParams(selected.required_params)
       setParams(prev => {
         const next = { ...prev }
-        if (parseRequiredParams(selected.required_params).includes('domain_dn'))
+        if (reqParams.includes('domain_dn')) {
           next['domain_dn'] = fqdnToDn(domain.fqdn)
+        }
         return next
       })
     }
   }
 
-  const reqParams       = selected ? parseRequiredParams(selected.required_params) : []
-  const canSubmit       = selected && domainId && reqParams.every(p => params[p]?.trim())
+  const domainUsers   = users.filter(u => u.domain_id === domainId)
+  const reqParams     = selected ? parseRequiredParams(selected.required_params) : []
+  const canSubmit     = selected && domainId && reqParams.every(p => params[p]?.trim())
   const filteredCatalog = catalog.filter(v =>
     v.name.toLowerCase().includes(search.toLowerCase()) ||
     v.code.toLowerCase().includes(search.toLowerCase())
@@ -142,7 +115,7 @@ function ApplyModal({ projectId, domains, catalog, onClose, onSuccess }: ApplyMo
       title={step === 'pick' ? 'Appliquer une vulnérabilité' : 'Configurer la vulnérabilité'}
       onClose={onClose}
     >
-      {/* ── Step 1 : catalogue ── */}
+      {/* ── Step 1: pick ── */}
       {step === 'pick' && (
         <div className="space-y-3">
           <input
@@ -167,11 +140,17 @@ function ApplyModal({ projectId, domains, catalog, onClose, onSuccess }: ApplyMo
                   key={v.id}
                   onClick={() => pickVuln(v)}
                   style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 12,
-                    background: 'var(--bg-card)', border: '1px solid var(--border-card)',
-                    borderRadius: 8, padding: '11px 14px',
-                    textAlign: 'left', cursor: 'pointer', width: '100%',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 12,
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-card)',
+                    borderRadius: 8,
+                    padding: '11px 14px',
+                    textAlign: 'left',
+                    cursor: 'pointer',
                     transition: 'border-color 0.15s',
+                    width: '100%',
                   }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--brand-400)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-card)' }}
@@ -205,13 +184,13 @@ function ApplyModal({ projectId, domains, catalog, onClose, onSuccess }: ApplyMo
         </div>
       )}
 
-      {/* ── Step 2 : configuration ── */}
+      {/* ── Step 2: configure ── */}
       {step === 'configure' && selected && (
         <form
           onSubmit={e => { e.preventDefault(); if (canSubmit) applyMut.mutate() }}
           className="space-y-4"
         >
-          {/* Recap */}
+          {/* Selected vuln recap */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
             background: 'var(--bg-input)', border: '1px solid var(--border-input)',
@@ -240,8 +219,14 @@ function ApplyModal({ projectId, domains, catalog, onClose, onSuccess }: ApplyMo
                 Aucun domaine disponible.
               </p>
             ) : (
-              <select className="input" value={domainId} onChange={e => handleDomainChange(Number(e.target.value))}>
-                {domains.map(d => <option key={d.id} value={d.id}>{d.fqdn}</option>)}
+              <select
+                className="input"
+                value={domainId}
+                onChange={e => handleDomainChange(Number(e.target.value))}
+              >
+                {domains.map(d => (
+                  <option key={d.id} value={d.id}>{d.fqdn}</option>
+                ))}
               </select>
             )}
           </div>
@@ -260,21 +245,35 @@ function ApplyModal({ projectId, domains, catalog, onClose, onSuccess }: ApplyMo
                   <label style={{ textTransform: 'none' }}>
                     <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 12 }}>{param}</span>
                   </label>
-                  {USERNAME_PARAMS.has(param) && domainUsers.length > 0 ? (
-                    <select className="input" value={params[param] ?? ''} required
-                      onChange={e => setParams({ ...params, [param]: e.target.value })}>
-                      <option value="">— Sélectionner un utilisateur —</option>
-                      {domainUsers.map(u => <option key={u.id} value={u.username}>{u.username}</option>)}
-                    </select>
+                  {USERNAME_PARAMS.has(param) ? (
+                    domainUsers.length > 0 ? (
+                      <select
+                        className="input"
+                        value={params[param] ?? ''}
+                        onChange={e => setParams({ ...params, [param]: e.target.value })}
+                        required
+                      >
+                        <option value="">— Sélectionner un utilisateur —</option>
+                        {domainUsers.map(u => (
+                          <option key={u.id} value={u.username}>{u.username}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        className="input"
+                        placeholder={`ex: j.doe`}
+                        value={params[param] ?? ''}
+                        onChange={e => setParams({ ...params, [param]: e.target.value })}
+                        required
+                      />
+                    )
                   ) : (
                     <input
-                      className="input" required
-                      placeholder={
-                        param === 'spn_name'  ? 'ex: HTTP/myserver.corp.local' :
-                        param === 'domain_dn' ? 'ex: DC=corp,DC=local' : ''
-                      }
+                      className="input"
+                      placeholder={param === 'spn_name' ? 'ex: HTTP/myserver.corp.local' : param === 'domain_dn' ? 'ex: DC=corp,DC=local' : ''}
                       value={params[param] ?? ''}
                       onChange={e => setParams({ ...params, [param]: e.target.value })}
+                      required
                     />
                   )}
                 </div>
@@ -290,7 +289,11 @@ function ApplyModal({ projectId, domains, catalog, onClose, onSuccess }: ApplyMo
 
           <div className="flex gap-2 justify-end">
             <button type="button" className="btn-ghost" onClick={onClose}>Annuler</button>
-            <button type="submit" className="btn-primary" disabled={!canSubmit || applyMut.isPending}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={!canSubmit || applyMut.isPending}
+            >
               {applyMut.isPending && <Spinner className="w-3.5 h-3.5" />}
               Appliquer
             </button>
@@ -306,18 +309,35 @@ function ApplyModal({ projectId, domains, catalog, onClose, onSuccess }: ApplyMo
   )
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ─── Status badge ────────────────────────────────────────────────────────────
 
-export function VulnerabilitiesSection({ projectId }: Props) {
+const STATUS_STYLE: Record<string, { color: string; bg: string; label: string }> = {
+  pending:          { color: '#FBBF24', bg: 'rgba(251,191,36,0.1)',  label: 'en attente' },
+  applied:          { color: '#4ADE80', bg: 'rgba(74,222,128,0.1)',  label: 'appliquée' },
+  error:            { color: '#FB7185', bg: 'rgba(244,63,94,0.1)',   label: 'erreur' },
+  reverted_pending: { color: '#94A3B8', bg: 'rgba(148,163,184,0.1)', label: 'revert en attente' },
+  reverted_applied: { color: '#64748B', bg: 'rgba(100,116,139,0.1)', label: 'revertée' },
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const s = STATUS_STYLE[status] ?? STATUS_STYLE['pending']
+  return (
+    <span style={{
+      fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600,
+      color: s.color, background: s.bg, borderRadius: 4, padding: '2px 7px',
+      letterSpacing: '0.06em', textTransform: 'uppercase',
+    }}>
+      {s.label}
+    </span>
+  )
+}
+
+// ─── Main section ─────────────────────────────────────────────────────────────
+
+export function VulnerabilitiesSection({ projectId, domains, users }: Props) {
   const queryClient = useQueryClient()
   const [showApply,    setShowApply]    = useState(false)
   const [removeTarget, setRemoveTarget] = useState<AppliedVulnerability | null>(null)
-
-  const { data: projectData } = useQuery({
-    queryKey: ['project', projectId],
-    queryFn:  () => projectsApi.get(projectId),
-  })
-  const domains = projectData?.domains ?? []
 
   const { data: applied, isLoading } = useQuery({
     queryKey: ['applied-vulns', projectId],
@@ -381,15 +401,15 @@ export function VulnerabilitiesSection({ projectId }: Props) {
             </p>
           </div>
         ) : (
-          applied.map(av => (
+          applied.map((av) => (
             <div
               key={av.id}
-              className="group"
               style={{
                 display: 'flex', alignItems: 'flex-start', gap: 12,
                 background: 'var(--bg-card)', border: '1px solid var(--border-card)',
                 borderRadius: 8, padding: '12px 14px',
               }}
+              className="group"
             >
               <ShieldAlert style={{ width: 15, height: 15, color: '#FB7185', marginTop: 2, flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -408,23 +428,19 @@ export function VulnerabilitiesSection({ projectId }: Props) {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   {av.domain_id && <Badge label={domainName(av.domain_id) ?? `Domain #${av.domain_id}`} variant="blue" />}
-                  {av.user_id   && <Badge label={`User #${av.user_id}`}    variant="yellow" />}
+                  {av.user_id   && <Badge label={`User #${av.user_id}`}   variant="yellow" />}
                   {av.server_id && <Badge label={`Server #${av.server_id}`} variant="gray" />}
                   {av.forest_id && <Badge label={`Forest #${av.forest_id}`} variant="green" />}
                 </div>
                 {av.params && (
                   <pre style={{
-                    fontFamily: "'Fira Code', monospace", fontSize: 11,
-                    color: 'var(--text-dim)', marginTop: 6,
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    fontFamily: "'Fira Code', monospace", fontSize: 11, color: 'var(--text-dim)',
+                    marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
                     {av.params}
                   </pre>
                 )}
-                <p style={{
-                  fontSize: 11, color: 'var(--text-muted)', marginTop: 4,
-                  fontFamily: "'IBM Plex Mono', monospace",
-                }}>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, fontFamily: "'IBM Plex Mono', monospace" }}>
                   {new Date(av.created_at).toLocaleDateString('fr-FR')}
                 </p>
               </div>
@@ -447,6 +463,7 @@ export function VulnerabilitiesSection({ projectId }: Props) {
         <ApplyModal
           projectId={projectId}
           domains={domains}
+          users={users}
           catalog={catalog}
           onClose={() => setShowApply(false)}
           onSuccess={() => {

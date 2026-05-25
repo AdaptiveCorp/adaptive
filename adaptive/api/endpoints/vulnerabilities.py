@@ -46,10 +46,6 @@ def list_applied_vulnerabilities(project_id: int, db: Session = Depends(get_db))
     """
     return (
         db.query(AppliedTemplate)
-        .join(Template)
-        .filter(
-            AppliedTemplate.project_id == project_id,
-        )
         .all()
     )
 
@@ -108,7 +104,6 @@ def post_vulnerability(
     db.refresh(domain)
 
     # result = execute_powershell_winrm(primary_dc.ip, powershell_script, param_req, db)
-
     return applied_template
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Table, Column, ForeignKey, Integer
+from sqlalchemy import String, Table, Column, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from adaptive.api.environment.database import Base
@@ -13,20 +13,12 @@ if TYPE_CHECKING:
     from adaptive.api.models.server import Server
 
 
-# Table d’association User <-> Group
+# Table d'association User <-> Group
 group_users = Table(
     "group_users",
     Base.metadata,
     Column("group_id", ForeignKey("groups.id"), primary_key=True),
     Column("user_id", ForeignKey("users.id"), primary_key=True),
-)
-
-# Table d’association Group <-> Group (group nesting)
-group_group_membership = Table(
-    "group_group_membership",
-    Base.metadata,
-    Column("parent_group_id", ForeignKey("groups.id"), primary_key=True),
-    Column("member_group_id", ForeignKey("groups.id"), primary_key=True),
 )
 
 
@@ -40,9 +32,9 @@ class Group(Base):
     domain_id: Mapped[int | None] = mapped_column(ForeignKey("domains.id"), nullable=True)
     domain: Mapped[Domain | None] = relationship(
         "Domain",
-        back_populates="groups", 
+        back_populates="groups",
     )
-    
+
     server_id: Mapped[int | None] = mapped_column(ForeignKey("servers.id"), nullable=True)
     server: Mapped[Server | None] = relationship(
         "Server",
@@ -54,24 +46,6 @@ class Group(Base):
         "User",
         secondary=group_users,
         back_populates="groups",
-    )
-
-    # groupes membres (nested groups)
-    member_groups: Mapped[list["Group"]] = relationship(
-        "Group",
-        secondary=group_group_membership,
-        primaryjoin=id == group_group_membership.c.parent_group_id,
-        secondaryjoin=id == group_group_membership.c.member_group_id,
-        back_populates="parent_groups",
-    )
-
-    # groupes dont CE groupe est membre
-    parent_groups: Mapped[list["Group"]] = relationship(
-        "Group",
-        secondary=group_group_membership,
-        primaryjoin=id == group_group_membership.c.member_group_id,
-        secondaryjoin=id == group_group_membership.c.parent_group_id,
-        back_populates="member_groups",
     )
 
     def __repr__(self) -> str:

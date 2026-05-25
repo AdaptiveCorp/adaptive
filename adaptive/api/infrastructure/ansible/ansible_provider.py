@@ -115,6 +115,28 @@ class AnsibleService:
 
         return result
 
+    def delete_user(
+        self,
+        server_ip: str,
+        username: str,
+    ) -> PlaybookResult:
+        logger.info("%s Deleting user '%s' on %s", PREFIX, username, server_ip)
+
+        extravars: dict[str, Any] = {
+            "target_host": server_ip,
+            "username": username,
+        }
+
+        content = self._get_template_content("delete_user_by_sam")
+        result = self._run_playbook(content, server_ip, extravars)
+
+        if result.success:
+            logger.info("%s User '%s' deleted successfully on %s", PREFIX, username, server_ip)
+        else:
+            logger.error("%s Failed to delete user '%s' on %s: %s", PREFIX, username, server_ip, result.error)
+
+        return result
+
     def add_groups(
         self,
         server_ip: str,
@@ -126,7 +148,7 @@ class AnsibleService:
 
         extravars: dict[str, Any] = {
             "target_host": server_ip,
-            "groups_list": groups,
+            "groupnames": groups,
             "base_dn": base_dn,
             "domain_fqdn": domain_fqdn,
         }
@@ -141,7 +163,36 @@ class AnsibleService:
 
         return result
 
+    def add_group_members(
+        self,
+        server_ip: str,
+        memberships: list[dict[str, Any]],
+    ) -> PlaybookResult:
+        logger.info(
+            "%s Adding members to %d group(s) on %s",
+            PREFIX, len(memberships), server_ip
+        )
 
+        # memberships contient toujours 1 seul élément désormais
+        membership = memberships[0]
+
+        extravars: dict[str, Any] = {
+            "target_host": server_ip,
+            "group_name": membership["group_name"],
+            "members": membership["members"],
+        }
+
+        content = self._get_template_content("add_group_members")
+        result = self._run_playbook(content, server_ip, extravars)
+
+        if result.success:
+            logger.info("%s Successfully updated group memberships on %s", PREFIX, server_ip)
+        else:
+            logger.error("%s Failed to update group memberships on %s: %s", PREFIX, server_ip, result.error)
+
+        return result
+    
+    
     def _run_playbook(
         self,
         playbook_content: str,
@@ -150,6 +201,7 @@ class AnsibleService:
     ) -> PlaybookResult:
         logger.info("%s Running playbook on %s", PREFIX, target_host)
 
+        print("PASSWORD : ", self._password)
         inventory = {
             "all": {
                 "hosts": {
@@ -167,7 +219,7 @@ class AnsibleService:
             "ansible_winrm_scheme": "http",
             "ansible_winrm_server_cert_validation": "ignore",
             "ansible_port": 5985,
-            **extravars,  # ← les extravars métier par dessus
+            **extravars, 
         }
         with tempfile.TemporaryDirectory() as tmpdir:
             project_dir = Path(tmpdir) / "project"

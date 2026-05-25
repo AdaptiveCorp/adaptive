@@ -48,6 +48,8 @@ def seed_templates(yaml_path: str | None = None) -> None:
                 description=tpl_data["description"],
                 category=tpl_data["category"],
                 content=tpl_data["content"],
+                reverse_type=tpl_data["reverse_type"],
+                reverse_content=tpl_data["reverse_content"],
                 required_params=required_params_json,
             )
             db.add(tpl)

@@ -1,43 +1,12 @@
-Write-Host "=== Installing VirtIO drivers ==="
+$driverPath = 'E:\vioscsi\w10\amd64'
+if (Test-Path $driverPath) { pnputil /add-driver "$driverPath\vioscsi.inf" /install }
 
-# Find VirtIO CD-ROM drive letter
-$virtioCD = Get-WmiObject -Class Win32_CDROMDrive |
-    Where-Object { $_.VolumeName -like "*virtio*" } |
-    Select-Object -First 1 -ExpandProperty Drive
+$netPath = 'E:\NetKVM\2k22\amd64'
+if (Test-Path $netPath) { pnputil /add-driver "$netPath\netkvm.inf" /install }
+elseif (Test-Path 'E:\NetKVM\w10\amd64') { pnputil /add-driver 'E:\NetKVM\w10\amd64\netkvm.inf' /install }
 
-if (-not $virtioCD) {
-    Write-Host "VirtIO ISO not found - listing available drives:"
-    Get-WmiObject -Class Win32_CDROMDrive | ForEach-Object {
-        Write-Host "  $($_.Drive) - $($_.VolumeName)"
-    }
-    throw "Cannot find VirtIO ISO. Aborting."
-}
+$balloonPath = 'E:\Balloon\2k22\amd64'
+if (Test-Path $balloonPath) { pnputil /add-driver "$balloonPath\balloon.inf" /install }
 
-Write-Host "VirtIO ISO found on $virtioCD"
-
-# vioscsi, viostor, NetKVM are already loaded via autounattend.xml (windowsPE pass)
-# Only install additional drivers not included in the answer file
-$drivers = @(
-    "Balloon\2k22\amd64",
-    "vioserial\2k22\amd64"
-)
-
-foreach ($driver in $drivers) {
-    $path = "$virtioCD\$driver"
-    if (Test-Path $path) {
-        Write-Host "Installing $driver ..."
-        pnputil.exe /add-driver "$path\*.inf" /install /subdirs
-    }
-}
-
-# Install QEMU Guest Agent
-$qemuMsi = "$virtioCD\guest-agent\qemu-ga-x86_64.msi"
-if (Test-Path $qemuMsi) {
-    Write-Host "Installing QEMU Guest Agent ..."
-    Start-Process msiexec.exe -ArgumentList "/i `"$qemuMsi`" /qn /norestart" -Wait
-    Set-Service -Name "QEMU-GA" -StartupType Automatic -ErrorAction SilentlyContinue
-    Start-Service -Name "QEMU-GA" -ErrorAction SilentlyContinue
-}
-
-Write-Host "=== VirtIO installation complete ==="
-exit 0
+$qemuGa = 'E:\guest-agent\qemu-ga-x86_64.msi'
+if (Test-Path $qemuGa) { Start-Process msiexec.exe -ArgumentList "/i `"$qemuGa`" /qn /norestart" -Wait }

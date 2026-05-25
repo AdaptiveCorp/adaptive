@@ -7,7 +7,6 @@ interface GroupCreatePayload {
   domain_id?: number
   server_id?: number
   user_ids?: number[]
-  member_group_ids?: number[]
 }
 
 export const groupsApi = {

@@ -24,10 +24,8 @@ export function GroupsTab({ projectId, domains }: Props) {
     description: '',
     domain_id: domains[0]?.id ?? 0,
   })
-  const [selectedUserIds,  setSelectedUserIds]  = useState<number[]>([])
-  const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([])
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
 
-  // All groups, filtered to this project's domains
   const { data: allGroups, isLoading } = useQuery({
     queryKey: ['groups'],
     queryFn: () => groupsApi.list(),
@@ -36,7 +34,6 @@ export function GroupsTab({ projectId, domains }: Props) {
     g.domain_id !== null && domainIds.includes(g.domain_id)
   )
 
-  // Users for the selected domain (for create form)
   const { data: domainUsers } = useQuery({
     queryKey: ['users', projectId, form.domain_id],
     queryFn: async () => {
@@ -46,16 +43,12 @@ export function GroupsTab({ projectId, domains }: Props) {
     enabled: !!form.domain_id,
   })
 
-  // Existing groups in the selected domain (for nested groups)
-  const siblingGroups = groups.filter(g => g.domain_id === form.domain_id)
-
   const createMut = useMutation({
     mutationFn: () => groupsApi.create({
       name: form.name.trim(),
       description: form.description.trim() || undefined,
       domain_id: form.domain_id || undefined,
       user_ids: selectedUserIds,
-      member_group_ids: selectedGroupIds,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups'] })
@@ -67,8 +60,10 @@ export function GroupsTab({ projectId, domains }: Props) {
 
   const deleteMut = useMutation({
     mutationFn: (id: number) => groupsApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['groups'] })
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<Group[]>(['groups'], old =>
+        (old ?? []).filter(g => g.id !== id)
+      )
       queryClient.invalidateQueries({ queryKey: ['project', projectId] })
       setDelTarget(null)
     },
@@ -77,17 +72,10 @@ export function GroupsTab({ projectId, domains }: Props) {
   function resetForm() {
     setForm({ name: '', description: '', domain_id: domains[0]?.id ?? 0 })
     setSelectedUserIds([])
-    setSelectedGroupIds([])
   }
 
   function toggleUser(id: number) {
     setSelectedUserIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    )
-  }
-
-  function toggleGroup(id: number) {
-    setSelectedGroupIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     )
   }
@@ -156,11 +144,6 @@ export function GroupsTab({ projectId, domains }: Props) {
                   <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
                     {g.user_ids.length} utilisateur{g.user_ids.length !== 1 ? 's' : ''}
                   </span>
-                  {g.member_group_ids.length > 0 && (
-                    <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                      · {g.member_group_ids.length} sous-groupe{g.member_group_ids.length !== 1 ? 's' : ''}
-                    </span>
-                  )}
                   {g.description && (
                     <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
                       — {g.description}
@@ -212,7 +195,6 @@ export function GroupsTab({ projectId, domains }: Props) {
                 onChange={e => {
                   setForm({ ...form, domain_id: Number(e.target.value) })
                   setSelectedUserIds([])
-                  setSelectedGroupIds([])
                 }}
               >
                 {domains.map(d => (
@@ -221,10 +203,9 @@ export function GroupsTab({ projectId, domains }: Props) {
               </select>
             </div>
 
-            {/* Users */}
             {domainUsers && domainUsers.length > 0 && (
               <div>
-                <label>Membres utilisateurs <span style={{ color: 'var(--text-dim)', textTransform: 'none', fontSize: 10 }}>(optionnel)</span></label>
+                <label>Membres <span style={{ color: 'var(--text-dim)', textTransform: 'none', fontSize: 10 }}>(optionnel)</span></label>
                 <div style={{
                   background: 'var(--bg-input)', border: '1px solid var(--border-input)',
                   borderRadius: 7, maxHeight: 140, overflowY: 'auto', padding: '6px 0',
@@ -241,33 +222,6 @@ export function GroupsTab({ projectId, domains }: Props) {
                       />
                       <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 12, color: 'var(--text-bright)' }}>
                         {u.username}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Nested groups */}
-            {siblingGroups.length > 0 && (
-              <div>
-                <label>Sous-groupes <span style={{ color: 'var(--text-dim)', textTransform: 'none', fontSize: 10 }}>(optionnel)</span></label>
-                <div style={{
-                  background: 'var(--bg-input)', border: '1px solid var(--border-input)',
-                  borderRadius: 7, maxHeight: 120, overflowY: 'auto', padding: '6px 0',
-                }}>
-                  {siblingGroups.map(g => (
-                    <label key={g.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '5px 12px', cursor: 'pointer',
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedGroupIds.includes(g.id)}
-                        onChange={() => toggleGroup(g.id)}
-                      />
-                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: 'var(--text-bright)' }}>
-                        {g.name}
                       </span>
                     </label>
                   ))}
@@ -297,11 +251,14 @@ export function GroupsTab({ projectId, domains }: Props) {
       {/* Delete confirm */}
       {delTarget && (
         <Modal title="Supprimer le groupe" onClose={() => setDelTarget(null)}>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.6 }}>
             Supprimer{' '}
             <span style={{ fontFamily: "'Fira Code', monospace", color: 'var(--text-bright)', fontWeight: 500 }}>
               {delTarget.name}
             </span>{' '}?
+          </p>
+          <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 20, lineHeight: 1.5 }}>
+            La suppression sera effective au prochain déploiement.
           </p>
           <div className="flex gap-2 justify-end">
             <button className="btn-ghost" onClick={() => setDelTarget(null)}>Annuler</button>
