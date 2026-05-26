@@ -28,10 +28,10 @@ source "proxmox-iso" "windows-server-2022" {
     index            = 2
     iso_file         = var.iso_already_downloaded ? var.iso_file : null
     iso_url          = var.iso_already_downloaded ? null : var.iso_url
-    iso_checksum     = var.iso_already_downloaded ? null : var.iso_checksum
     iso_storage_pool = var.iso_storage_pool
     iso_download_pve = !var.iso_already_downloaded
     unmount          = true
+    # iso_checksum     = var.iso_already_downloaded ? null : var.iso_checksum
   }
 
   additional_iso_files {
