@@ -8,3 +8,6 @@ adaptive/web/dist/
 adaptive/web/node_modules/
 adaptive/web/.env
 adaptive/migrations/versions/
+adaptive/packer/windows-server-2022/variables.auto.pkrvars.hcl
+adaptive/packer/windows-server-2022/variables.pkrvars.hcl
+adaptive/packer/windows-server-2022/packer-2026*

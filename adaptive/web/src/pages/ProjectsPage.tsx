@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, Trash2, ArrowRight, FolderOpen } from 'lucide-react'
+import { Plus, Trash2, FolderOpen } from 'lucide-react'
 import { projectsApi } from '../api/projects'
 import { Modal } from '../components/Modal'
 import { Spinner } from '../components/Spinner'
@@ -191,49 +191,48 @@ function ProjectRow({ project, onDelete }: { project: Project; onDelete: () => v
   })
 
   return (
-    <div className="project-row">
-      {/* Name + meta */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontWeight: 600,
-          fontSize: 15,
-          color: 'var(--text-bright)',
-          letterSpacing: '-0.02em',
-          marginBottom: 3,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
-          {project.name}
-        </p>
-        <p style={{
-          fontSize: 11,
-          color: 'var(--text-dim)',
-          fontFamily: "'IBM Plex Mono', monospace",
-          letterSpacing: '0.02em',
-        }}>
-          <span style={{ color: 'var(--text-muted)' }}>
-            #{String(project.id).padStart(3, '0')}
-          </span>
-          {' · '}
-          {date}
-        </p>
-      </div>
+    <Link to={`/projects/${project.id}`} style={{ display: 'block', textDecoration: 'none' }}>
+      <div className="project-row" style={{ cursor: 'pointer' }}>
+        {/* Name + meta */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontWeight: 600,
+            fontSize: 15,
+            color: 'var(--text-bright)',
+            letterSpacing: '-0.02em',
+            marginBottom: 3,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
+            {project.name}
+          </p>
+          <p style={{
+            fontSize: 11,
+            color: 'var(--text-dim)',
+            fontFamily: "'IBM Plex Mono', monospace",
+            letterSpacing: '0.02em',
+          }}>
+            <span style={{ color: 'var(--text-muted)' }}>
+              #{String(project.id).padStart(3, '0')}
+            </span>
+            {' · '}
+            {date}
+          </p>
+        </div>
 
-      {/* Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete() }}
-          title="Supprimer"
-          className="row-del"
-        >
-          <Trash2 style={{ width: 13, height: 13 }} />
-        </button>
-        <Link to={`/projects/${project.id}`} className="row-nav">
-          <ArrowRight style={{ width: 13, height: 13 }} />
-        </Link>
+        {/* Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete() }}
+            title="Supprimer"
+            className="row-del"
+          >
+            <Trash2 style={{ width: 13, height: 13 }} />
+          </button>
+        </div>
       </div>
-    </div>
+    </Link>
   )
 }
