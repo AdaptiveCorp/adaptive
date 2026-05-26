@@ -11,3 +11,6 @@ adaptive/migrations/versions/
 adaptive/packer/windows-server-2022/variables.auto.pkrvars.hcl
 adaptive/packer/windows-server-2022/variables.pkrvars.hcl
 adaptive/packer/windows-server-2022/packer-2026*
+.claude/*
+agent_docs/*
+CLAUDE*
