@@ -4,7 +4,7 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from adaptive.api.infrastructure import AnsibleService
+from adaptive.api.infrastructure import AnsibleService, PlaybookResult
 from adaptive.api.infrastructure.base import DeploymentResult
 from adaptive.api.models.applied_template import AppliedTemplate, TemplateStatus
 from adaptive.api.models.domain import Domain
@@ -12,9 +12,43 @@ from adaptive.api.models.project import Project
 from adaptive.api.models.template import Template
 from adaptive.api.models.user import User
 from adaptive.api.services.applied_template import _create_applied_template, _update_template_status
+from adaptive.api.services.servers import get_root_dc
 from adaptive.api.services.utils import _bare_ip
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+def ansible_deploy_user(user: User, db: Session) -> PlaybookResult:
+    ansible = AnsibleService(db=db)
+
+    if not user.domain:
+        raise ValueError(f"User '{user.username}' must belong to a domain")
+
+    primary_dc = get_root_dc(user.domain, db)
+
+    if not primary_dc.ip:
+        raise ValueError(f"DC '{primary_dc.fqdn}' has no IP address")
+
+    domain = primary_dc.domain
+    if not domain:
+        raise ValueError(f"DC '{primary_dc.fqdn}' has no domain")
+
+    user_dicts: list[dict[str, str]] = [
+        {
+            "username": user.username,
+            "firstname": user.firstname,
+            "lastname": user.lastname,
+            "password": user.password,
+        }
+    ]
+    fqdn = primary_dc.fqdn
+    base_dn = "DC=" + fqdn.split(".")[-2].lower() + "," + "DC=" + fqdn.split(".")[-1].lower()
+    return ansible.add_users(
+        server_ip=_bare_ip(primary_dc.ip),
+        users=user_dicts,
+        base_dn=base_dn,
+        domain_fqdn=domain.fqdn,
+    )
 
 
 def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:

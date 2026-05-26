@@ -24,7 +24,7 @@ from adaptive.api.schemas.vulnerability import (
     VulnerabilityApply,
     VulnerabilityResponse,
 )
-from adaptive.api.services.deployment_service import execute_powershell_winrm
+from adaptive.api.services.utils import execute_powershell_winrm
 
 router = APIRouter(
     prefix="/vulnerabilities",
