@@ -1,209 +1,230 @@
 # ADaptive — API
 
-Application web pour générer des infrastructures Active Directory vulnérables sur Proxmox, destinées à l'entraînement en pentest.
+Web application for generating vulnerable Active Directory infrastructures on Proxmox, designed for penetration testing practice.
 
-## Prérequis
+---
+
+## Prerequisites
+
+Install system dependencies:
 
 ```bash
 sudo apt update
 sudo apt install python3 npm
 ```
 
-- [uv](https://docs.astral.sh/uv/) — gestionnaire de packages et d'environnement Python
+Install [uv](https://docs.astral.sh/uv/), the Python package and environment manager:
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+---
+
 ## Installation
 
+Install Python dependencies and create the virtual environment:
+
 ```bash
-# Installer les dépendances et créer l'environnement virtuel
 uv sync
 ```
 
-Copier le fichier `.env.example` en `.env` et renseigner la configuration :
+Copy the example environment file and fill in your configuration:
 
 ```bash
 cp .env.example .env
 ```
 
-## Lancer l'application
+---
 
-Créer les différentes tables nécessaires. Pour ca il faut lancer la commande `alembic` suivante :
+## Running the API
+
+### Database setup
+
+Before starting the API, apply the database migrations to create the required tables:
 
 ```bash
 uv run alembic upgrade head
 ```
 
-Attention, il faut qu'il y'ai au moins un fichier de migration qui créé les tables dans `migrations/verions`. Si il y'en a pas, il faut le générer avec :
+At least one migration file must exist in `migrations/versions/`. If none is present, generate the initial migration from the SQLAlchemy models defined in `adaptive/api/models/`:
 
 ```bash
 uv run alembic revision --autogenerate -m "initial"
 ```
 
-Cette commande va traduire les modèles de nos objets dans `api/models` en table et colonne SQL.
-
-Pour reset la db et la mettre à jour avec les dernière modification fait tout simplement :
+To reset the database and rebuild it from scratch after model changes:
 
 ```bash
-rm app.db && rm -rf adaptive/migrations/versions/* && uv run alembic revision --autogenerate -m "initial" && uv run alembic upgrade head
+rm app.db && rm -rf adaptive/migrations/versions/* \
+  && uv run alembic revision --autogenerate -m "initial" \
+  && uv run alembic upgrade head
 ```
 
+### Start the server
+
 ```bash
-# Mode développement (rechargement automatique)
+# Development mode (auto-reload)
 uv run uvicorn adaptive.api.main:app --reload
 
-# Mode production
+# Production mode
 uv run gunicorn adaptive.api.main:app -k uvicorn.workers.UvicornWorker
 ```
 
-L'API est disponible sur `http://localhost:8000`. La documentation Swagger est accessible sur `/docs`.
+The API is available at `http://localhost:8000`. The Swagger documentation is accessible at `/docs`.
 
-## Lancer le front-end
+---
 
-Le front-end se trouve dans `adaptive/web/` (React + Vite + TypeScript).
+## Running the Frontend
+
+The frontend is located in `adaptive/web/` and is built with React, Vite, and TypeScript.
 
 ```bash
-# Installer les dépendances
+# Install dependencies
 npm --prefix adaptive/web install
 
-# Mode développement (rechargement automatique)
+# Development mode (auto-reload)
 npm --prefix adaptive/web run dev
 
-# Build de production
+# Production build
 npm --prefix adaptive/web run build
 
-# Prévisualiser le build de production
+# Preview the production build
 npm --prefix adaptive/web run preview
 ```
 
-L'application front-end est disponible par défaut sur `http://localhost:5173`.
+The frontend is available by default at `http://localhost:5173`.
 
-## Migrations de base de données
+---
 
-### Principe
+## Database Migrations
 
-ADaptive utilise **Alembic** pour gérer les migrations de sa base de données SQLite.
+### Overview
 
-Une **migration** est un script Python qui décrit une modification du schéma de la base de données (ajout d'une table, d'une colonne, changement de type, etc.). Chaque migration possède un identifiant unique (un hash) et un pointeur vers la migration précédente, formant ainsi une **chaîne ordonnée** de toutes les évolutions du schéma.
+ADaptive uses **Alembic** to manage SQLite database migrations. A migration is a Python script that describes a schema change — adding a table, a column, changing a type, and so on. Each migration has a unique hash identifier and a pointer to the previous migration, forming an ordered chain of all schema changes.
 
-L'intérêt principal est de pouvoir :
+The main benefits are:
 
-- **Versionner** le schéma de la base au même titre que le code
-- **Reproduire** la base de données à l'identique sur n'importe quelle machine en rejouant les migrations
-- **Collaborer** sans conflits : chaque développeur génère ses migrations depuis ses modifications de modèles, et Alembic les applique dans l'ordre
-- **Revenir en arrière** si une migration pose problème (`downgrade`)
+- **Version control** — the database schema is versioned alongside the code
+- **Reproducibility** — any machine can recreate the exact database state by replaying the migrations in order
+- **Collaboration** — each developer generates migrations from their model changes; Alembic applies them in the correct order
+- **Rollback** — a problematic migration can be reverted with `downgrade`
 
 ### Workflow
 
-Le schéma de référence est défini par les **modèles SQLAlchemy** dans `adaptive/api/models/`. On ne modifie **jamais** une migration à la main.
+The reference schema is defined by the **SQLAlchemy models** in `adaptive/api/models/`. Migration files must never be edited manually.
 
-Le cycle de travail est le suivant :
-
-1. **Modifier un modèle** SQLAlchemy (ajouter un champ, une table, une relation…)
-2. **Générer la migration** — Alembic compare les modèles au schéma actuel et produit automatiquement le script de migration :
+1. **Modify a model** — add a field, a table, a relation, etc.
+2. **Generate the migration** — Alembic compares the models against the current schema and produces the migration script automatically:
    ```bash
-   uv run alembic revision --autogenerate -m "description du changement"
+   uv run alembic revision --autogenerate -m "description of the change"
    ```
-3. **Appliquer la migration** — exécute tous les scripts en attente pour mettre la base à jour :
+3. **Apply the migration** — runs all pending scripts to bring the database up to date:
    ```bash
    uv run alembic upgrade head
    ```
 
-### Commandes utiles
+### Useful Commands
 
 ```bash
-# Voir la révision actuellement appliquée
+# Show the currently applied revision
 uv run alembic current
 
-# Afficher l'historique complet des migrations
+# Display the full migration history
 uv run alembic history
 
-# Annuler la dernière migration appliquée
+# Revert the last applied migration
 uv run alembic downgrade -1
 
-# Réinitialiser la base (supprimer et recréer)
+# Reset the database (delete and recreate)
 rm app.db && uv run alembic upgrade head
 ```
 
-> **Note :** Les templates de vulnérabilités sont automatiquement injectés au démarrage de l'application depuis `templates.yaml`.
+> **Note:** Vulnerability templates are automatically injected at startup from `templates.yaml`.
 
-# Status des templates
+---
 
-Un template lorsqu'il est appliqué peut avoir plusieurs status :
+## Template Status
 
-- applied
-- failed
-- modified
-- pending
+When a template is applied, it can have one of the following statuses:
+
+- `applied`
+- `failed`
+- `modified`
+- `pending`
+
+---
 
 ## Linting
 
-Le projet utilise deux linters, installés automatiquement avec `uv sync` (groupe `dev`) :
+Linters are installed automatically with `uv sync` (dev dependency group).
 
 ### Ruff (Python)
 
-uv run yamllint adaptive/api/database/
+[Ruff](https://docs.astral.sh/ruff/) handles linting and formatting for Python code. Configuration is defined in `pyproject.toml` under `[tool.ruff]`.
 
-[Ruff](https://docs.astral.sh/ruff/) s'occupe du lint et du formatage du code Python. La configuration se trouve dans `pyproject.toml` sous `[tool.ruff]`.
+Enabled rule sets: pycodestyle, pyflakes, isort, pyupgrade, bugbear, simplify.
 
 ```bash
-# Vérifier les erreurs de lint
+# Check for lint errors
 uv run ruff check .
 
-# Corriger automatiquement les erreurs
+# Auto-fix lint errors
 uv run ruff check . --fix
 
-# Vérifier le formatage
+# Check formatting
 uv run ruff format --check .
 
-# Formater automatiquement
+# Auto-format
 uv run ruff format .
 ```
 
-Règles activées : pycodestyle, pyflakes, isort, pyupgrade, bugbear, simplify.
-
 ### yamllint (YAML)
 
-[yamllint](https://yamllint.readthedocs.io/) valide les fichiers YAML du dossier `adaptive/api/database/` (templates de vulnérabilités). La configuration se trouve dans `.yamllint.yml`.
+[yamllint](https://yamllint.readthedocs.io/) validates the YAML files in `adaptive/api/database/` (vulnerability templates). Configuration is defined in `.yamllint.yml`.
 
 ```bash
 uv run yamllint adaptive/api/database/
 ```
 
-### Avant de commit
+### Pre-commit Check
+
+Run all linters before committing:
 
 ```bash
 uv run ruff check . --fix && uv run ruff format . && uv run yamllint adaptive/api/database/
 ```
 
-# Docker
+---
 
-Pour build
+## Docker
+
+Build the image:
 
 ```bash
 docker build -t adaptive-api .
 ```
 
-Pour lancer :
+Run the container:
 
 ```bash
 docker run --rm -p 8000:8000 --env-file .env adaptive-api
 ```
 
-# Tests
+---
 
-Pour lancer le script de test pour peuplre la base données avec :
+## Tests
 
-- Un vm template
-- Un project
-- Une forêt
-- Un domaine
-- Un user
+The test suite seeds the database with a minimal dataset:
 
-Lancer :
+- A VM template
+- A project
+- A forest
+- A domain
+- A user
 
-```
+Run the tests with:
+
+```bash
 uv run pytest
 ```

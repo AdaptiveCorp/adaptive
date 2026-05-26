@@ -1,50 +1,69 @@
-Script de déploiement d'un template windows avec packer.
+# Deploying a Windows Template with Packer
 
-# Build
+This guide explains how to build and deploy a Windows template using Packer.
 
-Ajouter les ISO suivant :
+## Prerequisites
 
-- windows server
-- virtio drivers
-- CloudBase Init, pour ce faire :
+Before starting the build, add the following ISOs:
 
-```
+- Windows Server
+- VirtIO Drivers
+- Cloudbase-Init
+
+### Download Cloudbase-Init
+
+```bash
 wget https://cloudbase.it/downloads/CloudbaseInitSetup_Stable_x64.msi
 ```
 
-Puis transformer le fichier en image iso :
+### Create an ISO from the installer
 
-```
+```bash
 mkisofs -J -r -o CloudbaseInitSetup_Stable_x64.iso CloudbaseInitSetup_Stable_x64.msi
 ```
 
-Créer un fichier `variables.auto.pkrvars.hcl`.
-Copier les valeur de `variables.pkrvars.hcl` dans le fichier créer et les modifier avec votre contexte (IP proxmox, ...).
+## Configure Variables
 
-Enfin, pour build le template, rendez vous dans un des répertoire de template.
+Create a `variables.auto.pkrvars.hcl` file.
 
-```
+Copy the values from `variables.pkrvars.hcl` into the newly created file, then update them to match your environment, such as the Proxmox IP address and any other required settings.
+
+## Build the Template
+
+Go to the template directory:
+
+```bash
 cd packer/windows-server-2022
 ```
 
-Et lancer :
+Run the build:
 
-```
+```bash
 packer build .
 ```
 
-Pour ne pas supprimer la machine lorsqu'il y'a des erreur :
+## Useful Build Options
 
-```
+### Keep the VM when an error occurs
+
+Use the following command if you do not want the VM to be deleted when the build fails:
+
+```bash
 packer build -on-error=ask .
 ```
 
-Pour avoir des logs plus pertinents pendant le build :
+### Enable detailed logs
 
-```
+Use the following command to get more detailed logs during the build:
+
+```bash
 PACKER_LOG=1 PACKER_LOG_PATH="packer-debug.log" packer build . 2>&1 | tee /dev/stderr
+```
 
+Then read the log file:
+
+```bash
 cat packer-debug.log
 ```
 
-# Explication des étapes
+## Build Steps Explained

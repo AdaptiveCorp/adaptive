@@ -1,6 +1,6 @@
-proxmox_url             = "https://pve.lan.cqban.xyz/api2/json"
-proxmox_username        = "Cqban@pve"
-proxmox_password        = "pdezezdzd"
+proxmox_url             = "https://your-pve.com/api2/json"
+proxmox_username        = "root"
+proxmox_password        = "password"
 proxmox_skip_tls_verify = true
 proxmox_node            = "pve"
 proxmox_storage         = "local"
