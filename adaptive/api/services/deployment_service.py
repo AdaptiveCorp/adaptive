@@ -63,9 +63,9 @@ def _step_clone_vms(
             logger.warning("[STEP 1] Clone failed or missing vm_id for server_id=%s", res.server_id)
 
     db.commit()
-    logger.info("[STEP 1] All VMs cloned. Waiting 60s for boot...")
+    logger.info("[STEP 1] All VMs cloned. Waiting 240s (4min) for boot...")
 
-    time.sleep(30)
+    time.sleep(120)
 
     return deployment_result
 

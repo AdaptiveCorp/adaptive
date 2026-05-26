@@ -13,7 +13,7 @@ from adaptive.api.services.applied_template import (
     get_template_for_project,
 )
 from adaptive.api.services.servers import get_all_domain_in_project, get_root_dc
-from adaptive.api.services.utils import execute_powershell_winrm
+from adaptive.api.services.utils import _bare_ip, execute_powershell_winrm
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ def _step_push_vulnerabilities(
             param_vuln = ast.literal_eval(applied.params)
             powershell_script = applied.template.content
 
-            result = execute_powershell_winrm(dc.ip, powershell_script, param_vuln, db)
+            result = execute_powershell_winrm(_bare_ip(dc.ip), powershell_script, param_vuln, db)
 
             if not result.success:
                 _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
@@ -156,7 +156,7 @@ def _step_reverse_templates(
                 domain.fqdn,
             )
 
-            result = execute_powershell_winrm(dc.ip, powershell_script, param_vuln, db)
+            result = execute_powershell_winrm(_bare_ip(dc.ip), powershell_script, param_vuln, db)
 
             if not result.success:
                 # _update_template_status(db, applied, TemplateStatus.ERROR, error=result.error)
@@ -191,3 +191,6 @@ def _step_reverse_templates(
         deployment_result.error = "One or more templates failed to reverse"
 
     return deployment_result
+
+
+# Youenn "ZLEB" Belz = Chef DRSD

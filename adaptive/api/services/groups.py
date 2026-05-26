@@ -22,8 +22,6 @@ def get_groups_grouped_by_domain(project: Project) -> dict[Domain, list[Group]]:
     grouped: dict[Domain, list[Group]] = {}
     for forest in project.forests:
         for domain in forest.domains:
-            print(domain)
-            print(domain.users)
             if domain.groups:
                 grouped[domain] = list(domain.groups)
     return grouped

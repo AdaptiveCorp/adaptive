@@ -133,7 +133,9 @@ class AnsibleService:
         if result.success:
             logger.info("%s User '%s' deleted successfully on %s", PREFIX, username, server_ip)
         else:
-            logger.error("%s Failed to delete user '%s' on %s: %s", PREFIX, username, server_ip, result.error)
+            logger.error(
+                "%s Failed to delete user '%s' on %s: %s", PREFIX, username, server_ip, result.error
+            )
 
         return result
 
@@ -168,10 +170,7 @@ class AnsibleService:
         server_ip: str,
         memberships: list[dict[str, Any]],
     ) -> PlaybookResult:
-        logger.info(
-            "%s Adding members to %d group(s) on %s",
-            PREFIX, len(memberships), server_ip
-        )
+        logger.info("%s Adding members to %d group(s) on %s", PREFIX, len(memberships), server_ip)
 
         # memberships contient toujours 1 seul élément désormais
         membership = memberships[0]
@@ -188,11 +187,12 @@ class AnsibleService:
         if result.success:
             logger.info("%s Successfully updated group memberships on %s", PREFIX, server_ip)
         else:
-            logger.error("%s Failed to update group memberships on %s: %s", PREFIX, server_ip, result.error)
+            logger.error(
+                "%s Failed to update group memberships on %s: %s", PREFIX, server_ip, result.error
+            )
 
         return result
-    
-    
+
     def _run_playbook(
         self,
         playbook_content: str,
@@ -201,14 +201,12 @@ class AnsibleService:
     ) -> PlaybookResult:
         logger.info("%s Running playbook on %s", PREFIX, target_host)
 
-        print("PASSWORD : ", self._password)
         inventory = {
             "all": {
                 "hosts": {
                     target_host: {
                         "ansible_user": self._user,
                         "ansible_password": self._password,
-
                     }
                 }
             }
@@ -219,7 +217,7 @@ class AnsibleService:
             "ansible_winrm_scheme": "http",
             "ansible_winrm_server_cert_validation": "ignore",
             "ansible_port": 5985,
-            **extravars, 
+            **extravars,
         }
         with tempfile.TemporaryDirectory() as tmpdir:
             project_dir = Path(tmpdir) / "project"

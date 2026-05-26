@@ -28,7 +28,7 @@ def deploy_vm_template(vm_template: VmTemplate):
     var_file = cwd / "variables.pkrvars.hcl"
     packer_args_suffix = ["--var-file", str(var_file)] if var_file.exists() else []
 
-    result: subprocess.CompletedProcess[bytes] = subprocess.run(
+    result: subprocess.CompletedProcess[str] = subprocess.run(
         ["packer", "validate", *packer_args_suffix, "."],
         cwd=cwd,
         env=packer_env,
