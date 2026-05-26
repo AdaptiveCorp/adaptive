@@ -83,7 +83,7 @@ export function Layout({ children }: LayoutProps) {
               <div style={{ width: 1, height: 24, background: 'var(--border-sep)' }} />
 
               <div className="flex items-center gap-2">
-                <span className={apiOnline ? 'status-dot' : undefined} style={{
+                <span style={{
                   width: 7,
                   height: 7,
                   borderRadius: '50%',
