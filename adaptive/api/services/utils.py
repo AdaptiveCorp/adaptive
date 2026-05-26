@@ -1,4 +1,13 @@
+import json
 import logging
+import textwrap
+import time
+
+import winrm
+from sqlalchemy.orm import Session
+
+from adaptive.api.environment.config import settings
+from adaptive.api.infrastructure import AnsibleService, PlaybookResult
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -34,7 +43,6 @@ def _wait_for_adws(
                     "[WAIT] WinRM is reachable on %s (after %ds)", server_ip, elapsed + initial_wait
                 )
 
-                # Activer et démarrer ADWS
                 logger.info("[WAIT] Enabling and starting ADWS on %s...", server_ip)
                 adws_result = session.run_ps(
                     "Set-Service ADWS -StartupType Automatic; Start-Service ADWS"
@@ -66,9 +74,9 @@ def _wait_for_adws(
 
 def _wait_for_ad_ready(
     server_ip: str,
-    timeout: int = 600,  # promotion AD peut être longue, 10 min n'est pas déraisonnable
+    timeout: int = 600,
     poll_interval: int = 30,
-    initial_wait: int = 60,  # tu peux garder 30, mais 60 est plus safe
+    initial_wait: int = 60,
 ) -> bool:
     """Attendre que le DC soit réellement fonctionnel (AD DS + ADWS)."""
 
@@ -79,20 +87,17 @@ def _wait_for_ad_ready(
     session = winrm.Session(
         f"http://{server_ip}:5985/wsman",
         auth=(settings.ansible_user, settings.ansible_password),
-        transport="ntlm",  # ici tu peux laisser ntlm, c'est uniquement pour ce check Python
+        transport="ntlm",
     )
 
     elapsed = 0
 
     while elapsed < timeout:
         try:
-            # 1) Vérifier que WinRM répond encore
             ping = session.run_ps("echo ok")
             if ping.status_code != 0:
                 raise RuntimeError("WinRM not ready yet")
 
-            # 2) Vérifier que les cmdlets AD fonctionnent
-            #    - Get-ADDomain renvoie une erreur tant que le DC n'est pas complètement prêt
             ps_script = r"""
             try {
                 Import-Module ActiveDirectory -ErrorAction Stop
@@ -146,11 +151,9 @@ def execute_powershell_winrm(
 ) -> PlaybookResult:
     ansible = AnsibleService(db=db)
 
-    # Sérialisation correcte : strings entre guillemets, listes/dicts en YAML natif
     vars_lines = []
     for k, v in params.items():
         if isinstance(v, (list, dict)):
-            # Valeur complexe : on la sérialise en JSON inline (YAML-compatible)
             vars_lines.append(f"    {k}: {json.dumps(v)}")
         else:
             vars_lines.append(f'    {k}: "{v}"')

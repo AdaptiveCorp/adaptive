@@ -1,4 +1,3 @@
-import json
 import logging
 import time
 from collections.abc import Callable
@@ -7,70 +6,23 @@ from sqlalchemy.orm import Session
 
 from adaptive.api.infrastructure import AnsibleService, ProxmoxProvider, ServerInfo
 from adaptive.api.infrastructure.base import DeploymentResult, HypervisorProvider
-from adaptive.api.models.applied_template import AppliedTemplate, TemplateStatus
 from adaptive.api.models.domain import Domain
 from adaptive.api.models.project import Project
 from adaptive.api.models.server import Server, ServerStatus
-from adaptive.api.models.template import Template
+from adaptive.api.services.applied_template import get_pending_reverted_template
+from adaptive.api.services.groups import (
+    _step_add_group_members,
+    _step_add_groups,
+    get_groups_not_push_by_domain,
+)
+from adaptive.api.services.servers import _step_promote_dcs, get_dcs_to_promote
+from adaptive.api.services.users import _step_add_users, get_users_not_push_by_domain
+from adaptive.api.services.vulnerabilities import (
+    _step_push_vulnerabilities,
+    _step_reverse_templates,
+)
 
 logger: logging.Logger = logging.getLogger(__name__)
-
-
-def _create_applied_template(
-    db: Session,
-    *,
-    project_id: int,
-    template_code: str,
-    domain_id: int | None = None,
-    server_id: int | None = None,
-    forest_id: int | None = None,
-    user_id: int | None = None,
-    group_id: int | None = None,
-    params: dict | None = None,
-) -> AppliedTemplate:
-    """Create a pending AppliedTemplate record for tracking."""
-    template = db.query(Template).filter(Template.code == template_code).first()
-    if not template:
-        raise ValueError(f"Template '{template_code}' not found in database")
-
-    applied = AppliedTemplate(
-        project_id=project_id,
-        template_id=template.id,
-        domain_id=domain_id,
-        server_id=server_id,
-        forest_id=forest_id,
-        user_id=user_id,
-        group_id=group_id,
-        params=json.dumps(params) if params else None,
-        status=TemplateStatus.PENDING,
-    )
-
-    db.add(applied)
-    db.commit()
-    db.refresh(applied)
-    logger.info(
-        "[TRACKING] Created AppliedTemplate id=%d (template=%s, status=pending)",
-        applied.id,
-        template_code,
-    )
-    return applied
-
-
-def _update_template_status(
-    db: Session,
-    applied: AppliedTemplate,
-    status: TemplateStatus,
-    error: str | None = None,
-) -> None:
-    """Update the status of an AppliedTemplate after execution."""
-    applied.status = status
-    db.commit()
-    logger.info(
-        "[TRACKING] AppliedTemplate id=%d -> status=%s%s",
-        applied.id,
-        status.value,
-        f" (error: {error})" if error else "",
-    )
 
 
 def _step_clone_vms(
@@ -99,7 +51,7 @@ def _step_clone_vms(
     deployment_result.clone_results = clone_results
 
     for res in clone_results:
-        srv: Server | None = db.get(Server, res.server_id)  # ← déplacer ici
+        srv: Server | None = db.get(Server, res.server_id)
         if res.success and res.vm_id:
             if srv:
                 srv.vm_id = res.vm_id
@@ -127,13 +79,11 @@ def build_deployment_steps(
 ) -> list[Callable[[DeploymentResult], DeploymentResult]]:
     steps: list[Callable[[DeploymentResult], DeploymentResult]] = []
 
-    # Serveurs qui n'ont pas encore été clonés
     servers_to_clone = [s for s in all_servers if s.status != ServerStatus.APPLIED]
 
     if servers_to_clone:
         steps.append(lambda r, s=servers_to_clone: _step_clone_vms(project, s, hypervisor, db, r))
 
-    # Serveurs qui n'ont pas été promu
     servers_to_promote = get_dcs_to_promote(project, db)
 
     if servers_to_promote:
@@ -141,24 +91,17 @@ def build_deployment_steps(
             lambda r: _step_promote_dcs(project, hypervisor, ansible, servers_to_promote, db, r)
         )
 
-    # Utilisateur qui n'ont pas encore été pushé
     users_not_pushed = get_users_not_push_by_domain(project, db)
     if any(users_list for users_list in users_not_pushed.values()):
         steps.append(lambda r: _step_add_users(project, ansible, db, users_not_pushed, r))
 
-    # Groupes qui n'ont pas encore été pushés
-    # STEP : Créer les groupes (sans membres)
     groups_not_pushed = get_groups_not_push_by_domain(project, db)
     if any(gl for gl in groups_not_pushed.values()):
         steps.append(lambda r: _step_add_groups(project, ansible, db, groups_not_pushed, r))
 
-    # STEP : Ajouter les membres dans les groupes
-    # On réutilise groups_not_pushed : tous les groupes, qu'ils aient des membres ou non.
-    # La step filtrera elle-même les groupes sans membres.
     if any(gl for gl in groups_not_pushed.values()):
         steps.append(lambda r: _step_add_group_members(project, ansible, db, groups_not_pushed, r))
 
-    # STEP : Récupère les applied_template qui sont en pending_reverted
     find_pending_reverted_template = get_pending_reverted_template(project, db)
     if find_pending_reverted_template:
         steps.append(

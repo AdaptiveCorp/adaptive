@@ -1,6 +1,42 @@
 import logging
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from adaptive.api.exceptions import DomainNoDCError
+from adaptive.api.infrastructure import AnsibleService
+from adaptive.api.infrastructure.base import DeploymentResult, HypervisorProvider
+from adaptive.api.models.applied_template import AppliedTemplate, TemplateStatus
+from adaptive.api.models.domain import Domain
+from adaptive.api.models.forest import Forest
+from adaptive.api.models.project import Project
+from adaptive.api.models.server import Server
+from adaptive.api.models.template import Template
+from adaptive.api.services.applied_template import _create_applied_template, _update_template_status
+from adaptive.api.services.utils import _bare_ip, _wait_for_ad_ready
+
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+def get_root_dc(domain: Domain, db: Session) -> Server:
+    stmt = select(Server).where(Server.domain_id == domain.id, Server.is_dc.is_(True))
+    server = db.scalars(stmt).first()
+    if not server:
+        raise DomainNoDCError(domain.id)
+    return server
+
+
+def get_all_domain_in_project(project: Project, db: Session) -> list[Domain]:
+    stmt = select(Forest).where(Forest.project_id == project.id)
+    list_foret = db.scalars(stmt).all()
+
+    liste_domain = []
+
+    for foret in list_foret:
+        stmt = select(Domain).where(Domain.forest_id == foret.id)
+        liste_domain.extend(db.scalars(stmt).all())
+
+    return liste_domain
 
 
 def get_dcs_grouped_by_domain(project: Project) -> dict[Domain, list[Server]]:
@@ -39,29 +75,6 @@ def get_dcs_to_promote(project: Project, db: Session) -> dict[Domain, list[Serve
     return grouped
 
 
-def get_all_domain_in_project(project: Project, db: Session) -> list[Domain]:
-
-    stmt = select(Forest).where(Forest.project_id == project.id)
-    list_foret = db.scalars(stmt).all()
-
-    liste_domain = []
-
-    for foret in list_foret:
-        stmt = select(Domain).where(Domain.forest_id == foret.id)
-        liste_domain.extend(db.scalars(stmt).all())
-
-    return liste_domain
-
-
-def get_users_grouped_by_domain(project: Project) -> dict[Domain, list[User]]:
-    grouped: dict[Domain, list[User]] = {}
-    for forest in project.forests:
-        for domain in forest.domains:
-            if domain.users:
-                grouped[domain] = list(domain.users)
-    return grouped
-
-
 def _step_promote_dcs(
     project: Project,
     hypervisor: HypervisorProvider,
@@ -79,7 +92,6 @@ def _step_promote_dcs(
 
     logger.info("[STEP 2] Starting DC promotions across %d domain(s)", len(dcs_by_domain))
 
-    # 1) Envoyer les commandes de promotion sur chaque DC
     for domain, dcs in dcs_by_domain.items():
         logger.info("[STEP 2] Processing domain '%s' (%d DC(s))", domain.fqdn, len(dcs))
 
@@ -113,8 +125,6 @@ def _step_promote_dcs(
                 domain.fqdn,
             )
 
-            # Le playbook dc_promo fait Install-ADDSForest/DomainController
-            # et laisse Windows rebooter tout seul (plus de -NoRebootOnCompletion)
             result = ansible.dc_promote(
                 server_ip=_bare_ip(dc.ip),
                 dc_hostname=dc.fqdn.split(".")[0],
@@ -133,10 +143,6 @@ def _step_promote_dcs(
             _update_template_status(db, applied, TemplateStatus.APPLIED)
             logger.info("[STEP 2] DC promotion command sent successfully for '%s'", dc.fqdn)
 
-            # IMPORTANT : on NE redémarre PAS la VM via l'hyperviseur ici,
-            # c'est Windows qui reboot tout seul après Install-ADDS*
-
-    # 2) Attendre que chaque DC soit réellement prêt côté AD (AD DS + ADWS + Get-ADDomain OK)
     logger.info("[STEP 2] All DC promotion commands sent. Waiting for AD readiness...")
 
     for _domain, dcs in dcs_by_domain.items():

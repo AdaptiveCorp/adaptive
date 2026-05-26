@@ -60,6 +60,7 @@ def deploy_vm_template(vm_template: VmTemplate):
             _running_builds.discard(vm_template.id)
 
     import threading
+
     threading.Thread(target=_run, daemon=True).start()
 
     return "OK"
