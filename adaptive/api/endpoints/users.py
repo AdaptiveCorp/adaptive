@@ -16,7 +16,7 @@ from adaptive.api.models.server import Server
 from adaptive.api.models.template import Template
 from adaptive.api.models.user import User
 from adaptive.api.schemas.user import UserCreate, UserResponse
-from adaptive.api.services.deployment_service import ansible_deploy_user
+from adaptive.api.services.users import ansible_deploy_user
 
 router = APIRouter(
     prefix="/users",
