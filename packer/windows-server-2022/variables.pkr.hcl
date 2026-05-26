@@ -38,9 +38,9 @@ variable "iso_url" {
   type = string
 }
 
-variable "iso_checksum" {
-  type = string
-}
+# variable "iso_checksum" {
+#   type = string
+# }
 
 variable "iso_already_downloaded" {
   type    = bool

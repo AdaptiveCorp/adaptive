@@ -1,0 +1,897 @@
+2026/05/26 10:07:18 [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 [TRACE] listing potential installations for "github.com/hashicorp/proxmox" that match ">= 1.1.8". plugingetter.ListInstallationsOptions{PluginDirectory:"/home/brico/.config/packer/plugins", BinaryInstallationOptions:plugingetter.BinaryInstallationOptions{APIVersionMajor:"5", APIVersionMinor:"0", OS:"linux", ARCH:"amd64", Ext:"", Checksummers:[]plugingetter.Checksummer{plugingetter.Checksummer{Type:"sha256", Hash:(*sha256.Digest)(0xc00099ab00)}}, ReleasesOnly:false}}
+2026/05/26 10:07:18 [TRACE] Found the following "github.com/hashicorp/proxmox" installations: [{/home/brico/.config/packer/plugins/github.com/hashicorp/proxmox/packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 v1.2.3 x5.0}]
+2026/05/26 10:07:18 [INFO] found external [-packer-default-plugin-name- clone iso] builders from proxmox plugin
+2026/05/26 10:07:18 [TRACE] listing potential installations for <nil> that match "". plugingetter.ListInstallationsOptions{PluginDirectory:"/home/brico/.config/packer/plugins", BinaryInstallationOptions:plugingetter.BinaryInstallationOptions{APIVersionMajor:"5", APIVersionMinor:"0", OS:"linux", ARCH:"amd64", Ext:"", Checksummers:[]plugingetter.Checksummer{plugingetter.Checksummer{Type:"sha256", Hash:(*sha256.Digest)(0xc00008a380)}}, ReleasesOnly:false}}
+2026/05/26 10:07:18 [INFO] found external [-packer-default-plugin-name- clone iso] builders from proxmox plugin
+2026/05/26 10:07:18 [TRACE] validateValue: not active for vm_dns, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for adaptive_endpoint, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for proxmox_skip_tls_verify, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for computer_name, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for vm_id, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for winrm_username, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for iso_url, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for vm_cpu_cores, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for os_image_index, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for template_uuid, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for iso_storage_pool, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for iso_file, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for vm_name, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for proxmox_password, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for vm_cpu_sockets, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for vm_memory, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for vm_disk_size, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for winrm_password, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for vm_ip, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for proxmox_url, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for proxmox_username, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for virtio_iso_file, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for vm_gateway, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for proxmox_storage, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for iso_already_downloaded, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for template_description, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for network_vlan_id, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for timezone, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for proxmox_node, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for network_bridge, so skipping
+2026/05/26 10:07:18 [TRACE] validateValue: not active for vm_network_prefix, so skipping
+2026/05/26 10:07:18 [TRACE] Using protobuf for communication with plugins
+2026/05/26 10:07:18 [INFO] Starting external plugin /home/brico/.config/packer/plugins/github.com/hashicorp/proxmox/packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 start builder --protobuf iso
+2026/05/26 10:07:18 Starting plugin: /home/brico/.config/packer/plugins/github.com/hashicorp/proxmox/packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 []string{"/home/brico/.config/packer/plugins/github.com/hashicorp/proxmox/packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64", "start", "builder", "--protobuf", "iso"}
+2026/05/26 10:07:18 Waiting for RPC address for: /home/brico/.config/packer/plugins/github.com/hashicorp/proxmox/packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64
+2026/05/26 10:07:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:18 Plugin address: unix /tmp/packer-plugin1117592953
+2026/05/26 10:07:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:18 Waiting for connection...
+2026/05/26 10:07:18 Received unix RPC address for /home/brico/.config/packer/plugins/github.com/hashicorp/proxmox/packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64: addr is /tmp/packer-plugin1117592953
+2026/05/26 10:07:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:18 Serving a plugin connection...
+2026/05/26 10:07:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:18 [TRACE] starting builder iso
+2026/05/26 10:07:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:18 [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:18 CPU type not set, using default 'kvm64'
+2026/05/26 10:07:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:18 [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 [INFO] Starting external plugin /usr/bin/packer execute --protobuf packer-provisioner-powershell
+2026/05/26 10:07:18 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "execute", "--protobuf", "packer-provisioner-powershell"}
+2026/05/26 10:07:18 Waiting for RPC address for: /usr/bin/packer
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Plugin address: unix /tmp/packer-plugin2266060298
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Waiting for connection...
+2026/05/26 10:07:18 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin2266060298
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Serving a plugin connection...
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Using script default execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Using script default elevated execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 [INFO] Starting external plugin /usr/bin/packer execute --protobuf packer-provisioner-powershell
+2026/05/26 10:07:18 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "execute", "--protobuf", "packer-provisioner-powershell"}
+2026/05/26 10:07:18 Waiting for RPC address for: /usr/bin/packer
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Plugin address: unix /tmp/packer-plugin3721828600
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Waiting for connection...
+2026/05/26 10:07:18 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin3721828600
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Serving a plugin connection...
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Using script default execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Using script default elevated execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 [INFO] Starting external plugin /usr/bin/packer execute --protobuf packer-provisioner-file
+2026/05/26 10:07:18 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "execute", "--protobuf", "packer-provisioner-file"}
+2026/05/26 10:07:18 Waiting for RPC address for: /usr/bin/packer
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-file plugin: [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 packer-provisioner-file plugin: Plugin address: unix /tmp/packer-plugin461744862
+2026/05/26 10:07:18 packer-provisioner-file plugin: Waiting for connection...
+2026/05/26 10:07:18 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin461744862
+2026/05/26 10:07:18 packer-provisioner-file plugin: Serving a plugin connection...
+2026/05/26 10:07:18 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 [INFO] Starting external plugin /usr/bin/packer execute --protobuf packer-provisioner-file
+2026/05/26 10:07:18 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "execute", "--protobuf", "packer-provisioner-file"}
+2026/05/26 10:07:18 Waiting for RPC address for: /usr/bin/packer
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-file plugin: [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 packer-provisioner-file plugin: Plugin address: unix /tmp/packer-plugin1883598818
+2026/05/26 10:07:18 packer-provisioner-file plugin: Waiting for connection...
+2026/05/26 10:07:18 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin1883598818
+2026/05/26 10:07:18 packer-provisioner-file plugin: Serving a plugin connection...
+2026/05/26 10:07:18 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 [INFO] Starting external plugin /usr/bin/packer execute --protobuf packer-provisioner-file
+2026/05/26 10:07:18 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "execute", "--protobuf", "packer-provisioner-file"}
+2026/05/26 10:07:18 Waiting for RPC address for: /usr/bin/packer
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-file plugin: [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 packer-provisioner-file plugin: Plugin address: unix /tmp/packer-plugin200196629
+2026/05/26 10:07:18 packer-provisioner-file plugin: Waiting for connection...
+2026/05/26 10:07:18 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin200196629
+2026/05/26 10:07:18 packer-provisioner-file plugin: Serving a plugin connection...
+2026/05/26 10:07:18 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 [INFO] Starting external plugin /usr/bin/packer execute --protobuf packer-provisioner-windows-restart
+2026/05/26 10:07:18 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "execute", "--protobuf", "packer-provisioner-windows-restart"}
+2026/05/26 10:07:18 Waiting for RPC address for: /usr/bin/packer
+2026/05/26 10:07:18 packer-provisioner-windows-restart plugin: [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 packer-provisioner-windows-restart plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 packer-provisioner-windows-restart plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-windows-restart plugin: [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-windows-restart plugin: [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 packer-provisioner-windows-restart plugin: Plugin address: unix /tmp/packer-plugin1980042584
+2026/05/26 10:07:18 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin1980042584
+2026/05/26 10:07:18 packer-provisioner-windows-restart plugin: Waiting for connection...
+2026/05/26 10:07:18 packer-provisioner-windows-restart plugin: Serving a plugin connection...
+2026/05/26 10:07:18 packer-provisioner-windows-restart plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-provisioner-windows-restart plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 [INFO] Starting external plugin /usr/bin/packer execute --protobuf packer-provisioner-powershell
+2026/05/26 10:07:18 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "execute", "--protobuf", "packer-provisioner-powershell"}
+2026/05/26 10:07:18 Waiting for RPC address for: /usr/bin/packer
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Plugin address: unix /tmp/packer-plugin1390829814
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Waiting for connection...
+2026/05/26 10:07:18 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin1390829814
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Serving a plugin connection...
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Using script default execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Using script default elevated execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 [INFO] Starting external plugin /usr/bin/packer execute --protobuf packer-provisioner-powershell
+2026/05/26 10:07:18 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "execute", "--protobuf", "packer-provisioner-powershell"}
+2026/05/26 10:07:18 Waiting for RPC address for: /usr/bin/packer
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Plugin address: unix /tmp/packer-plugin3159135267
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Waiting for connection...
+2026/05/26 10:07:18 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin3159135267
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Serving a plugin connection...
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Using script default execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Using script default elevated execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 [INFO] Starting external plugin /usr/bin/packer execute --protobuf packer-provisioner-file
+2026/05/26 10:07:18 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "execute", "--protobuf", "packer-provisioner-file"}
+2026/05/26 10:07:18 Waiting for RPC address for: /usr/bin/packer
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-file plugin: [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-file plugin: [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 packer-provisioner-file plugin: Plugin address: unix /tmp/packer-plugin2044591453
+2026/05/26 10:07:18 packer-provisioner-file plugin: Waiting for connection...
+2026/05/26 10:07:18 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin2044591453
+2026/05/26 10:07:18 packer-provisioner-file plugin: Serving a plugin connection...
+2026/05/26 10:07:18 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 [INFO] Starting external plugin /usr/bin/packer execute --protobuf packer-provisioner-powershell
+2026/05/26 10:07:18 Starting plugin: /usr/bin/packer []string{"/usr/bin/packer", "execute", "--protobuf", "packer-provisioner-powershell"}
+2026/05/26 10:07:18 Waiting for RPC address for: /usr/bin/packer
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] Packer version: 1.15.3 [go1.25.9 linux amd64]
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] PACKER_CONFIG env var not set; checking the default config file path
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] PACKER_CONFIG env var set; attempting to open config file: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [WARN] Config file doesn't exist: /home/brico/.packerconfig
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [INFO] Setting cache directory: /home/brico/.cache/packer
+2026/05/26 10:07:18 Received unix RPC address for /usr/bin/packer: addr is /tmp/packer-plugin1579923496
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Plugin address: unix /tmp/packer-plugin1579923496
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Waiting for connection...
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Serving a plugin connection...
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Using script default execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: Using script default elevated execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:07:18 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:07:18 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:07:18 ui: [1;32mwindows-server-2022.proxmox-iso.windows-server-2022: output will be in this color.[0m
+2026/05/26 10:07:18 ui: 
+2026/05/26 10:07:18 Build debug mode: false
+2026/05/26 10:07:18 Force build: false
+2026/05/26 10:07:18 On error: 
+2026/05/26 10:07:18 Waiting on builds to complete...
+2026/05/26 10:07:18 Starting build run: windows-server-2022.proxmox-iso.windows-server-2022
+2026/05/26 10:07:18 Running builder: proxmox-iso
+2026/05/26 10:07:18 [INFO] (telemetry) Starting builder proxmox-iso.windows-server-2022
+2026/05/26 10:07:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:18 using password auth
+2026/05/26 10:07:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:19 No CD files specified. CD disk will not be made.
+2026/05/26 10:07:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:19 No URLs were provided to Step Download. Continuing...
+2026/05/26 10:07:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:19 No CD files specified. CD disk will not be made.
+2026/05/26 10:07:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:19 No URLs were provided to Step Download. Continuing...
+2026/05/26 10:07:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:19 No CD files specified. CD disk will not be made.
+2026/05/26 10:07:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:19 No URLs were provided to Step Download. Continuing...
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Creating CD disk...[0m
+2026/05/26 10:07:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:19 CD label is set to Unattend
+2026/05/26 10:07:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:19 CD path: /tmp/packer1425715720.iso
+2026/05/26 10:07:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:19 Executing: /usr/bin/xorriso [-as genisoimage -rock -joliet -volid Unattend -output /tmp/packer1425715720.iso /tmp/packer_to_cdrom650125667]
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: xorriso 1.5.6 : RockRidge filesystem manipulator, libburnia project.[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Drive current: -outdev 'stdio:/tmp/packer1425715720.iso'[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Media current: stdio file, overwriteable[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Media status : is blank[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Media summary: 0 sessions, 0 data blocks, 0 data,  387g free[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: xorriso : WARNING : -volid text does not comply to ISO 9660 / ECMA 119 rules[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Added to ISO image: directory '/'='/tmp/packer_to_cdrom650125667'[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: xorriso : UPDATE :       1 files added in 1 seconds[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: xorriso : UPDATE :       1 files added in 1 seconds[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: ISO image produced: 188 sectors[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Written to medium : 188 sectors at LBA 0[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Writing to 'stdio:/tmp/packer1425715720.iso' completed successfully.[0m
+2026/05/26 10:07:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Done copying paths from CD_dirs[0m
+2026/05/26 10:07:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:19 No URLs were provided to Step Download. Continuing...
+2026/05/26 10:07:21 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Uploaded ISO to local:iso/packer1425715720.iso[0m
+2026/05/26 10:07:21 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:21 Mapping static assigned ISO to ide2
+2026/05/26 10:07:21 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:21 Mapping static assigned ISO to ide0
+2026/05/26 10:07:21 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:21 Mapping static assigned ISO to ide1
+2026/05/26 10:07:21 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:21 Mapping static assigned ISO to sata0
+2026/05/26 10:07:21 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:21 Mapping Disk to scsi0
+2026/05/26 10:07:21 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Creating VM[0m
+2026/05/26 10:07:24 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Starting VM[0m
+2026/05/26 10:07:27 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:27 No boot command given, skipping
+2026/05/26 10:07:27 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Using WinRM communicator to connect: 10.50.0.10[0m
+2026/05/26 10:07:27 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:27 Waiting for WinRM, up to timeout: 1h30m0s
+2026/05/26 10:07:27 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Waiting for WinRM to become available...[0m
+2026/05/26 10:07:27 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:27 [INFO] Attempting WinRM connection...
+2026/05/26 10:07:27 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:27 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:07:30 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:30 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:07:30 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:30 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:07:35 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:35 [INFO] Attempting WinRM connection...
+2026/05/26 10:07:35 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:35 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:07:39 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:39 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:07:39 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:39 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:07:44 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:44 [INFO] Attempting WinRM connection...
+2026/05/26 10:07:44 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:44 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:07:47 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:47 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:07:47 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:47 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:07:52 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:52 [INFO] Attempting WinRM connection...
+2026/05/26 10:07:52 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:52 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:07:55 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:55 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:07:55 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:07:55 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:00 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:00 [INFO] Attempting WinRM connection...
+2026/05/26 10:08:00 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:00 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:08:03 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:03 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:03 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:03 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:08 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:08 [INFO] Attempting WinRM connection...
+2026/05/26 10:08:08 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:08 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:08:12 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:12 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:12 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:12 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:17 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:17 [INFO] Attempting WinRM connection...
+2026/05/26 10:08:17 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:17 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:08:20 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:20 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:20 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:20 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:25 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:25 [INFO] Attempting WinRM connection...
+2026/05/26 10:08:25 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:25 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:08:28 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:28 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:28 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:28 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:33 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:33 [INFO] Attempting WinRM connection...
+2026/05/26 10:08:33 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:33 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:08:37 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:37 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:37 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:37 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:42 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:42 [INFO] Attempting WinRM connection...
+2026/05/26 10:08:42 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:42 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:08:45 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:45 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:45 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:45 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:50 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:50 [INFO] Attempting WinRM connection...
+2026/05/26 10:08:50 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:50 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:08:53 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:53 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:53 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:53 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:08:58 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:58 [INFO] Attempting WinRM connection...
+2026/05/26 10:08:58 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:08:58 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:09:02 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:02 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:02 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:02 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:07 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:07 [INFO] Attempting WinRM connection...
+2026/05/26 10:09:07 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:07 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:09:10 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:10 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:10 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:10 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:15 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:15 [INFO] Attempting WinRM connection...
+2026/05/26 10:09:15 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:15 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:09:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:18 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:18 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:23 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:23 [INFO] Attempting WinRM connection...
+2026/05/26 10:09:23 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:23 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:09:26 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:26 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:26 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:26 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:31 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:31 [INFO] Attempting WinRM connection...
+2026/05/26 10:09:31 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:31 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:09:35 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:35 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:35 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:35 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:40 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:40 [INFO] Attempting WinRM connection...
+2026/05/26 10:09:40 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:40 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:09:43 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:43 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:43 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:43 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:48 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:48 [INFO] Attempting WinRM connection...
+2026/05/26 10:09:48 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:48 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:09:51 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:51 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:51 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:51 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:09:56 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:56 [INFO] Attempting WinRM connection...
+2026/05/26 10:09:56 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:09:56 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:10:00 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:00 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:00 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:00 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:05 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:05 [INFO] Attempting WinRM connection...
+2026/05/26 10:10:05 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:05 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:10:08 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:08 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:08 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:08 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:13 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:13 [INFO] Attempting WinRM connection...
+2026/05/26 10:10:13 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:13 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:10:16 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:16 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:16 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:16 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:21 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:21 [INFO] Attempting WinRM connection...
+2026/05/26 10:10:21 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:21 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:10:24 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:24 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:24 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:24 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:29 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:29 [INFO] Attempting WinRM connection...
+2026/05/26 10:10:29 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:29 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:10:33 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:33 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:33 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:33 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:38 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:38 [INFO] Attempting WinRM connection...
+2026/05/26 10:10:38 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:38 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:10:41 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:41 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:41 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:41 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:46 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:46 [INFO] Attempting WinRM connection...
+2026/05/26 10:10:46 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:46 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:10:49 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:49 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:49 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:49 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:54 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:54 [INFO] Attempting WinRM connection...
+2026/05/26 10:10:54 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:54 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:10:57 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:57 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:10:57 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:10:57 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:02 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:02 [INFO] Attempting WinRM connection...
+2026/05/26 10:11:02 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:02 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:11:06 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:06 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:06 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:06 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:11 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:11 [INFO] Attempting WinRM connection...
+2026/05/26 10:11:11 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:11 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:11:14 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:14 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:14 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:14 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:19 [INFO] Attempting WinRM connection...
+2026/05/26 10:11:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:19 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:11:22 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:22 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:22 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:22 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:27 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:27 [INFO] Attempting WinRM connection...
+2026/05/26 10:11:27 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:27 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:11:30 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:30 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:30 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:30 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:35 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:35 [INFO] Attempting WinRM connection...
+2026/05/26 10:11:35 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:35 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:11:39 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:39 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:39 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:39 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:44 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:44 [INFO] Attempting WinRM connection...
+2026/05/26 10:11:44 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:44 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:11:47 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:47 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:47 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:47 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:52 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:52 [INFO] Attempting WinRM connection...
+2026/05/26 10:11:52 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:52 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:11:55 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:55 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:11:55 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:11:55 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:00 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:00 [INFO] Attempting WinRM connection...
+2026/05/26 10:12:00 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:00 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:12:04 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:04 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:04 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:04 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:09 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:09 [INFO] Attempting WinRM connection...
+2026/05/26 10:12:09 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:09 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:12:12 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:12 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:12 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:12 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:17 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:17 [INFO] Attempting WinRM connection...
+2026/05/26 10:12:17 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:17 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:12:20 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:20 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:20 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:20 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:25 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:25 [INFO] Attempting WinRM connection...
+2026/05/26 10:12:25 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:25 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:12:28 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:28 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:28 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:28 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:33 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:33 [INFO] Attempting WinRM connection...
+2026/05/26 10:12:33 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:33 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:12:37 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:37 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:37 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:37 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:42 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:42 [INFO] Attempting WinRM connection...
+2026/05/26 10:12:42 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:42 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:12:45 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:45 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:45 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:45 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:50 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:50 [INFO] Attempting WinRM connection...
+2026/05/26 10:12:50 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:50 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:12:53 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:53 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:53 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:53 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:12:58 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:58 [INFO] Attempting WinRM connection...
+2026/05/26 10:12:58 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:12:58 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:13:01 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:01 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:01 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:01 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:06 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:06 [INFO] Attempting WinRM connection...
+2026/05/26 10:13:06 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:06 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:13:10 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:10 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:10 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:10 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:15 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:15 [INFO] Attempting WinRM connection...
+2026/05/26 10:13:15 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:15 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:13:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:18 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:18 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:18 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:23 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:23 [INFO] Attempting WinRM connection...
+2026/05/26 10:13:23 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:23 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:13:26 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:26 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:26 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:26 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:31 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:31 [INFO] Attempting WinRM connection...
+2026/05/26 10:13:31 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:31 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:13:34 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:34 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:34 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:34 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:39 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:39 [INFO] Attempting WinRM connection...
+2026/05/26 10:13:39 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:39 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:13:43 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:43 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:43 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:43 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:48 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:48 [INFO] Attempting WinRM connection...
+2026/05/26 10:13:48 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:48 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:13:51 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:51 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:51 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:51 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:56 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:56 [INFO] Attempting WinRM connection...
+2026/05/26 10:13:56 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:56 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:13:59 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:59 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:13:59 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:13:59 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:04 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:04 [INFO] Attempting WinRM connection...
+2026/05/26 10:14:04 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:04 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:14:08 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:08 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:08 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:08 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:13 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:13 [INFO] Attempting WinRM connection...
+2026/05/26 10:14:13 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:13 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:14:16 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:16 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:16 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:16 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:21 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:21 [INFO] Attempting WinRM connection...
+2026/05/26 10:14:21 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:21 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:14:24 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:24 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:24 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:24 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:29 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:29 [INFO] Attempting WinRM connection...
+2026/05/26 10:14:29 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:29 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:14:32 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:32 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:32 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:32 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:37 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:37 [INFO] Attempting WinRM connection...
+2026/05/26 10:14:37 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:37 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:14:41 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:41 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:41 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:41 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:46 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:46 [INFO] Attempting WinRM connection...
+2026/05/26 10:14:46 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:46 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:14:49 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:49 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:49 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:49 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:54 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:54 [INFO] Attempting WinRM connection...
+2026/05/26 10:14:54 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:54 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:14:58 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:58 [ERROR] connection error: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:14:58 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:14:58 [ERROR] WinRM connection err: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:15:03 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:03 [INFO] Attempting WinRM connection...
+2026/05/26 10:15:03 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:03 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:15:05 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:05 [ERROR] connection error: http response error: 401 - invalid content type
+2026/05/26 10:15:05 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:05 [ERROR] WinRM connection err: http response error: 401 - invalid content type
+2026/05/26 10:15:10 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:10 [INFO] Attempting WinRM connection...
+2026/05/26 10:15:10 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:10 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:15:11 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:11 [ERROR] connection error: http response error: 401 - invalid content type
+2026/05/26 10:15:11 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:11 [ERROR] WinRM connection err: http response error: 401 - invalid content type
+2026/05/26 10:15:16 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:16 [INFO] Attempting WinRM connection...
+2026/05/26 10:15:16 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:16 [DEBUG] connecting to remote shell using WinRM
+2026/05/26 10:15:22 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:22 Checking that WinRM is connected with: 'powershell.exe -EncodedCommand JABQAHIAbwBnAHIAZQBzAHMAUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAFMAaQBsAGUAbgB0AGwAeQBDAG8AbgB0AGkAbgB1AGUAJwA7AGkAZgAgACgAVABlAHMAdAAtAFAAYQB0AGgAIAB2AGEAcgBpAGEAYgBsAGUAOgBnAGwAbwBiAGEAbAA6AFAAcgBvAGcAcgBlAHMAcwBQAHIAZQBmAGUAcgBlAG4AYwBlACkAewAkAFAAcgBvAGcAcgBlAHMAcwBQAHIAZQBmAGUAcgBlAG4AYwBlAD0AJwBTAGkAbABlAG4AdABsAHkAQwBvAG4AdABpAG4AdQBlACcAfQA7ACAAZQBjAGgAbwAgACIAVwBpAG4AUgBNACAAYwBvAG4AbgBlAGMAdABlAGQALgAiAA=='
+2026/05/26 10:15:22 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:22 [INFO] starting remote command: powershell.exe -EncodedCommand JABQAHIAbwBnAHIAZQBzAHMAUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAFMAaQBsAGUAbgB0AGwAeQBDAG8AbgB0AGkAbgB1AGUAJwA7AGkAZgAgACgAVABlAHMAdAAtAFAAYQB0AGgAIAB2AGEAcgBpAGEAYgBsAGUAOgBnAGwAbwBiAGEAbAA6AFAAcgBvAGcAcgBlAHMAcwBQAHIAZQBmAGUAcgBlAG4AYwBlACkAewAkAFAAcgBvAGcAcgBlAHMAcwBQAHIAZQBmAGUAcgBlAG4AYwBlAD0AJwBTAGkAbABlAG4AdABsAHkAQwBvAG4AdABpAG4AdQBlACcAfQA7ACAAZQBjAGgAbwAgACIAVwBpAG4AUgBNACAAYwBvAG4AbgBlAGMAdABlAGQALgAiAA==
+2026/05/26 10:15:25 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:25 [INFO] command 'powershell.exe -EncodedCommand JABQAHIAbwBnAHIAZQBzAHMAUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAFMAaQBsAGUAbgB0AGwAeQBDAG8AbgB0AGkAbgB1AGUAJwA7AGkAZgAgACgAVABlAHMAdAAtAFAAYQB0AGgAIAB2AGEAcgBpAGEAYgBsAGUAOgBnAGwAbwBiAGEAbAA6AFAAcgBvAGcAcgBlAHMAcwBQAHIAZQBmAGUAcgBlAG4AYwBlACkAewAkAFAAcgBvAGcAcgBlAHMAcwBQAHIAZQBmAGUAcgBlAG4AYwBlAD0AJwBTAGkAbABlAG4AdABsAHkAQwBvAG4AdABpAG4AdQBlACcAfQA7ACAAZQBjAGgAbwAgACIAVwBpAG4AUgBNACAAYwBvAG4AbgBlAGMAdABlAGQALgAiAA==' exited with code: 0
+2026/05/26 10:15:25 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: WinRM connected.[0m
+2026/05/26 10:15:25 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:25 Connected to machine
+2026/05/26 10:15:25 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Connected to WinRM![0m
+2026/05/26 10:15:25 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:25 Running the provision hook
+2026/05/26 10:15:26 [INFO] (telemetry) Starting provisioner powershell
+2026/05/26 10:15:26 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:15:26 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:15:26 packer-provisioner-powershell plugin: Using script default execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:15:26 packer-provisioner-powershell plugin: Using script default elevated execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:15:26 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Provisioning with Powershell...[0m
+2026/05/26 10:15:26 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Provisioning with powershell script: ./scripts/install-virtio.ps1[0m
+2026/05/26 10:15:26 packer-provisioner-powershell plugin: Opening ./scripts/install-virtio.ps1 for reading
+2026/05/26 10:15:26 packer-provisioner-powershell plugin: Uploading env vars to c:/Windows/Temp/packer-ps-env-vars-6a15569e-9ce8-6913-b464-d2e45393b279.ps1
+2026/05/26 10:15:26 packer-provisioner-powershell plugin: [INFO] 113 bytes written for 'uploadData'
+2026/05/26 10:15:26 [INFO] 113 bytes written for 'uploadData'
+2026/05/26 10:15:26 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:26 Uploading file to 'c:/Windows/Temp/packer-ps-env-vars-6a15569e-9ce8-6913-b464-d2e45393b279.ps1'
+2026/05/26 10:15:35 packer-provisioner-powershell plugin: Building elevated command wrapper for: powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a15569e-9ce8-6913-b464-d2e45393b279.ps1; &'c:/Windows/Temp/script-6a15569e-9d8d-0d66-9aa9-41b635f7ec24.ps1'; exit $LastExitCode }"
+2026/05/26 10:15:35 packer-provisioner-powershell plugin: Command [powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a15569e-9ce8-6913-b464-d2e45393b279.ps1; &'c:/Windows/Temp/script-6a15569e-9d8d-0d66-9aa9-41b635f7ec24.ps1'; exit $LastExitCode }" > %SYSTEMROOT%/Temp/packer-6a1556a7-bfed-fc13-25bb-8642ce478abd.out 2>&1] converted to [powershell -executionpolicy bypass &#34;&amp; { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value &#39;SilentlyContinue&#39;};. c:/Windows/Temp/packer-ps-env-vars-6a15569e-9ce8-6913-b464-d2e45393b279.ps1; &amp;&#39;c:/Windows/Temp/script-6a15569e-9d8d-0d66-9aa9-41b635f7ec24.ps1&#39;; exit $LastExitCode }&#34; &gt; %SYSTEMROOT%/Temp/packer-6a1556a7-bfed-fc13-25bb-8642ce478abd.out 2&gt;&amp;1] for use in XML string
+2026/05/26 10:15:35 packer-provisioner-powershell plugin: Uploading elevated shell wrapper for command [powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a15569e-9ce8-6913-b464-d2e45393b279.ps1; &'c:/Windows/Temp/script-6a15569e-9d8d-0d66-9aa9-41b635f7ec24.ps1'; exit $LastExitCode }" > %SYSTEMROOT%/Temp/packer-6a1556a7-bfed-fc13-25bb-8642ce478abd.out 2>&1] to [C:/Windows/Temp/packer-elevated-shell-6a1556a7-a056-3c56-d400-f560da549495.ps1]
+2026/05/26 10:15:35 packer-provisioner-powershell plugin: [INFO] 3512 bytes written for 'uploadData'
+2026/05/26 10:15:35 [INFO] 3512 bytes written for 'uploadData'
+2026/05/26 10:15:35 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:35 Uploading file to 'C:/Windows/Temp/packer-elevated-shell-6a1556a7-a056-3c56-d400-f560da549495.ps1'
+2026/05/26 10:15:44 packer-provisioner-powershell plugin: [INFO] 623 bytes written for 'uploadData'
+2026/05/26 10:15:44 [INFO] 623 bytes written for 'uploadData'
+2026/05/26 10:15:44 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:44 Uploading file to 'c:/Windows/Temp/script-6a15569e-9d8d-0d66-9aa9-41b635f7ec24.ps1'
+2026/05/26 10:15:54 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:15:54 [INFO] starting remote command: powershell -executionpolicy bypass -file "C:/Windows/Temp/packer-elevated-shell-6a1556a7-a056-3c56-d400-f560da549495.ps1"
+2026/05/26 10:16:01 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:01 [INFO] command 'powershell -executionpolicy bypass -file "C:/Windows/Temp/packer-elevated-shell-6a1556a7-a056-3c56-d400-f560da549495.ps1"' exited with code: 0
+2026/05/26 10:16:01 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:01 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:16:01 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:16:01 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:16:01 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:16:01 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:16:01 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:16:01 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:16:01 packer-provisioner-powershell plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:16:01 packer-provisioner-powershell plugin: c:/Windows/Temp/script-6a15569e-9d8d-0d66-9aa9-41b635f7ec24.ps1 returned with exit code 0
+2026/05/26 10:16:01 packer-provisioner-powershell plugin: [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:16:01 [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:16:01 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:01 Uploading file to 'c:/Windows/Temp/packer-cleanup-6a15569e-079a-c0a7-fbba-bd1c05b4d11d.ps1'
+2026/05/26 10:16:10 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:10 [INFO] starting remote command: powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a15569e-9ce8-6913-b464-d2e45393b279.ps1; &'c:/Windows/Temp/packer-cleanup-6a15569e-079a-c0a7-fbba-bd1c05b4d11d.ps1'; exit $LastExitCode }"
+2026/05/26 10:16:14 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:14 [INFO] command 'powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a15569e-9ce8-6913-b464-d2e45393b279.ps1; &'c:/Windows/Temp/packer-cleanup-6a15569e-079a-c0a7-fbba-bd1c05b4d11d.ps1'; exit $LastExitCode }"' exited with code: 0
+2026/05/26 10:16:14 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:14 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:16:14 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:16:14 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:16:14 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:16:14 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:16:14 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:16:14 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:16:14 packer-provisioner-powershell plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:16:14 [INFO] (telemetry) ending powershell
+2026/05/26 10:16:14 [INFO] (telemetry) Starting provisioner powershell
+2026/05/26 10:16:14 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:16:14 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:16:14 packer-provisioner-powershell plugin: Using script default execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:16:14 packer-provisioner-powershell plugin: Using script default elevated execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:16:14 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Provisioning with Powershell...[0m
+2026/05/26 10:16:14 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Provisioning with powershell script: ./scripts/init-dirs.ps1[0m
+2026/05/26 10:16:14 packer-provisioner-powershell plugin: Opening ./scripts/init-dirs.ps1 for reading
+2026/05/26 10:16:14 packer-provisioner-powershell plugin: Uploading env vars to c:/Windows/Temp/packer-ps-env-vars-6a1556ce-aab5-a15a-32c1-267ec914ab9c.ps1
+2026/05/26 10:16:14 packer-provisioner-powershell plugin: [INFO] 113 bytes written for 'uploadData'
+2026/05/26 10:16:14 [INFO] 113 bytes written for 'uploadData'
+2026/05/26 10:16:14 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:14 Uploading file to 'c:/Windows/Temp/packer-ps-env-vars-6a1556ce-aab5-a15a-32c1-267ec914ab9c.ps1'
+2026/05/26 10:16:23 packer-provisioner-powershell plugin: Building elevated command wrapper for: powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1556ce-aab5-a15a-32c1-267ec914ab9c.ps1; &'c:/Windows/Temp/script-6a1556ce-cf8b-fde9-71a6-55579c5e6c9d.ps1'; exit $LastExitCode }"
+2026/05/26 10:16:23 packer-provisioner-powershell plugin: Command [powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1556ce-aab5-a15a-32c1-267ec914ab9c.ps1; &'c:/Windows/Temp/script-6a1556ce-cf8b-fde9-71a6-55579c5e6c9d.ps1'; exit $LastExitCode }" > %SYSTEMROOT%/Temp/packer-6a1556d7-cf10-57a0-5a4f-625891591c8b.out 2>&1] converted to [powershell -executionpolicy bypass &#34;&amp; { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value &#39;SilentlyContinue&#39;};. c:/Windows/Temp/packer-ps-env-vars-6a1556ce-aab5-a15a-32c1-267ec914ab9c.ps1; &amp;&#39;c:/Windows/Temp/script-6a1556ce-cf8b-fde9-71a6-55579c5e6c9d.ps1&#39;; exit $LastExitCode }&#34; &gt; %SYSTEMROOT%/Temp/packer-6a1556d7-cf10-57a0-5a4f-625891591c8b.out 2&gt;&amp;1] for use in XML string
+2026/05/26 10:16:23 packer-provisioner-powershell plugin: Uploading elevated shell wrapper for command [powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1556ce-aab5-a15a-32c1-267ec914ab9c.ps1; &'c:/Windows/Temp/script-6a1556ce-cf8b-fde9-71a6-55579c5e6c9d.ps1'; exit $LastExitCode }" > %SYSTEMROOT%/Temp/packer-6a1556d7-cf10-57a0-5a4f-625891591c8b.out 2>&1] to [C:/Windows/Temp/packer-elevated-shell-6a1556d7-54b5-4b62-91bf-183f84c8a941.ps1]
+2026/05/26 10:16:23 packer-provisioner-powershell plugin: [INFO] 3512 bytes written for 'uploadData'
+2026/05/26 10:16:23 [INFO] 3512 bytes written for 'uploadData'
+2026/05/26 10:16:23 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:23 Uploading file to 'C:/Windows/Temp/packer-elevated-shell-6a1556d7-54b5-4b62-91bf-183f84c8a941.ps1'
+2026/05/26 10:16:32 packer-provisioner-powershell plugin: [INFO] 131 bytes written for 'uploadData'
+2026/05/26 10:16:32 [INFO] 131 bytes written for 'uploadData'
+2026/05/26 10:16:32 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:32 Uploading file to 'c:/Windows/Temp/script-6a1556ce-cf8b-fde9-71a6-55579c5e6c9d.ps1'
+2026/05/26 10:16:41 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:41 [INFO] starting remote command: powershell -executionpolicy bypass -file "C:/Windows/Temp/packer-elevated-shell-6a1556d7-54b5-4b62-91bf-183f84c8a941.ps1"
+2026/05/26 10:16:48 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:48 [INFO] command 'powershell -executionpolicy bypass -file "C:/Windows/Temp/packer-elevated-shell-6a1556d7-54b5-4b62-91bf-183f84c8a941.ps1"' exited with code: 0
+2026/05/26 10:16:48 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:48 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:16:48 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:16:48 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:16:48 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:16:48 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:16:48 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:16:48 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:16:48 packer-provisioner-powershell plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:16:48 packer-provisioner-powershell plugin: c:/Windows/Temp/script-6a1556ce-cf8b-fde9-71a6-55579c5e6c9d.ps1 returned with exit code 0
+2026/05/26 10:16:48 packer-provisioner-powershell plugin: [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:16:48 [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:16:48 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:48 Uploading file to 'c:/Windows/Temp/packer-cleanup-6a1556ce-b2a4-78f0-4d8e-49c28937463f.ps1'
+2026/05/26 10:16:58 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:16:58 [INFO] starting remote command: powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1556ce-aab5-a15a-32c1-267ec914ab9c.ps1; &'c:/Windows/Temp/packer-cleanup-6a1556ce-b2a4-78f0-4d8e-49c28937463f.ps1'; exit $LastExitCode }"
+2026/05/26 10:17:01 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:01 [INFO] command 'powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1556ce-aab5-a15a-32c1-267ec914ab9c.ps1; &'c:/Windows/Temp/packer-cleanup-6a1556ce-b2a4-78f0-4d8e-49c28937463f.ps1'; exit $LastExitCode }"' exited with code: 0
+2026/05/26 10:17:01 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:01 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:17:01 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:17:01 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:17:01 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:17:01 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:17:01 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:17:01 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:17:01 packer-provisioner-powershell plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:17:01 [INFO] (telemetry) ending powershell
+2026/05/26 10:17:01 [INFO] (telemetry) Starting provisioner file
+2026/05/26 10:17:01 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:17:01 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:17:01 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Uploading ./files/cloudbase-init.conf => C:\Temp\cloudbase-init.conf[0m
+2026/05/26 10:17:01 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:01 Uploading file to 'C:\Temp\cloudbase-init.conf'
+2026/05/26 10:17:01 packer-provisioner-file plugin: [INFO] 960 bytes written for 'uploadData'
+2026/05/26 10:17:01 [INFO] 960 bytes written for 'uploadData'
+2026/05/26 10:17:11 packer-provisioner-file plugin: closing
+2026/05/26 10:17:11 closing
+2026/05/26 10:17:11 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:11 closing
+2026/05/26 10:17:11 [INFO] (telemetry) ending file
+2026/05/26 10:17:11 [INFO] (telemetry) Starting provisioner file
+2026/05/26 10:17:11 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:17:11 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:17:11 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Uploading ./files/cloudbase-init-unattend.conf => C:\Temp\cloudbase-init-unattend.conf[0m
+2026/05/26 10:17:11 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:11 Uploading file to 'C:\Temp\cloudbase-init-unattend.conf'
+2026/05/26 10:17:11 packer-provisioner-file plugin: [INFO] 1016 bytes written for 'uploadData'
+2026/05/26 10:17:11 [INFO] 1016 bytes written for 'uploadData'
+2026/05/26 10:17:19 packer-provisioner-file plugin: closing
+2026/05/26 10:17:19 closing
+2026/05/26 10:17:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:19 closing
+2026/05/26 10:17:19 [INFO] (telemetry) ending file
+2026/05/26 10:17:19 [INFO] (telemetry) Starting provisioner file
+2026/05/26 10:17:19 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:17:19 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:17:19 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Uploading /tmp/pkr-file-content4068415205 => C:\Scripts\ping-url.ps1[0m
+2026/05/26 10:17:19 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:19 Uploading file to 'C:\Scripts\ping-url.ps1'
+2026/05/26 10:17:19 packer-provisioner-file plugin: [INFO] 518 bytes written for 'uploadData'
+2026/05/26 10:17:19 [INFO] 518 bytes written for 'uploadData'
+2026/05/26 10:17:29 packer-provisioner-file plugin: closing
+2026/05/26 10:17:29 closing
+2026/05/26 10:17:29 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:29 closing
+2026/05/26 10:17:29 [INFO] (telemetry) ending file
+2026/05/26 10:17:29 [INFO] (telemetry) Starting provisioner windows-restart
+2026/05/26 10:17:29 packer-provisioner-windows-restart plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:17:29 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:17:29 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Restarting Machine[0m
+2026/05/26 10:17:29 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:29 [INFO] starting remote command: shutdown /r /f /t 0 /c "packer restart"
+2026/05/26 10:17:29 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:29 [INFO] command 'shutdown /r /f /t 0 /c "packer restart"' exited with code: 0
+2026/05/26 10:17:29 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:29 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:17:29 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:17:29 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:17:29 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:17:29 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:17:29 packer-provisioner-windows-restart plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:17:29 packer-provisioner-windows-restart plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:17:29 packer-provisioner-windows-restart plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:17:29 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Waiting for machine to restart...[0m
+2026/05/26 10:17:29 packer-provisioner-windows-restart plugin: Check if machine is rebooting...
+2026/05/26 10:17:30 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:30 [INFO] starting remote command: shutdown /r /f /t 60 /c "packer restart test"
+2026/05/26 10:17:30 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:30 [INFO] command 'shutdown /r /f /t 60 /c "packer restart test"' exited with code: 1115
+2026/05/26 10:17:30 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:30 [INFO] RPC endpoint: Communicator ended with: 1115
+2026/05/26 10:17:30 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:17:30 [INFO] 40 bytes written for 'stderr'
+2026/05/26 10:17:30 [INFO] RPC client: Communicator ended with: 1115
+2026/05/26 10:17:30 [INFO] RPC endpoint: Communicator ended with: 1115
+2026/05/26 10:17:30 packer-provisioner-windows-restart plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:17:30 packer-provisioner-windows-restart plugin: [INFO] 40 bytes written for 'stderr'
+2026/05/26 10:17:30 ui error: [1;31m==> windows-server-2022.proxmox-iso.windows-server-2022: A system shutdown is in progress.(1115)[0m
+2026/05/26 10:17:30 packer-provisioner-windows-restart plugin: [INFO] RPC client: Communicator ended with: 1115
+2026/05/26 10:17:30 packer-provisioner-windows-restart plugin: Reboot already in progress, waiting...
+2026/05/26 10:17:40 packer-provisioner-windows-restart plugin: Check if machine is rebooting...
+2026/05/26 10:17:54 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:54 [INFO] starting remote command: shutdown /r /f /t 60 /c "packer restart test"
+2026/05/26 10:17:55 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:55 [INFO] command 'shutdown /r /f /t 60 /c "packer restart test"' exited with code: 0
+2026/05/26 10:17:55 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:55 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:17:55 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:17:55 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:17:55 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:17:55 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:17:55 packer-provisioner-windows-restart plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:17:55 packer-provisioner-windows-restart plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:17:55 packer-provisioner-windows-restart plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:17:56 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:56 [INFO] starting remote command: shutdown /a
+2026/05/26 10:17:57 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:57 [INFO] command 'shutdown /a' exited with code: 0
+2026/05/26 10:17:57 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:17:57 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:17:57 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:17:57 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:17:57 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:17:57 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:17:57 packer-provisioner-windows-restart plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:17:57 packer-provisioner-windows-restart plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:17:57 packer-provisioner-windows-restart plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:17:57 packer-provisioner-windows-restart plugin: Waiting for machine to reboot with timeout: 15m0s
+2026/05/26 10:17:57 packer-provisioner-windows-restart plugin: Waiting for machine to become available...
+2026/05/26 10:17:57 packer-provisioner-windows-restart plugin: Checking that communicator is connected with: 'powershell.exe -EncodedCommand JABQAHIAbwBnAHIAZQBzAHMAUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAFMAaQBsAGUAbgB0AGwAeQBDAG8AbgB0AGkAbgB1AGUAJwA7AGUAYwBoAG8AIAAoACIAewAwAH0AIAByAGUAcwB0AGEAcgB0AGUAZAAuACIAIAAtAGYAIABbAFMAeQBzAHQAZQBtAC4ATgBlAHQALgBEAG4AcwBdADoAOgBHAGUAdABIAG8AcwB0AE4AYQBtAGUAKAApACkA'
+2026/05/26 10:18:02 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:18:02 [INFO] starting remote command: powershell.exe -EncodedCommand JABQAHIAbwBnAHIAZQBzAHMAUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAFMAaQBsAGUAbgB0AGwAeQBDAG8AbgB0AGkAbgB1AGUAJwA7AGUAYwBoAG8AIAAoACIAewAwAH0AIAByAGUAcwB0AGEAcgB0AGUAZAAuACIAIAAtAGYAIABbAFMAeQBzAHQAZQBtAC4ATgBlAHQALgBEAG4AcwBdADoAOgBHAGUAdABIAG8AcwB0AE4AYQBtAGUAKAApACkA
+2026/05/26 10:18:07 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:18:07 [INFO] command 'powershell.exe -EncodedCommand JABQAHIAbwBnAHIAZQBzAHMAUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAFMAaQBsAGUAbgB0AGwAeQBDAG8AbgB0AGkAbgB1AGUAJwA7AGUAYwBoAG8AIAAoACIAewAwAH0AIAByAGUAcwB0AGEAcgB0AGUAZAAuACIAIAAtAGYAIABbAFMAeQBzAHQAZQBtAC4ATgBlAHQALgBEAG4AcwBdADoAOgBHAGUAdABIAG8AcwB0AE4AYQBtAGUAKAApACkA' exited with code: 0
+2026/05/26 10:18:07 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:18:07 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:18:07 [INFO] 25 bytes written for 'stdout'
+2026/05/26 10:18:07 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:18:07 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:18:07 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:18:07 packer-provisioner-windows-restart plugin: [INFO] 25 bytes written for 'stdout'
+2026/05/26 10:18:07 packer-provisioner-windows-restart plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:18:07 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: WIN-TEMPLATE restarted.[0m
+2026/05/26 10:18:07 packer-provisioner-windows-restart plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:18:07 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Machine successfully restarted, moving on[0m
+2026/05/26 10:18:07 [INFO] (telemetry) ending windows-restart
+2026/05/26 10:18:07 [INFO] (telemetry) Starting provisioner powershell
+2026/05/26 10:18:07 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:18:07 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:18:07 packer-provisioner-powershell plugin: Using script default execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:18:07 packer-provisioner-powershell plugin: Using script default elevated execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:18:07 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Provisioning with Powershell...[0m
+2026/05/26 10:18:07 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Provisioning with powershell script: ./scripts/install-cloudbase.ps1[0m
+2026/05/26 10:18:07 packer-provisioner-powershell plugin: Opening ./scripts/install-cloudbase.ps1 for reading
+2026/05/26 10:18:07 packer-provisioner-powershell plugin: Uploading env vars to c:/Windows/Temp/packer-ps-env-vars-6a15573f-2a97-31bd-8c39-48043dd14f01.ps1
+2026/05/26 10:18:07 packer-provisioner-powershell plugin: [INFO] 113 bytes written for 'uploadData'
+2026/05/26 10:18:07 [INFO] 113 bytes written for 'uploadData'
+2026/05/26 10:18:07 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:18:07 Uploading file to 'c:/Windows/Temp/packer-ps-env-vars-6a15573f-2a97-31bd-8c39-48043dd14f01.ps1'
+2026/05/26 10:18:17 packer-provisioner-powershell plugin: Building elevated command wrapper for: powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a15573f-2a97-31bd-8c39-48043dd14f01.ps1; &'c:/Windows/Temp/script-6a15573f-2eba-954b-70eb-289a42420b15.ps1'; exit $LastExitCode }"
+2026/05/26 10:18:17 packer-provisioner-powershell plugin: Command [powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a15573f-2a97-31bd-8c39-48043dd14f01.ps1; &'c:/Windows/Temp/script-6a15573f-2eba-954b-70eb-289a42420b15.ps1'; exit $LastExitCode }" > %SYSTEMROOT%/Temp/packer-6a155749-3f06-3e4a-1593-cc6dbb3f2064.out 2>&1] converted to [powershell -executionpolicy bypass &#34;&amp; { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value &#39;SilentlyContinue&#39;};. c:/Windows/Temp/packer-ps-env-vars-6a15573f-2a97-31bd-8c39-48043dd14f01.ps1; &amp;&#39;c:/Windows/Temp/script-6a15573f-2eba-954b-70eb-289a42420b15.ps1&#39;; exit $LastExitCode }&#34; &gt; %SYSTEMROOT%/Temp/packer-6a155749-3f06-3e4a-1593-cc6dbb3f2064.out 2&gt;&amp;1] for use in XML string
+2026/05/26 10:18:17 packer-provisioner-powershell plugin: Uploading elevated shell wrapper for command [powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a15573f-2a97-31bd-8c39-48043dd14f01.ps1; &'c:/Windows/Temp/script-6a15573f-2eba-954b-70eb-289a42420b15.ps1'; exit $LastExitCode }" > %SYSTEMROOT%/Temp/packer-6a155749-3f06-3e4a-1593-cc6dbb3f2064.out 2>&1] to [C:/Windows/Temp/packer-elevated-shell-6a155749-7c2c-5757-3fdc-bcf44790fdca.ps1]
+2026/05/26 10:18:17 packer-provisioner-powershell plugin: [INFO] 3512 bytes written for 'uploadData'
+2026/05/26 10:18:17 [INFO] 3512 bytes written for 'uploadData'
+2026/05/26 10:18:17 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:18:17 Uploading file to 'C:/Windows/Temp/packer-elevated-shell-6a155749-7c2c-5757-3fdc-bcf44790fdca.ps1'
+2026/05/26 10:18:27 packer-provisioner-powershell plugin: [INFO] 1038 bytes written for 'uploadData'
+2026/05/26 10:18:27 [INFO] 1038 bytes written for 'uploadData'
+2026/05/26 10:18:27 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:18:27 Uploading file to 'c:/Windows/Temp/script-6a15573f-2eba-954b-70eb-289a42420b15.ps1'
+2026/05/26 10:18:37 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:18:37 [INFO] starting remote command: powershell -executionpolicy bypass -file "C:/Windows/Temp/packer-elevated-shell-6a155749-7c2c-5757-3fdc-bcf44790fdca.ps1"
+2026/05/26 10:18:45 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: MSI trouvÇ¸ : E:\CloudbaseInitSetup_Stable_x64.msi[0m
+2026/05/26 10:20:03 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:03 [INFO] command 'powershell -executionpolicy bypass -file "C:/Windows/Temp/packer-elevated-shell-6a155749-7c2c-5757-3fdc-bcf44790fdca.ps1"' exited with code: 0
+2026/05/26 10:20:03 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:03 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:20:03 [INFO] 54 bytes written for 'stdout'
+2026/05/26 10:20:03 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:20:03 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:20:03 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:20:03 packer-provisioner-powershell plugin: [INFO] 54 bytes written for 'stdout'
+2026/05/26 10:20:03 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:20:03 packer-provisioner-powershell plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:20:03 packer-provisioner-powershell plugin: c:/Windows/Temp/script-6a15573f-2eba-954b-70eb-289a42420b15.ps1 returned with exit code 0
+2026/05/26 10:20:03 packer-provisioner-powershell plugin: [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:20:03 [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:20:03 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:03 Uploading file to 'c:/Windows/Temp/packer-cleanup-6a15573f-7a15-56f5-ea6d-aca9f4d557a9.ps1'
+2026/05/26 10:20:12 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:12 [INFO] starting remote command: powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a15573f-2a97-31bd-8c39-48043dd14f01.ps1; &'c:/Windows/Temp/packer-cleanup-6a15573f-7a15-56f5-ea6d-aca9f4d557a9.ps1'; exit $LastExitCode }"
+2026/05/26 10:20:15 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:15 [INFO] command 'powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a15573f-2a97-31bd-8c39-48043dd14f01.ps1; &'c:/Windows/Temp/packer-cleanup-6a15573f-7a15-56f5-ea6d-aca9f4d557a9.ps1'; exit $LastExitCode }"' exited with code: 0
+2026/05/26 10:20:15 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:15 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:20:15 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:20:15 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:20:15 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:20:15 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:20:15 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:20:15 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:20:15 packer-provisioner-powershell plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:20:15 [INFO] (telemetry) ending powershell
+2026/05/26 10:20:15 [INFO] (telemetry) Starting provisioner powershell
+2026/05/26 10:20:15 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:20:15 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:20:15 packer-provisioner-powershell plugin: Using script default execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:20:15 packer-provisioner-powershell plugin: Using script default elevated execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:20:15 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Provisioning with Powershell...[0m
+2026/05/26 10:20:15 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Provisioning with powershell script: ./scripts/register-ping-url-task.ps1[0m
+2026/05/26 10:20:15 packer-provisioner-powershell plugin: Opening ./scripts/register-ping-url-task.ps1 for reading
+2026/05/26 10:20:15 packer-provisioner-powershell plugin: Uploading env vars to c:/Windows/Temp/packer-ps-env-vars-6a1557bf-47e6-0c91-0fda-3da720060330.ps1
+2026/05/26 10:20:15 packer-provisioner-powershell plugin: [INFO] 113 bytes written for 'uploadData'
+2026/05/26 10:20:15 [INFO] 113 bytes written for 'uploadData'
+2026/05/26 10:20:15 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:15 Uploading file to 'c:/Windows/Temp/packer-ps-env-vars-6a1557bf-47e6-0c91-0fda-3da720060330.ps1'
+2026/05/26 10:20:24 packer-provisioner-powershell plugin: Building elevated command wrapper for: powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1557bf-47e6-0c91-0fda-3da720060330.ps1; &'c:/Windows/Temp/script-6a1557bf-8931-628e-ff78-f872b206a6f4.ps1'; exit $LastExitCode }"
+2026/05/26 10:20:24 packer-provisioner-powershell plugin: Command [powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1557bf-47e6-0c91-0fda-3da720060330.ps1; &'c:/Windows/Temp/script-6a1557bf-8931-628e-ff78-f872b206a6f4.ps1'; exit $LastExitCode }" > %SYSTEMROOT%/Temp/packer-6a1557c8-09d1-0442-4d69-e5ad6c15d299.out 2>&1] converted to [powershell -executionpolicy bypass &#34;&amp; { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value &#39;SilentlyContinue&#39;};. c:/Windows/Temp/packer-ps-env-vars-6a1557bf-47e6-0c91-0fda-3da720060330.ps1; &amp;&#39;c:/Windows/Temp/script-6a1557bf-8931-628e-ff78-f872b206a6f4.ps1&#39;; exit $LastExitCode }&#34; &gt; %SYSTEMROOT%/Temp/packer-6a1557c8-09d1-0442-4d69-e5ad6c15d299.out 2&gt;&amp;1] for use in XML string
+2026/05/26 10:20:24 packer-provisioner-powershell plugin: Uploading elevated shell wrapper for command [powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1557bf-47e6-0c91-0fda-3da720060330.ps1; &'c:/Windows/Temp/script-6a1557bf-8931-628e-ff78-f872b206a6f4.ps1'; exit $LastExitCode }" > %SYSTEMROOT%/Temp/packer-6a1557c8-09d1-0442-4d69-e5ad6c15d299.out 2>&1] to [C:/Windows/Temp/packer-elevated-shell-6a1557c8-83ca-2e19-80b9-61b41926abdc.ps1]
+2026/05/26 10:20:24 packer-provisioner-powershell plugin: [INFO] 3512 bytes written for 'uploadData'
+2026/05/26 10:20:24 [INFO] 3512 bytes written for 'uploadData'
+2026/05/26 10:20:24 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:24 Uploading file to 'C:/Windows/Temp/packer-elevated-shell-6a1557c8-83ca-2e19-80b9-61b41926abdc.ps1'
+2026/05/26 10:20:33 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:33 Uploading file to 'c:/Windows/Temp/script-6a1557bf-8931-628e-ff78-f872b206a6f4.ps1'
+2026/05/26 10:20:33 packer-provisioner-powershell plugin: [INFO] 754 bytes written for 'uploadData'
+2026/05/26 10:20:33 [INFO] 754 bytes written for 'uploadData'
+2026/05/26 10:20:42 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:42 [INFO] starting remote command: powershell -executionpolicy bypass -file "C:/Windows/Temp/packer-elevated-shell-6a1557c8-83ca-2e19-80b9-61b41926abdc.ps1"
+2026/05/26 10:20:53 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:53 [INFO] command 'powershell -executionpolicy bypass -file "C:/Windows/Temp/packer-elevated-shell-6a1557c8-83ca-2e19-80b9-61b41926abdc.ps1"' exited with code: 0
+2026/05/26 10:20:53 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:53 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:20:53 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:20:53 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:20:53 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:20:53 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:20:53 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:20:53 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:20:53 packer-provisioner-powershell plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:20:53 packer-provisioner-powershell plugin: c:/Windows/Temp/script-6a1557bf-8931-628e-ff78-f872b206a6f4.ps1 returned with exit code 0
+2026/05/26 10:20:53 packer-provisioner-powershell plugin: [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:20:53 [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:20:53 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:20:53 Uploading file to 'c:/Windows/Temp/packer-cleanup-6a1557bf-74a3-9ad7-7457-331aec7524f9.ps1'
+2026/05/26 10:21:03 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:21:03 [INFO] starting remote command: powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1557bf-47e6-0c91-0fda-3da720060330.ps1; &'c:/Windows/Temp/packer-cleanup-6a1557bf-74a3-9ad7-7457-331aec7524f9.ps1'; exit $LastExitCode }"
+2026/05/26 10:21:06 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:21:06 [INFO] command 'powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1557bf-47e6-0c91-0fda-3da720060330.ps1; &'c:/Windows/Temp/packer-cleanup-6a1557bf-74a3-9ad7-7457-331aec7524f9.ps1'; exit $LastExitCode }"' exited with code: 0
+2026/05/26 10:21:06 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:21:06 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:21:06 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:21:06 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:21:06 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:21:06 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:21:06 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:21:06 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:21:06 packer-provisioner-powershell plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:21:06 [INFO] (telemetry) ending powershell
+2026/05/26 10:21:06 [INFO] (telemetry) Starting provisioner file
+2026/05/26 10:21:06 packer-provisioner-file plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:21:06 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:21:06 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Uploading /tmp/pkr-file-content3287270643 => C:\Windows\System32\Sysprep\unattend.xml[0m
+2026/05/26 10:21:06 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:21:06 Uploading file to 'C:\Windows\System32\Sysprep\unattend.xml'
+2026/05/26 10:21:06 packer-provisioner-file plugin: [INFO] 1436 bytes written for 'uploadData'
+2026/05/26 10:21:06 [INFO] 1436 bytes written for 'uploadData'
+2026/05/26 10:21:16 packer-provisioner-file plugin: closing
+2026/05/26 10:21:16 closing
+2026/05/26 10:21:16 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:21:16 closing
+2026/05/26 10:21:16 [INFO] (telemetry) ending file
+2026/05/26 10:21:16 [INFO] (telemetry) Starting provisioner powershell
+2026/05/26 10:21:16 packer-provisioner-powershell plugin: [DEBUG] - common: sending ConfigSpec as protobuf
+2026/05/26 10:21:16 [DEBUG] - common: receiving ConfigSpec as protobuf
+2026/05/26 10:21:16 packer-provisioner-powershell plugin: Using script default execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:21:16 packer-provisioner-powershell plugin: Using script default elevated execute command powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. {{.Vars}}; &'{{.Path}}'; exit $LastExitCode }"
+2026/05/26 10:21:16 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Provisioning with Powershell...[0m
+2026/05/26 10:21:16 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Provisioning with powershell script: ./scripts/sysprep.ps1[0m
+2026/05/26 10:21:16 packer-provisioner-powershell plugin: Opening ./scripts/sysprep.ps1 for reading
+2026/05/26 10:21:16 packer-provisioner-powershell plugin: Uploading env vars to c:/Windows/Temp/packer-ps-env-vars-6a1557fc-c9b2-3d8a-8875-a2efe09704df.ps1
+2026/05/26 10:21:16 packer-provisioner-powershell plugin: [INFO] 113 bytes written for 'uploadData'
+2026/05/26 10:21:16 [INFO] 113 bytes written for 'uploadData'
+2026/05/26 10:21:16 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:21:16 Uploading file to 'c:/Windows/Temp/packer-ps-env-vars-6a1557fc-c9b2-3d8a-8875-a2efe09704df.ps1'
+2026/05/26 10:21:26 packer-provisioner-powershell plugin: Building elevated command wrapper for: powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1557fc-c9b2-3d8a-8875-a2efe09704df.ps1; &'c:/Windows/Temp/script-6a1557fc-4232-7114-3540-6823b33740ab.ps1'; exit $LastExitCode }"
+2026/05/26 10:21:26 packer-provisioner-powershell plugin: Command [powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1557fc-c9b2-3d8a-8875-a2efe09704df.ps1; &'c:/Windows/Temp/script-6a1557fc-4232-7114-3540-6823b33740ab.ps1'; exit $LastExitCode }" > %SYSTEMROOT%/Temp/packer-6a155806-2ecf-36f1-2669-78cfea962ee0.out 2>&1] converted to [powershell -executionpolicy bypass &#34;&amp; { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value &#39;SilentlyContinue&#39;};. c:/Windows/Temp/packer-ps-env-vars-6a1557fc-c9b2-3d8a-8875-a2efe09704df.ps1; &amp;&#39;c:/Windows/Temp/script-6a1557fc-4232-7114-3540-6823b33740ab.ps1&#39;; exit $LastExitCode }&#34; &gt; %SYSTEMROOT%/Temp/packer-6a155806-2ecf-36f1-2669-78cfea962ee0.out 2&gt;&amp;1] for use in XML string
+2026/05/26 10:21:26 packer-provisioner-powershell plugin: Uploading elevated shell wrapper for command [powershell -executionpolicy bypass "& { if (Test-Path variable:global:ProgressPreference){set-variable -name variable:global:ProgressPreference -value 'SilentlyContinue'};. c:/Windows/Temp/packer-ps-env-vars-6a1557fc-c9b2-3d8a-8875-a2efe09704df.ps1; &'c:/Windows/Temp/script-6a1557fc-4232-7114-3540-6823b33740ab.ps1'; exit $LastExitCode }" > %SYSTEMROOT%/Temp/packer-6a155806-2ecf-36f1-2669-78cfea962ee0.out 2>&1] to [C:/Windows/Temp/packer-elevated-shell-6a155806-e018-0dd7-c7f0-499de3a679c3.ps1]
+2026/05/26 10:21:26 packer-provisioner-powershell plugin: [INFO] 3512 bytes written for 'uploadData'
+2026/05/26 10:21:26 [INFO] 3512 bytes written for 'uploadData'
+2026/05/26 10:21:26 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:21:26 Uploading file to 'C:/Windows/Temp/packer-elevated-shell-6a155806-e018-0dd7-c7f0-499de3a679c3.ps1'
+2026/05/26 10:21:35 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:21:35 Uploading file to 'c:/Windows/Temp/script-6a1557fc-4232-7114-3540-6823b33740ab.ps1'
+2026/05/26 10:21:35 packer-provisioner-powershell plugin: [INFO] 209 bytes written for 'uploadData'
+2026/05/26 10:21:35 [INFO] 209 bytes written for 'uploadData'
+2026/05/26 10:21:44 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:21:44 [INFO] starting remote command: powershell -executionpolicy bypass -file "C:/Windows/Temp/packer-elevated-shell-6a155806-e018-0dd7-c7f0-499de3a679c3.ps1"
+2026/05/26 10:24:33 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:24:33 [INFO] command 'powershell -executionpolicy bypass -file "C:/Windows/Temp/packer-elevated-shell-6a155806-e018-0dd7-c7f0-499de3a679c3.ps1"' exited with code: 0
+2026/05/26 10:24:33 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:24:33 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:24:33 [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:24:33 [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:24:33 [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:24:33 [INFO] RPC endpoint: Communicator ended with: 0
+2026/05/26 10:24:33 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stdout'
+2026/05/26 10:24:33 packer-provisioner-powershell plugin: [INFO] 0 bytes written for 'stderr'
+2026/05/26 10:24:33 packer-provisioner-powershell plugin: [INFO] RPC client: Communicator ended with: 0
+2026/05/26 10:24:33 packer-provisioner-powershell plugin: c:/Windows/Temp/script-6a1557fc-4232-7114-3540-6823b33740ab.ps1 returned with exit code 0
+2026/05/26 10:24:33 packer-provisioner-powershell plugin: [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:24:33 [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:24:33 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:24:33 Uploading file to 'c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1'
+2026/05/26 10:24:35 packer-provisioner-powershell plugin: failed to upload the remote cleanup script: "clean up script \"c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1\" failed to upload: Error uploading file to $env:TEMP\\winrmcp-d4cda46d-c1dd-4372-7732-f8b2df177458.tmp: Couldn't create shell: unknown error Post \"http://10.50.0.10:5985/wsman\": dial tcp 10.50.0.10:5985: connect: no route to host"
+2026/05/26 10:24:35 packer-provisioner-powershell plugin: Retryable error: clean up script "c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1" failed to upload: Error uploading file to $env:TEMP\winrmcp-d4cda46d-c1dd-4372-7732-f8b2df177458.tmp: Couldn't create shell: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:24:45 packer-provisioner-powershell plugin: [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:24:45 [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:24:45 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:24:45 Uploading file to 'c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1'
+2026/05/26 10:24:46 packer-provisioner-powershell plugin: failed to upload the remote cleanup script: "clean up script \"c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1\" failed to upload: Error uploading file to $env:TEMP\\winrmcp-2a2aa3ad-550a-4521-4f5c-3669a9aa73a4.tmp: Couldn't create shell: unknown error Post \"http://10.50.0.10:5985/wsman\": dial tcp 10.50.0.10:5985: connect: no route to host"
+2026/05/26 10:24:46 packer-provisioner-powershell plugin: Retryable error: clean up script "c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1" failed to upload: Error uploading file to $env:TEMP\winrmcp-2a2aa3ad-550a-4521-4f5c-3669a9aa73a4.tmp: Couldn't create shell: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:24:56 packer-provisioner-powershell plugin: [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:24:56 [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:24:56 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:24:56 Uploading file to 'c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1'
+2026/05/26 10:25:00 packer-provisioner-powershell plugin: failed to upload the remote cleanup script: "clean up script \"c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1\" failed to upload: Error uploading file to $env:TEMP\\winrmcp-8cde331b-649d-4968-4362-60ae92bdc1ec.tmp: Couldn't create shell: unknown error Post \"http://10.50.0.10:5985/wsman\": dial tcp 10.50.0.10:5985: connect: no route to host"
+2026/05/26 10:25:00 packer-provisioner-powershell plugin: Retryable error: clean up script "c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1" failed to upload: Error uploading file to $env:TEMP\winrmcp-8cde331b-649d-4968-4362-60ae92bdc1ec.tmp: Couldn't create shell: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:25:10 packer-provisioner-powershell plugin: [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:25:10 [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:25:10 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:25:10 Uploading file to 'c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1'
+2026/05/26 10:25:13 packer-provisioner-powershell plugin: failed to upload the remote cleanup script: "clean up script \"c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1\" failed to upload: Error uploading file to $env:TEMP\\winrmcp-53dd984d-38ba-4b92-4bdb-dc6bdef5113e.tmp: Couldn't create shell: unknown error Post \"http://10.50.0.10:5985/wsman\": dial tcp 10.50.0.10:5985: connect: no route to host"
+2026/05/26 10:25:13 packer-provisioner-powershell plugin: Retryable error: clean up script "c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1" failed to upload: Error uploading file to $env:TEMP\winrmcp-53dd984d-38ba-4b92-4bdb-dc6bdef5113e.tmp: Couldn't create shell: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:25:23 packer-provisioner-powershell plugin: [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:25:23 [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:25:23 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:25:23 Uploading file to 'c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1'
+2026/05/26 10:25:26 packer-provisioner-powershell plugin: failed to upload the remote cleanup script: "clean up script \"c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1\" failed to upload: Error uploading file to $env:TEMP\\winrmcp-27a4bcc2-b00f-4615-737e-397a1bc23672.tmp: Couldn't create shell: unknown error Post \"http://10.50.0.10:5985/wsman\": dial tcp 10.50.0.10:5985: connect: no route to host"
+2026/05/26 10:25:26 packer-provisioner-powershell plugin: Retryable error: clean up script "c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1" failed to upload: Error uploading file to $env:TEMP\winrmcp-27a4bcc2-b00f-4615-737e-397a1bc23672.tmp: Couldn't create shell: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:25:36 packer-provisioner-powershell plugin: [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:25:36 [INFO] 511 bytes written for 'uploadData'
+2026/05/26 10:25:36 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:25:36 Uploading file to 'c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1'
+2026/05/26 10:25:40 packer-provisioner-powershell plugin: failed to upload the remote cleanup script: "clean up script \"c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1\" failed to upload: Error uploading file to $env:TEMP\\winrmcp-7ea89810-6e0d-436c-4a7f-c5f6769acba3.tmp: Couldn't create shell: unknown error Post \"http://10.50.0.10:5985/wsman\": dial tcp 10.50.0.10:5985: connect: no route to host"
+2026/05/26 10:25:40 packer-provisioner-powershell plugin: Retryable error: clean up script "c:/Windows/Temp/packer-cleanup-6a1557fc-3560-792b-06f1-281b0fea3f86.ps1" failed to upload: Error uploading file to $env:TEMP\winrmcp-7ea89810-6e0d-436c-4a7f-c5f6769acba3.tmp: Couldn't create shell: unknown error Post "http://10.50.0.10:5985/wsman": dial tcp 10.50.0.10:5985: connect: no route to host
+2026/05/26 10:25:40 packer-provisioner-powershell plugin: remote cleanup script failed to upload; skipping the removal of temporary files: c:/Windows/Temp/packer-ps-env-vars-6a1557fc-c9b2-3d8a-8875-a2efe09704df.ps1,c:/Windows/Temp/script-6a1557fc-4232-7114-3540-6823b33740ab.ps1;
+2026/05/26 10:25:40 [INFO] (telemetry) ending powershell
+2026/05/26 10:25:40 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Stopping VM[0m
+2026/05/26 10:25:41 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Converting VM to template[0m
+2026/05/26 10:25:41 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:25:41 template_id: 9022
+2026/05/26 10:25:42 ui: [1;32m==> windows-server-2022.proxmox-iso.windows-server-2022: Deleted generated ISO from local:iso/packer1425715720.iso[0m
+2026/05/26 10:25:42 packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64 plugin: 2026/05/26 10:25:42 Deleting CD disk: /tmp/packer1425715720.iso
+2026/05/26 10:25:42 [INFO] (telemetry) ending proxmox-iso.windows-server-2022
+2026/05/26 10:25:42 ui: [1;32mBuild 'windows-server-2022.proxmox-iso.windows-server-2022' finished after 18 minutes 24 seconds.[0m
+2026/05/26 10:25:42 ui: 
+==> Wait completed after 18 minutes 24 seconds
+2026/05/26 10:25:42 ui: 
+==> Builds finished. The artifacts of successful builds are:
+2026/05/26 10:25:42 machine readable: windows-server-2022.proxmox-iso.windows-server-2022,artifact-count []string{"1"}
+2026/05/26 10:25:42 machine readable: windows-server-2022.proxmox-iso.windows-server-2022,artifact []string{"0", "builder-id", "proxmox.iso"}
+2026/05/26 10:25:42 machine readable: windows-server-2022.proxmox-iso.windows-server-2022,artifact []string{"0", "id", "9022"}
+2026/05/26 10:25:42 machine readable: windows-server-2022.proxmox-iso.windows-server-2022,artifact []string{"0", "string", "A template was created: 9022"}
+2026/05/26 10:25:42 machine readable: windows-server-2022.proxmox-iso.windows-server-2022,artifact []string{"0", "files-count", "0"}
+2026/05/26 10:25:42 machine readable: windows-server-2022.proxmox-iso.windows-server-2022,artifact []string{"0", "end"}
+2026/05/26 10:25:42 ui: --> windows-server-2022.proxmox-iso.windows-server-2022: A template was created: 9022
+2026/05/26 10:25:42 [INFO] (telemetry) Finalizing.
+2026/05/26 10:25:43 waiting for all plugin processes to complete...
+2026/05/26 10:25:43 /usr/bin/packer: plugin process exited
+2026/05/26 10:25:43 /usr/bin/packer: plugin process exited
+2026/05/26 10:25:43 /usr/bin/packer: plugin process exited
+2026/05/26 10:25:43 /usr/bin/packer: plugin process exited
+2026/05/26 10:25:43 /usr/bin/packer: plugin process exited
+2026/05/26 10:25:43 /usr/bin/packer: plugin process exited
+2026/05/26 10:25:43 /usr/bin/packer: plugin process exited
+2026/05/26 10:25:43 /usr/bin/packer: plugin process exited
+2026/05/26 10:25:43 /usr/bin/packer: plugin process exited
+2026/05/26 10:25:43 /home/brico/.config/packer/plugins/github.com/hashicorp/proxmox/packer-plugin-proxmox_v1.2.3_x5.0_linux_amd64: plugin process exited
+2026/05/26 10:25:43 /usr/bin/packer: plugin process exited
